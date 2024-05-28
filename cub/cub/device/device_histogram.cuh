@@ -615,6 +615,35 @@ struct DeviceHistogram
       stream);
   }
 
+  template <int NUM_CHANNELS,
+            int NUM_ACTIVE_CHANNELS,
+            typename SampleIteratorT,
+            typename CounterT,
+            typename LevelT,
+            typename OffsetT>
+  CUB_RUNTIME_FUNCTION static cudaError_t MultiHistogramEven(
+    void* d_temp_storage,
+    size_t& temp_storage_bytes,
+    SampleIteratorT d_samples,
+    ::cuda::std::array<CounterT*, NUM_ACTIVE_CHANNELS> d_histogram,
+    ::cuda::std::array<int, NUM_ACTIVE_CHANNELS> num_levels,
+    ::cuda::std::array<LevelT, NUM_ACTIVE_CHANNELS> lower_level,
+    ::cuda::std::array<LevelT, NUM_ACTIVE_CHANNELS> upper_level,
+    OffsetT num_pixels,
+    cudaStream_t stream = 0)
+  {
+    return MultiHistogramEven<NUM_CHANNELS, NUM_ACTIVE_CHANNELS>(
+      d_temp_storage,
+      temp_storage_bytes,
+      d_samples,
+      d_histogram.data(),
+      num_levels.data(),
+      lower_level.data(),
+      upper_level.data(),
+      num_pixels,
+      stream);
+  }
+
   //! @rst
   //! Computes per-channel intensity histograms from a sequence of
   //! multi-channel "pixel" data samples using equal-width bins.
@@ -858,6 +887,39 @@ struct DeviceHistogram
       num_levels,
       lower_level,
       upper_level,
+      num_row_pixels,
+      num_rows,
+      row_stride_bytes,
+      stream);
+  }
+
+  template <int NUM_CHANNELS,
+            int NUM_ACTIVE_CHANNELS,
+            typename SampleIteratorT,
+            typename CounterT,
+            typename LevelT,
+            typename OffsetT>
+  CUB_RUNTIME_FUNCTION static cudaError_t MultiHistogramEven(
+    void* d_temp_storage,
+    size_t& temp_storage_bytes,
+    SampleIteratorT d_samples,
+    ::cuda::std::array<CounterT*, NUM_ACTIVE_CHANNELS> d_histogram,
+    ::cuda::std::array<int, NUM_ACTIVE_CHANNELS> num_levels,
+    ::cuda::std::array<LevelT, NUM_ACTIVE_CHANNELS> lower_level,
+    ::cuda::std::array<LevelT, NUM_ACTIVE_CHANNELS> upper_level,
+    OffsetT num_row_pixels,
+    OffsetT num_rows,
+    size_t row_stride_bytes,
+    cudaStream_t stream = 0)
+  {
+    return MultiHistogramEven(
+      d_temp_storage,
+      temp_storage_bytes,
+      d_samples,
+      d_histogram.data(),
+      num_levels.data(),
+      lower_level.data(),
+      upper_level.data(),
       num_row_pixels,
       num_rows,
       row_stride_bytes,
@@ -1354,6 +1416,26 @@ struct DeviceHistogram
       d_temp_storage, temp_storage_bytes, d_samples, d_histogram, num_levels, d_levels, num_pixels, stream);
   }
 
+  template <int NUM_CHANNELS,
+            int NUM_ACTIVE_CHANNELS,
+            typename SampleIteratorT,
+            typename CounterT,
+            typename LevelT,
+            typename OffsetT>
+  CUB_RUNTIME_FUNCTION static cudaError_t MultiHistogramRange(
+    void* d_temp_storage,
+    size_t& temp_storage_bytes,
+    SampleIteratorT d_samples,
+    ::cuda::std::array<CounterT*, NUM_ACTIVE_CHANNELS> d_histogram,
+    ::cuda::std::array<int, NUM_ACTIVE_CHANNELS> num_levels,
+    ::cuda::std::array<LevelT*, NUM_ACTIVE_CHANNELS> const d_levels,
+    OffsetT num_pixels,
+    cudaStream_t stream = 0)
+  {
+    return MultiHistogramRange<NUM_CHANNELS, NUM_ACTIVE_CHANNELS>(
+      d_temp_storage, temp_storage_bytes, d_samples, d_histogram, num_levels, d_levels, num_pixels, stream);
+  }
+
   //! @rst
   //! Computes per-channel intensity histograms from a sequence of multi-channel "pixel" data samples using
   //! the specified bin boundary levels.
@@ -1584,6 +1666,37 @@ struct DeviceHistogram
       d_histogram,
       num_levels,
       d_levels,
+      num_row_pixels,
+      num_rows,
+      row_stride_bytes,
+      stream);
+  }
+
+  template <int NUM_CHANNELS,
+            int NUM_ACTIVE_CHANNELS,
+            typename SampleIteratorT,
+            typename CounterT,
+            typename LevelT,
+            typename OffsetT>
+  CUB_RUNTIME_FUNCTION static cudaError_t MultiHistogramRange(
+    void* d_temp_storage,
+    size_t& temp_storage_bytes,
+    SampleIteratorT d_samples,
+    ::cuda::std::array<CounterT*, NUM_ACTIVE_CHANNELS> d_histogram,
+    ::cuda::std::array<int, NUM_ACTIVE_CHANNELS> num_levels,
+    ::cuda::std::array<const LevelT*, NUM_ACTIVE_CHANNELS> d_levels,
+    OffsetT num_row_pixels,
+    OffsetT num_rows,
+    size_t row_stride_bytes,
+    cudaStream_t stream = 0)
+  {
+    return MultiHistogramRange<NUM_CHANNELS, NUM_ACTIVE_CHANNELS>(
+      d_temp_storage,
+      temp_storage_bytes,
+      d_samples,
+      d_histogram.data(),
+      num_levels.data(),
+      d_levels.data(),
       num_row_pixels,
       num_rows,
       row_stride_bytes,
