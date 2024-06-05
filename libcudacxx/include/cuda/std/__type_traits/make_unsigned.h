@@ -38,20 +38,11 @@ template <class _Tp>
 using __make_unsigned_t = _LIBCUDACXX_MAKE_UNSIGNED(_Tp);
 
 #else
-typedef __type_list<unsigned char,
-                    __type_list<unsigned short,
-                                __type_list<unsigned int,
-                                            __type_list<unsigned long,
-                                                        __type_list<unsigned long long,
-#  ifndef _LIBCUDACXX_HAS_NO_INT128
-                                                                    __type_list<__uint128_t,
-#  endif
-                                                                                __nat
-#  ifndef _LIBCUDACXX_HAS_NO_INT128
-                                                                                >
-#  endif
-                                                                    >>>>>
-  __unsigned_types;
+using __unsigned_types = __type_list<
+  unsigned char,
+  __type_list<unsigned short,
+              __type_list<unsigned int,
+                          __type_list<unsigned long, __type_list<unsigned long long, __type_list<__uint128_t, __nat>>>>>>;
 
 template <class _Tp, bool = is_integral<_Tp>::value || is_enum<_Tp>::value>
 struct __make_unsigned_impl
@@ -60,7 +51,7 @@ struct __make_unsigned_impl
 template <class _Tp>
 struct __make_unsigned_impl<_Tp, true>
 {
-  typedef typename __find_first<__unsigned_types, sizeof(_Tp)>::type type;
+  using type = typename __find_first<__unsigned_types, sizeof(_Tp)>::type;
 };
 
 template <>
@@ -69,53 +60,53 @@ struct __make_unsigned_impl<bool, true>
 template <>
 struct __make_unsigned_impl<signed short, true>
 {
-  typedef unsigned short type;
+  using type = unsigned short;
 };
 template <>
 struct __make_unsigned_impl<unsigned short, true>
 {
-  typedef unsigned short type;
+  using type = unsigned short;
 };
 template <>
 struct __make_unsigned_impl<signed int, true>
 {
-  typedef unsigned int type;
+  using type = unsigned int;
 };
 template <>
 struct __make_unsigned_impl<unsigned int, true>
 {
-  typedef unsigned int type;
+  using type = unsigned int;
 };
 template <>
 struct __make_unsigned_impl<signed long, true>
 {
-  typedef unsigned long type;
+  using type = unsigned long;
 };
 template <>
 struct __make_unsigned_impl<unsigned long, true>
 {
-  typedef unsigned long type;
+  using type = unsigned long;
 };
 template <>
 struct __make_unsigned_impl<signed long long, true>
 {
-  typedef unsigned long long type;
+  using type = unsigned long long;
 };
 template <>
 struct __make_unsigned_impl<unsigned long long, true>
 {
-  typedef unsigned long long type;
+  using type = unsigned long long;
 };
 #  ifndef _LIBCUDACXX_HAS_NO_INT128
 template <>
 struct __make_unsigned_impl<__int128_t, true>
 {
-  typedef __uint128_t type;
+  using type = __uint128_t;
 };
 template <>
 struct __make_unsigned_impl<__uint128_t, true>
 {
-  typedef __uint128_t type;
+  using type = __uint128_t;
 };
 #  endif
 

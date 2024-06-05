@@ -12,9 +12,8 @@
 // template <class Alloc>
 // struct allocator_traits
 // {
-//     typedef Alloc::const_void_pointer
-//           | pointer_traits<pointer>::rebind<const void>
-//                                          const_void_pointer;
+//     using const_void_pointer = Alloc::const_void_pointer
+//                                | pointer_traits<pointer>::rebind<const void>;
 //     ...
 // };
 
@@ -30,14 +29,14 @@ struct Ptr
 template <class T>
 struct A
 {
-  typedef T value_type;
-  typedef Ptr<T> pointer;
+  using value_type = T;
+  using pointer    = Ptr<T>;
 };
 
 template <class T>
 struct B
 {
-  typedef T value_type;
+  using value_type = T;
 };
 
 template <class T>
@@ -47,18 +46,18 @@ struct CPtr
 template <class T>
 struct C
 {
-  typedef T value_type;
-  typedef CPtr<const void> const_void_pointer;
+  using value_type         = T;
+  using const_void_pointer = CPtr<const void>;
 };
 
 #if !defined(TEST_COMPILER_MSVC_2017) // const_void_pointer is inaccessible
 template <class T>
 struct D
 {
-  typedef T value_type;
+  using value_type = T;
 
 private:
-  typedef int const_void_pointer;
+  using const_void_pointer = int;
 };
 #endif // !TEST_COMPILER_MSVC_2017
 

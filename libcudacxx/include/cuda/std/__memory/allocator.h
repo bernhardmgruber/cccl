@@ -50,14 +50,14 @@ template <>
 class _LIBCUDACXX_TEMPLATE_VIS allocator<void>
 {
 public:
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef void* pointer;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const void* const_pointer;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef void value_type;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using pointer       = void*;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using const_pointer = const void*;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using value_type    = void;
 
   template <class _Up>
   struct _LIBCUDACXX_DEPRECATED_IN_CXX17 rebind
   {
-    typedef allocator<_Up> other;
+    using other = allocator<_Up>;
   };
 };
 
@@ -65,14 +65,14 @@ template <>
 class _LIBCUDACXX_TEMPLATE_VIS allocator<const void>
 {
 public:
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const void* pointer;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const void* const_pointer;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const void value_type;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using pointer       = const void*;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using const_pointer = const void*;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using value_type    = const void;
 
   template <class _Up>
   struct _LIBCUDACXX_DEPRECATED_IN_CXX17 rebind
   {
-    typedef allocator<_Up> other;
+    using other = allocator<_Up>;
   };
 };
 #endif // _CCCL_STD_VER <= 2017
@@ -110,11 +110,11 @@ class _LIBCUDACXX_TEMPLATE_VIS allocator : private __non_trivial_if<!_CCCL_TRAIT
   static_assert(!_CCCL_TRAIT(is_volatile, _Tp), "std::allocator does not support volatile types");
 
 public:
-  typedef size_t size_type;
-  typedef ptrdiff_t difference_type;
-  typedef _Tp value_type;
-  typedef true_type propagate_on_container_move_assignment;
-  typedef true_type is_always_equal;
+  using size_type                              = size_t;
+  using difference_type                        = ptrdiff_t;
+  using value_type                             = _Tp;
+  using propagate_on_container_move_assignment = true_type;
+  using is_always_equal                        = true_type;
 
   _CCCL_CONSTEXPR_CXX20 allocator() noexcept = default;
 
@@ -165,15 +165,15 @@ public:
 
   // C++20 Removed members
 #if _CCCL_STD_VER <= 2017
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef _Tp* pointer;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const _Tp* const_pointer;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef _Tp& reference;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const _Tp& const_reference;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using pointer         = _Tp*;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using const_pointer   = const _Tp*;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using reference       = _Tp&;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using const_reference = const _Tp&;
 
   template <class _Up>
   struct _LIBCUDACXX_DEPRECATED_IN_CXX17 rebind
   {
-    typedef allocator<_Up> other;
+    using other = allocator<_Up>;
   };
 
   _LIBCUDACXX_DEPRECATED_IN_CXX17 _LIBCUDACXX_INLINE_VISIBILITY pointer address(reference __x) const noexcept
@@ -215,11 +215,11 @@ class _LIBCUDACXX_TEMPLATE_VIS allocator<const _Tp>
   static_assert(!_CCCL_TRAIT(is_volatile, _Tp), "std::allocator does not support volatile types");
 
 public:
-  typedef size_t size_type;
-  typedef ptrdiff_t difference_type;
-  typedef const _Tp value_type;
-  typedef true_type propagate_on_container_move_assignment;
-  typedef true_type is_always_equal;
+  using size_type                              = size_t;
+  using difference_type                        = ptrdiff_t;
+  using value_type                             = const _Tp;
+  using propagate_on_container_move_assignment = true_type;
+  using is_always_equal                        = true_type;
 
   _CCCL_CONSTEXPR_CXX20 allocator() noexcept = default;
 
@@ -265,15 +265,15 @@ public:
 
   // C++20 Removed members
 #if _CCCL_STD_VER <= 2017
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const _Tp* pointer;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const _Tp* const_pointer;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const _Tp& reference;
-  _LIBCUDACXX_DEPRECATED_IN_CXX17 typedef const _Tp& const_reference;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using pointer         = const _Tp*;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using const_pointer   = const _Tp*;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using reference       = const _Tp&;
+  _LIBCUDACXX_DEPRECATED_IN_CXX17 using const_reference = const _Tp&;
 
   template <class _Up>
   struct _LIBCUDACXX_DEPRECATED_IN_CXX17 rebind
   {
-    typedef allocator<_Up> other;
+    using other = allocator<_Up>;
   };
 
   _LIBCUDACXX_DEPRECATED_IN_CXX17 _LIBCUDACXX_INLINE_VISIBILITY const_pointer address(const_reference __x) const noexcept

@@ -51,7 +51,7 @@ _LIBCUDACXX_INLINE_VAR constexpr bool is_destructible_v = _LIBCUDACXX_IS_DESTRUC
 template <class>
 struct __is_destructible_apply
 {
-  typedef int type;
+  using type = int;
 };
 
 template <typename _Tp>

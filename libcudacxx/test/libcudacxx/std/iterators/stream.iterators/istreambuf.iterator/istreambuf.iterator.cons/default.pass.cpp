@@ -26,14 +26,14 @@
 int main(int, char**)
 {
   {
-    typedef cuda::std::istreambuf_iterator<char> T;
+    using T = cuda::std::istreambuf_iterator<char>;
     T it;
     assert(it == T());
     constexpr T it2;
     (void) it2;
   }
   {
-    typedef cuda::std::istreambuf_iterator<wchar_t> T;
+    using T = cuda::std::istreambuf_iterator<wchar_t>;
     T it;
     assert(it == T());
     constexpr T it2;

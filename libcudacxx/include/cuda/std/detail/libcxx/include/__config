@@ -758,8 +758,8 @@ extern "C++" {
 #    endif
 
 #    if __cplusplus < 201103L
-typedef __char16_t char16_t;
-typedef __char32_t char32_t;
+using char16_t = __char16_t;
+using char32_t = __char32_t;
 #    endif
 
 #    if !(__has_feature(cxx_lambdas))
@@ -1263,8 +1263,8 @@ typedef __char32_t char32_t;
 #  endif
 
 #  ifdef _LIBCUDACXX_HAS_NO_UNICODE_CHARS
-typedef unsigned short char16_t;
-typedef unsigned int char32_t;
+using char16_t = unsigned short;
+using char32_t = unsigned int;
 #  endif // _LIBCUDACXX_HAS_NO_UNICODE_CHARS
 
 #  if defined(_CCCL_COMPILER_GCC) || defined(_CCCL_COMPILER_CLANG)

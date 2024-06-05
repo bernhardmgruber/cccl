@@ -49,7 +49,7 @@
 //     T operator=(T);
 // };
 //
-// typedef atomic<bool> atomic_bool;
+// using atomic_bool = atomic<bool>;
 
 #include <cuda/atomic>
 #include <cuda/std/atomic>
@@ -213,11 +213,11 @@ __host__ __device__ __noinline__ void do_test()
 #if TEST_STD_VER > 2017
   NV_DISPATCH_TARGET(
     NV_IS_HOST,
-    (typedef Atomic<Scope> A; TEST_ALIGNAS_TYPE(A) char storage[sizeof(A)] = {1}; A& zero = *new (storage) A();
+    (using A = Atomic<Scope>; TEST_ALIGNAS_TYPE(A) char storage[sizeof(A)] = {1}; A& zero = *new (storage) A();
      assert(zero == false);
      zero.~A();),
     NV_PROVIDES_SM_70,
-    (typedef Atomic<Scope> A; TEST_ALIGNAS_TYPE(A) char storage[sizeof(A)] = {1}; A& zero = *new (storage) A();
+    (using A = Atomic<Scope>; TEST_ALIGNAS_TYPE(A) char storage[sizeof(A)] = {1}; A& zero = *new (storage) A();
      assert(zero == false);
      zero.~A();))
 #endif // TEST_STD_VER > 2017

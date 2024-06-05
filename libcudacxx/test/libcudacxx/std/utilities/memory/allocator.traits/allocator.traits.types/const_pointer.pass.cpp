@@ -12,9 +12,8 @@
 // template <class Alloc>
 // struct allocator_traits
 // {
-//     typedef Alloc::const_pointer
-//           | pointer_traits<pointer>::rebind<const value_type>
-//     ...
+//     using ... = Alloc::const_pointer
+//               | pointer_traits<pointer>::rebind<const value_type>
 // };
 
 #include <cuda/std/__memory_>
@@ -29,14 +28,14 @@ struct Ptr
 template <class T>
 struct A
 {
-  typedef T value_type;
-  typedef Ptr<T> pointer;
+  using value_type = T;
+  using pointer    = Ptr<T>;
 };
 
 template <class T>
 struct B
 {
-  typedef T value_type;
+  using value_type = T;
 };
 
 template <class T>
@@ -46,19 +45,19 @@ struct CPtr
 template <class T>
 struct C
 {
-  typedef T value_type;
-  typedef CPtr<T> pointer;
-  typedef CPtr<const T> const_pointer;
+  using value_type    = T;
+  using pointer       = CPtr<T>;
+  using const_pointer = CPtr<const T>;
 };
 
 #if !defined(TEST_COMPILER_MSVC_2017) // const_pointer is inaccessible
 template <class T>
 struct D
 {
-  typedef T value_type;
+  using value_type = T;
 
 private:
-  typedef void const_pointer;
+  using const_pointer = void;
 };
 #endif // !TEST_COMPILER_MSVC_2017
 

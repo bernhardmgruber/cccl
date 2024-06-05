@@ -48,28 +48,28 @@ struct __libcpp_is_pointer<_Tp*> : public true_type
 template <class _Tp>
 struct __libcpp_remove_objc_qualifiers
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 #  if defined(_LIBCUDACXX_HAS_OBJC_ARC)
 template <class _Tp>
 struct __libcpp_remove_objc_qualifiers<_Tp __strong>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct __libcpp_remove_objc_qualifiers<_Tp __weak>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct __libcpp_remove_objc_qualifiers<_Tp __autoreleasing>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct __libcpp_remove_objc_qualifiers<_Tp __unsafe_unretained>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 #  endif
 

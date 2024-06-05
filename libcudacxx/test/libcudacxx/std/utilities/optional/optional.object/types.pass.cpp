@@ -14,7 +14,7 @@
 // class optional
 // {
 // public:
-//     typedef T value_type;
+//     using value_type = T;
 //     ...
 
 #include <cuda/std/optional>

@@ -20,9 +20,9 @@
 __host__ __device__ TEST_CONSTEXPR_CXX14 bool tests()
 {
   {
-    typedef double T;
-    typedef cuda::std::array<T, 3> C;
-    C c = {1, 2, 3.5};
+    using T = double;
+    using C = cuda::std::array<T, 3>;
+    C c     = {1, 2, 3.5};
     LIBCPP_ASSERT_NOEXCEPT(c[0]);
     ASSERT_SAME_TYPE(C::reference, decltype(c[0]));
     C::reference r1 = c[0];
@@ -39,9 +39,9 @@ __host__ __device__ TEST_CONSTEXPR_CXX14 bool tests()
   // Test operator[] "works" on zero sized arrays
   {
     {
-      typedef double T;
-      typedef cuda::std::array<T, 0> C;
-      C c = {};
+      using T = double;
+      using C = cuda::std::array<T, 0>;
+      C c     = {};
       LIBCPP_ASSERT_NOEXCEPT(c[0]);
       ASSERT_SAME_TYPE(C::reference, decltype(c[0]));
       if (c.size() > (0))
@@ -53,9 +53,9 @@ __host__ __device__ TEST_CONSTEXPR_CXX14 bool tests()
       }
     }
     {
-      typedef double T;
-      typedef cuda::std::array<const T, 0> C;
-      C c = {};
+      using T = double;
+      using C = cuda::std::array<const T, 0>;
+      C c     = {};
       LIBCPP_ASSERT_NOEXCEPT(c[0]);
       ASSERT_SAME_TYPE(C::reference, decltype(c[0]));
       if (c.size() > (0))

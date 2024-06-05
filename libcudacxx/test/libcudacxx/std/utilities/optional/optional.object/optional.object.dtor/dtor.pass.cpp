@@ -40,22 +40,22 @@ public:
 int main(int, char**)
 {
   {
-    typedef int T;
+    using T = int;
     static_assert(cuda::std::is_trivially_destructible<T>::value, "");
     static_assert(cuda::std::is_trivially_destructible<optional<T>>::value, "");
   }
   {
-    typedef double T;
+    using T = double;
     static_assert(cuda::std::is_trivially_destructible<T>::value, "");
     static_assert(cuda::std::is_trivially_destructible<optional<T>>::value, "");
   }
   {
-    typedef PODType T;
+    using T = PODType;
     static_assert(cuda::std::is_trivially_destructible<T>::value, "");
     static_assert(cuda::std::is_trivially_destructible<optional<T>>::value, "");
   }
   {
-    typedef X T;
+    using T = X;
     static_assert(!cuda::std::is_trivially_destructible<T>::value, "");
     static_assert(!cuda::std::is_trivially_destructible<optional<T>>::value, "");
     {

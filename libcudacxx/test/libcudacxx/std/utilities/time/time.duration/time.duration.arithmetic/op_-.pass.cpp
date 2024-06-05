@@ -34,8 +34,8 @@ int main(int, char**)
 
   // P0548
   {
-    typedef cuda::std::chrono::duration<int, cuda::std::ratio<10, 10>> D10;
-    typedef cuda::std::chrono::duration<int, cuda::std::ratio<1, 1>> D1;
+    using D10 = cuda::std::chrono::duration<int, cuda::std::ratio<10, 10>>;
+    using D1  = cuda::std::chrono::duration<int, cuda::std::ratio<1, 1>>;
     D10 zero(0);
     D10 one(1);
     static_assert((cuda::std::is_same<decltype(-one), decltype(zero - one)>::value), "");

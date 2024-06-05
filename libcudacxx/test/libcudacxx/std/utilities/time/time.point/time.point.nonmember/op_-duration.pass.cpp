@@ -22,8 +22,8 @@
 template <class D>
 __host__ __device__ void test2739() // LWG2739
 {
-  typedef cuda::std::chrono::time_point<cuda::std::chrono::system_clock> TimePoint;
-  typedef cuda::std::chrono::duration<D> Dur;
+  using TimePoint = cuda::std::chrono::time_point<cuda::std::chrono::system_clock>;
+  using Dur       = cuda::std::chrono::duration<D>;
   const Dur d(5);
   TimePoint t0 = cuda::std::chrono::system_clock::from_time_t(200);
   TimePoint t1 = t0 - d;
@@ -32,9 +32,9 @@ __host__ __device__ void test2739() // LWG2739
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::system_clock Clock;
-  typedef cuda::std::chrono::milliseconds Duration1;
-  typedef cuda::std::chrono::microseconds Duration2;
+  using Clock     = cuda::std::chrono::system_clock;
+  using Duration1 = cuda::std::chrono::milliseconds;
+  using Duration2 = cuda::std::chrono::microseconds;
   {
     cuda::std::chrono::time_point<Clock, Duration1> t1(Duration1(3));
     cuda::std::chrono::time_point<Clock, Duration2> t2 = t1 - Duration2(5);

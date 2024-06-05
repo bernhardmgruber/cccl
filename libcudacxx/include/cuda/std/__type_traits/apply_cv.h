@@ -33,49 +33,49 @@ template <class _Tp,
           bool = is_volatile<__libcpp_remove_reference_t<_Tp>>::value>
 struct __apply_cv
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Up type;
+  using type = _Up;
 };
 
 template <class _Tp, class _Up>
 struct __apply_cv<_Tp, _Up, true, false>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE const _Up type;
+  using type = const _Up;
 };
 
 template <class _Tp, class _Up>
 struct __apply_cv<_Tp, _Up, false, true>
 {
-  typedef volatile _Up type;
+  using type = volatile _Up;
 };
 
 template <class _Tp, class _Up>
 struct __apply_cv<_Tp, _Up, true, true>
 {
-  typedef const volatile _Up type;
+  using type = const volatile _Up;
 };
 
 template <class _Tp, class _Up>
 struct __apply_cv<_Tp&, _Up, false, false>
 {
-  typedef _Up& type;
+  using type = _Up&;
 };
 
 template <class _Tp, class _Up>
 struct __apply_cv<_Tp&, _Up, true, false>
 {
-  typedef const _Up& type;
+  using type = const _Up&;
 };
 
 template <class _Tp, class _Up>
 struct __apply_cv<_Tp&, _Up, false, true>
 {
-  typedef volatile _Up& type;
+  using type = volatile _Up&;
 };
 
 template <class _Tp, class _Up>
 struct __apply_cv<_Tp&, _Up, true, true>
 {
-  typedef const volatile _Up& type;
+  using type = const volatile _Up&;
 };
 
 _LIBCUDACXX_END_NAMESPACE_STD

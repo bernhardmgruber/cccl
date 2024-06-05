@@ -174,11 +174,11 @@ template<class Category, class T, class Distance = ptrdiff_t,
          class Pointer = T*, class Reference = T&>
 struct iterator                                            // deprecated in C++17
 {
-    typedef T         value_type;
-    typedef Distance  difference_type;
-    typedef Pointer   pointer;
-    typedef Reference reference;
-    typedef Category  iterator_category;
+    using value_type = T        ;
+    using difference_type = Distance ;
+    using pointer = Pointer  ;
+    using reference = Reference;
+    using iterator_category = Category ;
 };
 
 struct input_iterator_tag  {};
@@ -318,12 +318,12 @@ class back_insert_iterator
 protected:
     Container* container;
 public:
-    typedef Container                   container_type;
-    typedef void                        value_type;
-    typedef void                        difference_type; // until C++20
-    typedef ptrdiff_t                   difference_type; // since C++20
-    typedef void                        reference;
-    typedef void                        pointer;
+    using container_type = Container                  ;
+    using value_type = void                       ;
+    using difference_type = void                       ; // until C++20
+    using difference_type = ptrdiff_t                  ; // since C++20
+    using reference = void                       ;
+    using pointer = void                       ;
 
     explicit back_insert_iterator(Container& x);  // constexpr in C++20
     back_insert_iterator& operator=(const typename Container::value_type& value);  // constexpr in C++20
@@ -341,12 +341,12 @@ class front_insert_iterator
 protected:
     Container* container;
 public:
-    typedef Container                    container_type;
-    typedef void                         value_type;
-    typedef void                         difference_type; // until C++20
-    typedef ptrdiff_t                    difference_type; // since C++20
-    typedef void                         reference;
-    typedef void                         pointer;
+    using container_type = Container                   ;
+    using value_type = void                        ;
+    using difference_type = void                        ; // until C++20
+    using difference_type = ptrdiff_t                   ; // since C++20
+    using reference = void                        ;
+    using pointer = void                        ;
 
     explicit front_insert_iterator(Container& x);  // constexpr in C++20
     front_insert_iterator& operator=(const typename Container::value_type& value);  // constexpr in C++20
@@ -365,12 +365,12 @@ protected:
     Container* container;
     typename Container::iterator iter;
 public:
-    typedef Container              container_type;
-    typedef void                   value_type;
-    typedef void                   difference_type; // until C++20
-    typedef ptrdiff_t              difference_type; // since C++20
-    typedef void                   reference;
-    typedef void                   pointer;
+    using container_type = Container             ;
+    using value_type = void                  ;
+    using difference_type = void                  ; // until C++20
+    using difference_type = ptrdiff_t             ; // since C++20
+    using reference = void                  ;
+    using pointer = void                  ;
 
     insert_iterator(Container& x, typename Container::iterator i);  // constexpr in C++20
     insert_iterator& operator=(const typename Container::value_type& value);  // constexpr in C++20
@@ -513,15 +513,15 @@ class istream_iterator
     : public iterator<input_iterator_tag, T, Distance, const T*, const T&> // until C++17
 {
 public:
-    typedef input_iterator_tag           iterator_category;
-    typedef T                            value_type;
-    typedef Distance                     difference_type;
-    typedef const T*                     pointer;
-    typedef const T&                     reference;
+    using iterator_category = input_iterator_tag          ;
+    using value_type = T                           ;
+    using difference_type = Distance                    ;
+    using pointer = const T*                    ;
+    using reference = const T&                    ;
 
-    typedef charT                        char_type;
-    typedef traits                       traits_type;
-    typedef basic_istream<charT, traits> istream_type;
+    using char_type = charT                       ;
+    using traits_type = traits                      ;
+    using istream_type = basic_istream<charT, traits>;
 
     istream_iterator(); // constexpr since C++11
     constexpr istream_iterator(default_sentinel_t); // since C++20
@@ -548,16 +548,16 @@ class ostream_iterator
     : public iterator<output_iterator_tag, void, void, void, void> // until C++17
 {
 public:
-    typedef output_iterator_tag         iterator_category;
-    typedef void                        value_type;
-    typedef void                        difference_type; // until C++20
-    typedef ptrdiff_t                   difference_type; // since C++20
-    typedef void                        pointer;
-    typedef void                        reference;
+    using iterator_category = output_iterator_tag        ;
+    using value_type = void                       ;
+    using difference_type = void                       ; // until C++20
+    using difference_type = ptrdiff_t                  ; // since C++20
+    using pointer = void                       ;
+    using reference = void                       ;
 
-    typedef charT char_type;
-    typedef traits traits_type;
-    typedef basic_ostream<charT,traits> ostream_type;
+    using char_type = charT;
+    using traits_type = traits;
+    using ostream_type = basic_ostream<charT,traits>;
 
     ostream_iterator(ostream_type& s);
     ostream_iterator(ostream_type& s, const charT* delimiter);
@@ -575,17 +575,17 @@ class istreambuf_iterator
     : public iterator<input_iterator_tag, charT, traits::off_type, unspecified, charT> // until C++17
 {
 public:
-    typedef input_iterator_tag              iterator_category;
-    typedef charT                           value_type;
-    typedef traits::off_type                difference_type;
-    typedef unspecified                     pointer;
-    typedef charT                           reference;
+    using iterator_category = input_iterator_tag             ;
+    using value_type = charT                          ;
+    using difference_type = traits::off_type               ;
+    using pointer = unspecified                    ;
+    using reference = charT                          ;
 
-    typedef charT                           char_type;
-    typedef traits                          traits_type;
-    typedef traits::int_type                int_type;
-    typedef basic_streambuf<charT, traits>  streambuf_type;
-    typedef basic_istream<charT, traits>    istream_type;
+    using char_type = charT                          ;
+    using traits_type = traits                         ;
+    using int_type = traits::int_type               ;
+    using streambuf_type = basic_streambuf<charT, traits> ;
+    using istream_type = basic_istream<charT, traits>   ;
 
     istreambuf_iterator() noexcept; // constexpr since C++11
     constexpr istreambuf_iterator(default_sentinel_t) noexcept; // since C++20
@@ -614,17 +614,17 @@ class ostreambuf_iterator
     : public iterator<output_iterator_tag, void, void, void, void> // until C++17
 {
 public:
-    typedef output_iterator_tag            iterator_category;
-    typedef void                           value_type;
-    typedef void                           difference_type; // until C++20
-    typedef ptrdiff_t                      difference_type; // since C++20
-    typedef void                           pointer;
-    typedef void                           reference;
+    using iterator_category = output_iterator_tag           ;
+    using value_type = void                          ;
+    using difference_type = void                          ; // until C++20
+    using difference_type = ptrdiff_t                     ; // since C++20
+    using pointer = void                          ;
+    using reference = void                          ;
 
-    typedef charT                          char_type;
-    typedef traits                         traits_type;
-    typedef basic_streambuf<charT, traits> streambuf_type;
-    typedef basic_ostream<charT, traits>   ostream_type;
+    using char_type = charT                         ;
+    using traits_type = traits                        ;
+    using streambuf_type = basic_streambuf<charT, traits>;
+    using ostream_type = basic_ostream<charT, traits>  ;
 
     ostreambuf_iterator(ostream_type& s) noexcept;
     ostreambuf_iterator(streambuf_type* s) noexcept;

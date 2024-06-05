@@ -23,7 +23,7 @@ int main(int, char**)
   static_assert(cuda::std::is_enum<cuda::std::endian>::value, "");
 
   // Check that E is a scoped enum by checking for conversions.
-  typedef cuda::std::underlying_type<cuda::std::endian>::type UT;
+  using UT = cuda::std::underlying_type<cuda::std::endian>::type;
   static_assert(!cuda::std::is_convertible<cuda::std::endian, UT>::value, "");
 
   // test that the enumeration values exist

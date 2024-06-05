@@ -52,7 +52,7 @@ int main(int, char**)
 {
 #if !(defined(TEST_COMPILER_CUDACC_BELOW_11_3) && defined(TEST_COMPILER_CLANG))
   {
-    typedef int T;
+    using T = int;
     constexpr optional<T> opt(T(5));
     static_assert(static_cast<bool>(opt) == true, "");
     static_assert(*opt == 5, "");
@@ -63,7 +63,7 @@ int main(int, char**)
     };
   }
   {
-    typedef double T;
+    using T = double;
     constexpr optional<T> opt(T(3));
     static_assert(static_cast<bool>(opt) == true, "");
     static_assert(*opt == 3, "");
@@ -80,7 +80,7 @@ int main(int, char**)
     assert(*o == 42);
   }
   {
-    typedef TestTypes::TestType T;
+    using T = TestTypes::TestType;
     T::reset();
     optional<T> opt = T{3};
     assert(T::alive() == 1);
@@ -89,7 +89,7 @@ int main(int, char**)
     assert(opt.value().value == 3);
   }
   {
-    typedef ExplicitTestTypes::TestType T;
+    using T = ExplicitTestTypes::TestType;
     static_assert(!cuda::std::is_convertible<T&&, optional<T>>::value, "");
     T::reset();
     optional<T> opt(T{3});
@@ -99,7 +99,7 @@ int main(int, char**)
     assert(opt.value().value == 3);
   }
   {
-    typedef TestTypes::TestType T;
+    using T = TestTypes::TestType;
     T::reset();
     optional<T> opt = {3};
     assert(T::alive() == 1);
@@ -111,7 +111,7 @@ int main(int, char**)
   }
 #if !(defined(TEST_COMPILER_CUDACC_BELOW_11_3) && defined(TEST_COMPILER_CLANG))
   {
-    typedef ConstexprTestTypes::TestType T;
+    using T                   = ConstexprTestTypes::TestType;
     constexpr optional<T> opt = {T(3)};
     static_assert(static_cast<bool>(opt) == true, "");
     static_assert(opt.value().value == 3, "");
@@ -122,7 +122,7 @@ int main(int, char**)
     };
   }
   {
-    typedef ConstexprTestTypes::TestType T;
+    using T                   = ConstexprTestTypes::TestType;
     constexpr optional<T> opt = {3};
     static_assert(static_cast<bool>(opt) == true, "");
     static_assert(opt.value().value == 3, "");
@@ -133,7 +133,7 @@ int main(int, char**)
     };
   }
   {
-    typedef ExplicitConstexprTestTypes::TestType T;
+    using T = ExplicitConstexprTestTypes::TestType;
     static_assert(!cuda::std::is_convertible<T&&, optional<T>>::value, "");
     constexpr optional<T> opt(T{3});
     static_assert(static_cast<bool>(opt) == true, "");

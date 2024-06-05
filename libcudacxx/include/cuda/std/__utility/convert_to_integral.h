@@ -79,8 +79,8 @@ inline _LIBCUDACXX_INLINE_VISIBILITY constexpr __uint128_t __convert_to_integral
 template <class _Tp, bool = is_enum<_Tp>::value>
 struct __sfinae_underlying_type
 {
-  typedef typename underlying_type<_Tp>::type type;
-  typedef decltype(((type) 1) + 0) __promoted_type;
+  using type            = typename underlying_type<_Tp>::type;
+  using __promoted_type = decltype(((type) 1) + 0);
 };
 
 template <class _Tp>

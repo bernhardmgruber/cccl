@@ -27,12 +27,12 @@ __host__ __device__ void test()
   ASSERT_NOEXCEPT(cuda::std::chrono::duration_values<typename D::rep>::min());
 #endif
   {
-    typedef typename D::rep Rep;
+    using Rep   = typename D::rep;
     Rep min_rep = cuda::std::chrono::duration_values<Rep>::min();
     assert(D::min().count() == min_rep);
   }
   {
-    typedef typename D::rep Rep;
+    using Rep             = typename D::rep;
     constexpr Rep min_rep = cuda::std::chrono::duration_values<Rep>::min();
     static_assert(D::min().count() == min_rep, "");
   }

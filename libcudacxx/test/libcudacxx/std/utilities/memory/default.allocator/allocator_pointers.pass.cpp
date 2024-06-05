@@ -21,20 +21,13 @@
 // template <class Alloc>
 // struct allocator_traits
 // {
-//     typedef Alloc                        allocator_type;
-//     typedef typename allocator_type::value_type
-//                                          value_type;
+//     using allocator_type = Alloc;
+//     using value_type = typename allocator_type::value_type;
 //
-//     typedef Alloc::pointer | value_type* pointer;
-//     typedef Alloc::const_pointer
-//           | pointer_traits<pointer>::rebind<const value_type>
-//                                          const_pointer;
-//     typedef Alloc::void_pointer
-//           | pointer_traits<pointer>::rebind<void>
-//                                          void_pointer;
-//     typedef Alloc::const_void_pointer
-//           | pointer_traits<pointer>::rebind<const void>
-//                                          const_void_pointer;
+//     using pointer = Alloc::pointer | value_type*;
+//     using const_pointer = Alloc::const_pointer | pointer_traits<pointer>::rebind<const value_type>>;
+//     using void_pointer = Alloc::void_pointer | pointer_traits<pointer>::rebind<void>;
+//     using const_void_pointer = Alloc::const_void_pointer | pointer_traits<pointer>::rebind<const void>;
 
 template <typename Alloc>
 __host__ __device__ void test_pointer()

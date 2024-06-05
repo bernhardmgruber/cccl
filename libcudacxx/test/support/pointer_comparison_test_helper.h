@@ -16,12 +16,12 @@
 template <template <class> class CompareTemplate>
 __host__ __device__ void do_pointer_comparison_test()
 {
-  typedef CompareTemplate<int*> Compare;
-  typedef CompareTemplate<cuda::std::uintptr_t> UIntCompare;
+  using Compare     = CompareTemplate<int*>;
+  using UIntCompare = CompareTemplate<cuda::std::uintptr_t>;
 #if TEST_STD_VER > 2011
-  typedef CompareTemplate<void> VoidCompare;
+  using VoidCompare = CompareTemplate<void>;
 #else
-  typedef Compare VoidCompare;
+  using VoidCompare = Compare;
 #endif
 
   Compare comp;

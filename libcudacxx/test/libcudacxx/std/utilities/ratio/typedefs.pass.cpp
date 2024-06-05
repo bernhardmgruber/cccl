@@ -6,7 +6,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-// test ratio typedef's
+// test ratio aliases
 
 #include <cuda/std/ratio>
 

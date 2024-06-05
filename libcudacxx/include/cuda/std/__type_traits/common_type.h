@@ -63,7 +63,7 @@ struct __common_type2_imp
 template <class _Tp, class _Up>
 struct __common_type2_imp<_Tp, _Up, __void_t<__cond_type<_Tp, _Up>>>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE __decay_t<__cond_type<_Tp, _Up>> type;
+  using type = __decay_t<__cond_type<_Tp, _Up>>;
 };
 
 template <class, class = void>
@@ -76,7 +76,7 @@ struct __common_types;
 template <class _Tp, class _Up>
 struct __common_type_impl<__common_types<_Tp, _Up>, __void_t<__common_type_t<_Tp, _Up>>>
 {
-  typedef __common_type_t<_Tp, _Up> type;
+  using type = __common_type_t<_Tp, _Up>;
 };
 
 template <class _Tp, class _Up, class _Vp, class... _Rest>

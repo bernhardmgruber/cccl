@@ -22,13 +22,13 @@
 template <class FromDuration, class ToDuration>
 __host__ __device__ void test(const FromDuration& df, const ToDuration& d)
 {
-  typedef cuda::std::chrono::system_clock Clock;
-  typedef cuda::std::chrono::time_point<Clock, FromDuration> FromTimePoint;
-  typedef cuda::std::chrono::time_point<Clock, ToDuration> ToTimePoint;
+  using Clock         = cuda::std::chrono::system_clock;
+  using FromTimePoint = cuda::std::chrono::time_point<Clock, FromDuration>;
+  using ToTimePoint   = cuda::std::chrono::time_point<Clock, ToDuration>;
   {
     FromTimePoint f(df);
     ToTimePoint t(d);
-    typedef decltype(cuda::std::chrono::round<ToDuration>(f)) R;
+    using R = decltype(cuda::std::chrono::round<ToDuration>(f));
     static_assert((cuda::std::is_same<R, ToTimePoint>::value), "");
     assert(cuda::std::chrono::round<ToDuration>(f) == t);
   }
@@ -37,9 +37,9 @@ __host__ __device__ void test(const FromDuration& df, const ToDuration& d)
 template <class FromDuration, long long From, class ToDuration, long long To>
 __host__ __device__ void test_constexpr()
 {
-  typedef cuda::std::chrono::system_clock Clock;
-  typedef cuda::std::chrono::time_point<Clock, FromDuration> FromTimePoint;
-  typedef cuda::std::chrono::time_point<Clock, ToDuration> ToTimePoint;
+  using Clock         = cuda::std::chrono::system_clock;
+  using FromTimePoint = cuda::std::chrono::time_point<Clock, FromDuration>;
+  using ToTimePoint   = cuda::std::chrono::time_point<Clock, ToDuration>;
   {
     constexpr FromTimePoint f{FromDuration{From}};
     constexpr ToTimePoint t{ToDuration{To}};

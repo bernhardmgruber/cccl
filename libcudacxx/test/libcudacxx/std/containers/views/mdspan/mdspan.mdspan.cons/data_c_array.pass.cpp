@@ -16,8 +16,8 @@
 int main(int, char**)
 {
   {
-    typedef int data_t;
-    typedef size_t index_t;
+    using data_t  = int;
+    using index_t = size_t;
 
     data_t data[1] = {42};
     cuda::std::mdspan<data_t, cuda::std::extents<index_t, 1>> m(data);

@@ -12,7 +12,7 @@
 // class complex
 // {
 // public:
-//   typedef T value_type;
+//   using value_type = T;
 //   ...
 // };
 
@@ -26,7 +26,7 @@
 template <class T>
 __host__ __device__ void test()
 {
-  typedef cuda::std::complex<T> C;
+  using C = cuda::std::complex<T>;
 
   static_assert(sizeof(C) == (sizeof(T) * 2), "wrong size");
   static_assert(alignof(C) == (alignof(T)), "misaligned");

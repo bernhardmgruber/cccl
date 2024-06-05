@@ -26,9 +26,9 @@ struct NoDefault
 __host__ __device__ TEST_CONSTEXPR_CXX14 bool tests()
 {
   {
-    typedef double T;
-    typedef cuda::std::array<T, 3> C;
-    C c = {1, 2, 3.5};
+    using T = double;
+    using C = cuda::std::array<T, 3>;
+    C c     = {1, 2, 3.5};
     ASSERT_NOEXCEPT(c.data());
     T* p = c.data();
     assert(p[0] == 1);
@@ -36,26 +36,26 @@ __host__ __device__ TEST_CONSTEXPR_CXX14 bool tests()
     assert(p[2] == 3.5);
   }
   {
-    typedef double T;
-    typedef cuda::std::array<T, 0> C;
-    C c = {};
+    using T = double;
+    using C = cuda::std::array<T, 0>;
+    C c     = {};
     ASSERT_NOEXCEPT(c.data());
     T* p = c.data();
     unused(p);
   }
   {
-    typedef double T;
-    typedef cuda::std::array<const T, 0> C;
-    C c = {{}};
+    using T = double;
+    using C = cuda::std::array<const T, 0>;
+    C c     = {{}};
     ASSERT_NOEXCEPT(c.data());
     const T* p = c.data();
     unused(p);
     static_assert((cuda::std::is_same<decltype(c.data()), const T*>::value), "");
   }
   {
-    typedef NoDefault T;
-    typedef cuda::std::array<T, 0> C;
-    C c = {};
+    using T = NoDefault;
+    using C = cuda::std::array<T, 0>;
+    C c     = {};
     ASSERT_NOEXCEPT(c.data());
     T* p = c.data();
     unused(p);
@@ -78,8 +78,8 @@ int main(int, char**)
 
   // Test the alignment of data()
   {
-    typedef cuda::std::max_align_t T;
-    typedef cuda::std::array<T, 0> C;
+    using T                   = cuda::std::max_align_t;
+    using C                   = cuda::std::array<T, 0>;
     const C c                 = {};
     const T* p                = c.data();
     cuda::std::uintptr_t pint = reinterpret_cast<cuda::std::uintptr_t>(p);

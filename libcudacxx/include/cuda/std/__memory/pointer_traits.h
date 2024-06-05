@@ -49,7 +49,7 @@ struct __pointer_traits_element_type;
 template <class _Ptr>
 struct __pointer_traits_element_type<_Ptr, true>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename _Ptr::element_type type;
+  using type = typename _Ptr::element_type;
 };
 
 #ifndef _LIBCUDACXX_HAS_NO_VARIADICS
@@ -57,13 +57,13 @@ struct __pointer_traits_element_type<_Ptr, true>
 template <template <class, class...> class _Sp, class _Tp, class... _Args>
 struct __pointer_traits_element_type<_Sp<_Tp, _Args...>, true>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename _Sp<_Tp, _Args...>::element_type type;
+  using type = typename _Sp<_Tp, _Args...>::element_type;
 };
 
 template <template <class, class...> class _Sp, class _Tp, class... _Args>
 struct __pointer_traits_element_type<_Sp<_Tp, _Args...>, false>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp type;
+  using type = _Tp;
 };
 
 #else // _LIBCUDACXX_HAS_NO_VARIADICS
@@ -71,49 +71,49 @@ struct __pointer_traits_element_type<_Sp<_Tp, _Args...>, false>
 template <template <class> class _Sp, class _Tp>
 struct __pointer_traits_element_type<_Sp<_Tp>, true>
 {
-  typedef typename _Sp<_Tp>::element_type type;
+  using type = typename _Sp<_Tp>::element_type;
 };
 
 template <template <class> class _Sp, class _Tp>
 struct __pointer_traits_element_type<_Sp<_Tp>, false>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 
 template <template <class, class> class _Sp, class _Tp, class _A0>
 struct __pointer_traits_element_type<_Sp<_Tp, _A0>, true>
 {
-  typedef typename _Sp<_Tp, _A0>::element_type type;
+  using type = typename _Sp<_Tp, _A0>::element_type;
 };
 
 template <template <class, class> class _Sp, class _Tp, class _A0>
 struct __pointer_traits_element_type<_Sp<_Tp, _A0>, false>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 
 template <template <class, class, class> class _Sp, class _Tp, class _A0, class _A1>
 struct __pointer_traits_element_type<_Sp<_Tp, _A0, _A1>, true>
 {
-  typedef typename _Sp<_Tp, _A0, _A1>::element_type type;
+  using type = typename _Sp<_Tp, _A0, _A1>::element_type;
 };
 
 template <template <class, class, class> class _Sp, class _Tp, class _A0, class _A1>
 struct __pointer_traits_element_type<_Sp<_Tp, _A0, _A1>, false>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 
 template <template <class, class, class, class> class _Sp, class _Tp, class _A0, class _A1, class _A2>
 struct __pointer_traits_element_type<_Sp<_Tp, _A0, _A1, _A2>, true>
 {
-  typedef typename _Sp<_Tp, _A0, _A1, _A2>::element_type type;
+  using type = typename _Sp<_Tp, _A0, _A1, _A2>::element_type;
 };
 
 template <template <class, class, class, class> class _Sp, class _Tp, class _A0, class _A1, class _A2>
 struct __pointer_traits_element_type<_Sp<_Tp, _A0, _A1, _A2>, false>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 
 #endif // _LIBCUDACXX_HAS_NO_VARIADICS
@@ -129,13 +129,13 @@ struct __has_difference_type<_Tp, __void_t<typename _Tp::difference_type>> : tru
 template <class _Ptr, bool = __has_difference_type<_Ptr>::value>
 struct __pointer_traits_difference_type
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE ptrdiff_t type;
+  using type = ptrdiff_t;
 };
 
 template <class _Ptr>
 struct __pointer_traits_difference_type<_Ptr, true>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename _Ptr::difference_type type;
+  using type = typename _Ptr::difference_type;
 };
 
 template <class _Tp, class _Up>
@@ -156,7 +156,7 @@ public:
 template <class _Tp, class _Up, bool = __has_rebind<_Tp, _Up>::value>
 struct __pointer_traits_rebind
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename _Tp::template rebind<_Up> type;
+  using type = typename _Tp::template rebind<_Up>;
 };
 
 #ifndef _LIBCUDACXX_HAS_NO_VARIADICS
@@ -164,13 +164,13 @@ struct __pointer_traits_rebind
 template <template <class, class...> class _Sp, class _Tp, class... _Args, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp, _Args...>, _Up, true>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename _Sp<_Tp, _Args...>::template rebind<_Up> type;
+  using type = typename _Sp<_Tp, _Args...>::template rebind<_Up>;
 };
 
 template <template <class, class...> class _Sp, class _Tp, class... _Args, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp, _Args...>, _Up, false>
 {
-  typedef _Sp<_Up, _Args...> type;
+  using type = _Sp<_Up, _Args...>;
 };
 
 #else // _LIBCUDACXX_HAS_NO_VARIADICS
@@ -178,49 +178,49 @@ struct __pointer_traits_rebind<_Sp<_Tp, _Args...>, _Up, false>
 template <template <class> class _Sp, class _Tp, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp>, _Up, true>
 {
-  typedef typename _Sp<_Tp>::template rebind<_Up> type;
+  using type = typename _Sp<_Tp>::template rebind<_Up>;
 };
 
 template <template <class> class _Sp, class _Tp, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp>, _Up, false>
 {
-  typedef _Sp<_Up> type;
+  using type = _Sp<_Up>;
 };
 
 template <template <class, class> class _Sp, class _Tp, class _A0, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp, _A0>, _Up, true>
 {
-  typedef typename _Sp<_Tp, _A0>::template rebind<_Up> type;
+  using type = typename _Sp<_Tp, _A0>::template rebind<_Up>;
 };
 
 template <template <class, class> class _Sp, class _Tp, class _A0, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp, _A0>, _Up, false>
 {
-  typedef _Sp<_Up, _A0> type;
+  using type = _Sp<_Up, _A0>;
 };
 
 template <template <class, class, class> class _Sp, class _Tp, class _A0, class _A1, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp, _A0, _A1>, _Up, true>
 {
-  typedef typename _Sp<_Tp, _A0, _A1>::template rebind<_Up> type;
+  using type = typename _Sp<_Tp, _A0, _A1>::template rebind<_Up>;
 };
 
 template <template <class, class, class> class _Sp, class _Tp, class _A0, class _A1, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp, _A0, _A1>, _Up, false>
 {
-  typedef _Sp<_Up, _A0, _A1> type;
+  using type = _Sp<_Up, _A0, _A1>;
 };
 
 template <template <class, class, class, class> class _Sp, class _Tp, class _A0, class _A1, class _A2, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp, _A0, _A1, _A2>, _Up, true>
 {
-  typedef typename _Sp<_Tp, _A0, _A1, _A2>::template rebind<_Up> type;
+  using type = typename _Sp<_Tp, _A0, _A1, _A2>::template rebind<_Up>;
 };
 
 template <template <class, class, class, class> class _Sp, class _Tp, class _A0, class _A1, class _A2, class _Up>
 struct __pointer_traits_rebind<_Sp<_Tp, _A0, _A1, _A2>, _Up, false>
 {
-  typedef _Sp<_Up, _A0, _A1, _A2> type;
+  using type = _Sp<_Up, _A0, _A1, _A2>;
 };
 
 #endif // _LIBCUDACXX_HAS_NO_VARIADICS
@@ -228,9 +228,9 @@ struct __pointer_traits_rebind<_Sp<_Tp, _A0, _A1, _A2>, _Up, false>
 template <class _Ptr>
 struct _LIBCUDACXX_TEMPLATE_VIS pointer_traits
 {
-  typedef _Ptr pointer;
-  typedef typename __pointer_traits_element_type<pointer>::type element_type;
-  typedef typename __pointer_traits_difference_type<pointer>::type difference_type;
+  using pointer         = _Ptr;
+  using element_type    = typename __pointer_traits_element_type<pointer>::type;
+  using difference_type = typename __pointer_traits_difference_type<pointer>::type;
 
   template <class _Up>
   using rebind = typename __pointer_traits_rebind<pointer, _Up>::type;
@@ -250,9 +250,9 @@ public:
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS pointer_traits<_Tp*>
 {
-  typedef _Tp* pointer;
-  typedef _Tp element_type;
-  typedef ptrdiff_t difference_type;
+  using pointer         = _Tp*;
+  using element_type    = _Tp;
+  using difference_type = ptrdiff_t;
 
   template <class _Up>
   using rebind = _Up*;
@@ -272,7 +272,7 @@ public:
 template <class _From, class _To>
 struct __rebind_pointer
 {
-  typedef typename pointer_traits<_From>::template rebind<_To> type;
+  using type = typename pointer_traits<_From>::template rebind<_To>;
 };
 
 // to_address

@@ -153,7 +153,7 @@ int main(int, char**)
 #if TEST_STD_VER > 2011 && !defined(TEST_COMPILER_NVRTC) && !defined(TEST_COMPILER_CUDACC_BELOW_11_3) \
   && defined(_LIBCUDACXX_ADDRESSOF)
   {
-    typedef cuda::std::reverse_iterator<const C*> RI;
+    using RI         = cuda::std::reverse_iterator<const C*>;
     constexpr RI it1 = cuda::std::make_reverse_iterator(gC + 1);
 
     static_assert(it1->get() == gC[0].get(), "");

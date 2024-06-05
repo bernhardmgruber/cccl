@@ -67,8 +67,8 @@ __host__ __device__ constexpr void test_iter_category()
 template <class It>
 __host__ __device__ void test()
 {
-  typedef cuda::std::reverse_iterator<It> R;
-  typedef cuda::std::iterator_traits<It> T;
+  using R = cuda::std::reverse_iterator<It>;
+  using T = cuda::std::iterator_traits<It>;
   find_current<It> q;
   q.test(); // Just test that we can access `.current` from derived classes
   static_assert((cuda::std::is_same<typename R::iterator_type, It>::value), "");
@@ -78,7 +78,7 @@ __host__ __device__ void test()
   static_assert((cuda::std::is_same<typename R::pointer, typename cuda::std::iterator_traits<It>::pointer>::value), "");
 
 #if TEST_STD_VER <= 2014
-  typedef cuda::std::iterator<typename T::iterator_category, typename T::value_type> iterator_base;
+  using iterator_base = cuda::std::iterator<typename T::iterator_category, typename T::value_type>;
   static_assert((cuda::std::is_base_of<iterator_base, R>::value), "");
 #endif
 #if TEST_STD_VER > 2014

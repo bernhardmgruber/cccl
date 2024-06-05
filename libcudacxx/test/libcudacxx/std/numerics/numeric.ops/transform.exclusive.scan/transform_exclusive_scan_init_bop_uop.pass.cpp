@@ -145,7 +145,7 @@ __host__ __device__ TEST_CONSTEXPR_CXX14 void basic_tests()
     assert(res.empty());
   }
 
-  //  Make sure that the calculations are done using the init typedef
+  //  Make sure that the calculations are done using the init alias
   {
     cuda::std::array<unsigned char, 10> v{};
     cuda::std::iota(v.begin(), v.end(), static_cast<unsigned char>(1));

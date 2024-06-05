@@ -26,7 +26,7 @@ int main(int, char**)
   // cuda::std::complex not supported
   // cuda::std::string not supported
   /*
-  typedef cuda::std::complex<float> cf;
+  using cf = cuda::std::complex<float>;
   {
   auto t1 = cuda::std::tuple<int, cuda::std::string, cf> { 42, "Hi", { 1,2 }};
   assert ( cuda::std::get<int>(t1) == 42 ); // find at the beginning
@@ -59,7 +59,7 @@ int main(int, char**)
   // cuda::std::unique_ptr not supported
   /*
   {
-  typedef cuda::std::unique_ptr<int> upint;
+  using upint = cuda::std::unique_ptr<int>;
   cuda::std::tuple<upint> t(upint(new int(4)));
   upint p = cuda::std::get<upint>(cuda::std::move(t)); // get rvalue
   assert(*p == 4);
@@ -67,7 +67,7 @@ int main(int, char**)
   }
 
   {
-  typedef cuda::std::unique_ptr<int> upint;
+  using upint = cuda::std::unique_ptr<int>;
   const cuda::std::tuple<upint> t(upint(new int(4)));
   const upint&& p = cuda::std::get<upint>(cuda::std::move(t)); // get const rvalue
   assert(*p == 4);

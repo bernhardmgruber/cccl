@@ -32,7 +32,7 @@ template <class _Tp>
 _CCCL_NODISCARD inline _LIBCUDACXX_INLINE_VISIBILITY constexpr __libcpp_remove_reference_t<_Tp>&&
 move(_Tp&& __t) noexcept
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE __libcpp_remove_reference_t<_Tp> _Up;
+  using _Up = _LIBCUDACXX_NODEBUG_TYPE __libcpp_remove_reference_t<_Tp>;
   return static_cast<_Up&&>(__t);
 }
 

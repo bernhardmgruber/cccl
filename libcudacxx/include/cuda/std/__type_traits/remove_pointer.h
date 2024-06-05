@@ -36,27 +36,27 @@ using __remove_pointer_t = _LIBCUDACXX_REMOVE_POINTER(_Tp);
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_pointer
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_pointer<_Tp*>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_pointer<_Tp* const>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_pointer<_Tp* volatile>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_pointer<_Tp* const volatile>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp type;
+  using type = _Tp;
 };
 
 template <class _Tp>

@@ -19,8 +19,8 @@
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::system_clock Clock;
-  typedef cuda::std::chrono::milliseconds Duration;
+  using Clock    = cuda::std::chrono::system_clock;
+  using Duration = cuda::std::chrono::milliseconds;
   {
     cuda::std::chrono::time_point<Clock, Duration> t(Duration(3));
     assert(t.time_since_epoch() == Duration(3));

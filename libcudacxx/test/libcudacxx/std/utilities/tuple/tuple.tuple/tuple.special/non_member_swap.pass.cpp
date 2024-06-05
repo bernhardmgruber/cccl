@@ -24,13 +24,13 @@
 int main(int, char**)
 {
   {
-    typedef cuda::std::tuple<> T;
+    using T = cuda::std::tuple<>;
     T t0;
     T t1;
     swap(t0, t1);
   }
   {
-    typedef cuda::std::tuple<MoveOnly> T;
+    using T = cuda::std::tuple<MoveOnly>;
     T t0(MoveOnly(0));
     T t1(MoveOnly(1));
     swap(t0, t1);
@@ -38,7 +38,7 @@ int main(int, char**)
     assert(cuda::std::get<0>(t1) == 0);
   }
   {
-    typedef cuda::std::tuple<MoveOnly, MoveOnly> T;
+    using T = cuda::std::tuple<MoveOnly, MoveOnly>;
     T t0(MoveOnly(0), MoveOnly(1));
     T t1(MoveOnly(2), MoveOnly(3));
     swap(t0, t1);
@@ -48,7 +48,7 @@ int main(int, char**)
     assert(cuda::std::get<1>(t1) == 1);
   }
   {
-    typedef cuda::std::tuple<MoveOnly, MoveOnly, MoveOnly> T;
+    using T = cuda::std::tuple<MoveOnly, MoveOnly, MoveOnly>;
     T t0(MoveOnly(0), MoveOnly(1), MoveOnly(2));
     T t1(MoveOnly(3), MoveOnly(4), MoveOnly(5));
     swap(t0, t1);

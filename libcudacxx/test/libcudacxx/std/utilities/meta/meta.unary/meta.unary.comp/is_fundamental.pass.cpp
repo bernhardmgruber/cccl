@@ -76,7 +76,7 @@ enum Enum
   one
 };
 
-typedef void (*FunctionPtr)();
+using FunctionPtr = void (*)();
 
 int main(int, char**)
 {

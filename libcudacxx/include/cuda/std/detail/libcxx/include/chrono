@@ -46,8 +46,8 @@ class duration
     static_assert(__is_ratio<Period>::value, "Second template parameter of duration must be a std::ratio");
     static_assert(Period::num > 0, "duration period must be positive");
 public:
-    typedef Rep rep;
-    typedef typename _Period::type period;
+    using rep = Rep;
+    using period = typename _Period::type;
 
     constexpr duration() = default;
     template <class Rep2>
@@ -96,21 +96,21 @@ public:
     static constexpr duration max();  // noexcept in C++20
 };
 
-typedef duration<long long,         nano> nanoseconds;
-typedef duration<long long,        micro> microseconds;
-typedef duration<long long,        milli> milliseconds;
-typedef duration<long long              > seconds;
-typedef duration<     long, ratio<  60> > minutes;
-typedef duration<     long, ratio<3600> > hours;
+using nanoseconds = duration<long long,         nano>;
+using microseconds = duration<long long,        micro>;
+using milliseconds = duration<long long,        milli>;
+using seconds = duration<long long              >;
+using minutes = duration<     long, ratio<  60> >;
+using hours = duration<     long, ratio<3600> >;
 
 template <class Clock, class Duration = typename Clock::duration>
 class time_point
 {
 public:
-    typedef Clock                     clock;
-    typedef Duration                  duration;
-    typedef typename duration::rep    rep;
-    typedef typename duration::period period;
+    using clock = Clock                    ;
+    using duration = Duration                 ;
+    using rep = typename duration::rep   ;
+    using period = typename duration::period;
 private:
     duration d_;  // exposition only
 
@@ -265,10 +265,10 @@ template <class Rep, class Period>
 class system_clock
 {
 public:
-    typedef microseconds                     duration;
-    typedef duration::rep                    rep;
-    typedef duration::period                 period;
-    typedef chrono::time_point<system_clock> time_point;
+    using duration = microseconds                    ;
+    using rep = duration::rep                   ;
+    using period = duration::period                ;
+    using time_point = chrono::time_point<system_clock>;
     static const bool is_steady =            false; // constexpr in C++14
 
     static time_point now() noexcept;
@@ -301,16 +301,16 @@ template<class Duration>
 class steady_clock
 {
 public:
-    typedef nanoseconds                                   duration;
-    typedef duration::rep                                 rep;
-    typedef duration::period                              period;
-    typedef chrono::time_point<steady_clock, duration>    time_point;
+    using duration = nanoseconds                                  ;
+    using rep = duration::rep                                ;
+    using period = duration::period                             ;
+    using time_point = chrono::time_point<steady_clock, duration>   ;
     static const bool is_steady =                         true; // constexpr in C++14
 
     static time_point now() noexcept;
 };
 
-typedef steady_clock high_resolution_clock;
+using high_resolution_clock = steady_clock;
 
 // 25.7.8, local time           // C++20
 struct local_t {};
@@ -908,8 +908,8 @@ struct __is_duration<const volatile duration<_Rep, _Period>> : true_type
 template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 struct _LIBCUDACXX_TEMPLATE_VIS common_type<chrono::duration<_Rep1, _Period1>, chrono::duration<_Rep2, _Period2>>
 {
-  typedef chrono::duration<typename common_type<_Rep1, _Rep2>::type, typename __ratio_gcd<_Period1, _Period2>::type>
-    type;
+  using type =
+    chrono::duration<typename common_type<_Rep1, _Rep2>::type, typename __ratio_gcd<_Period1, _Period2>::type>;
 };
 
 namespace chrono
@@ -938,7 +938,7 @@ struct __duration_cast<_FromDuration, _ToDuration, _Period, true, false>
 {
   _LIBCUDACXX_INLINE_VISIBILITY constexpr _ToDuration operator()(const _FromDuration& __fd) const
   {
-    typedef typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type _Ct;
+    using _Ct = typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type;
     return _ToDuration(
       static_cast<typename _ToDuration::rep>(static_cast<_Ct>(__fd.count()) / static_cast<_Ct>(_Period::den)));
   }
@@ -949,7 +949,7 @@ struct __duration_cast<_FromDuration, _ToDuration, _Period, false, true>
 {
   _LIBCUDACXX_INLINE_VISIBILITY constexpr _ToDuration operator()(const _FromDuration& __fd) const
   {
-    typedef typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type _Ct;
+    using _Ct = typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type;
     return _ToDuration(
       static_cast<typename _ToDuration::rep>(static_cast<_Ct>(__fd.count()) * static_cast<_Ct>(_Period::num)));
   }
@@ -960,7 +960,7 @@ struct __duration_cast<_FromDuration, _ToDuration, _Period, false, false>
 {
   _LIBCUDACXX_INLINE_VISIBILITY constexpr _ToDuration operator()(const _FromDuration& __fd) const
   {
-    typedef typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type _Ct;
+    using _Ct = typename common_type<typename _ToDuration::rep, typename _FromDuration::rep, intmax_t>::type;
     return _ToDuration(static_cast<typename _ToDuration::rep>(
       static_cast<_Ct>(__fd.count()) * static_cast<_Ct>(_Period::num) / static_cast<_Ct>(_Period::den)));
   }
@@ -1080,12 +1080,12 @@ class _LIBCUDACXX_TEMPLATE_VIS duration
 
   public:
     static const bool value = (__n1 <= max / __d2) && (__n2 <= max / __d1);
-    typedef ratio<__mul<__n1, __d2, !value>::value, __mul<__n2, __d1, !value>::value> type;
+    using type              = ratio<__mul<__n1, __d2, !value>::value, __mul<__n2, __d1, !value>::value>;
   };
 
 public:
-  typedef _Rep rep;
-  typedef typename _Period::type period;
+  using rep    = _Rep;
+  using period = typename _Period::type;
 
 private:
   rep __rep_;
@@ -1196,17 +1196,17 @@ public:
   }
 };
 
-typedef duration<long long, nano> nanoseconds;
-typedef duration<long long, micro> microseconds;
-typedef duration<long long, milli> milliseconds;
-typedef duration<long long> seconds;
-typedef duration<long, ratio<60>> minutes;
-typedef duration<long, ratio<3600>> hours;
+using nanoseconds  = duration<long long, nano>;
+using microseconds = duration<long long, micro>;
+using milliseconds = duration<long long, milli>;
+using seconds      = duration<long long>;
+using minutes      = duration<long, ratio<60>>;
+using hours        = duration<long, ratio<3600>>;
 #if _CCCL_STD_VER > 2011
-typedef duration<int, ratio_multiply<ratio<24>, hours::period>> days;
-typedef duration<int, ratio_multiply<ratio<7>, days::period>> weeks;
-typedef duration<int, ratio_multiply<ratio<146097, 400>, days::period>> years;
-typedef duration<int, ratio_divide<years::period, ratio<12>>> months;
+using days   = duration<int, ratio_multiply<ratio<24>, hours::period>>;
+using weeks  = duration<int, ratio_multiply<ratio<7>, days::period>>;
+using years  = duration<int, ratio_multiply<ratio<146097, 400>, days::period>>;
+using months = duration<int, ratio_divide<years::period, ratio<12>>>;
 #endif // _CCCL_STD_VER > 2011
 // Duration ==
 
@@ -1215,7 +1215,7 @@ struct __duration_eq
 {
   _LIBCUDACXX_INLINE_VISIBILITY constexpr bool operator()(const _LhsDuration& __lhs, const _RhsDuration& __rhs) const
   {
-    typedef typename common_type<_LhsDuration, _RhsDuration>::type _Ct;
+    using _Ct = typename common_type<_LhsDuration, _RhsDuration>::type;
     return _Ct(__lhs).count() == _Ct(__rhs).count();
   }
 };
@@ -1252,7 +1252,7 @@ struct __duration_lt
 {
   _LIBCUDACXX_INLINE_VISIBILITY constexpr bool operator()(const _LhsDuration& __lhs, const _RhsDuration& __rhs) const
   {
-    typedef typename common_type<_LhsDuration, _RhsDuration>::type _Ct;
+    using _Ct = typename common_type<_LhsDuration, _RhsDuration>::type;
     return _Ct(__lhs).count() < _Ct(__rhs).count();
   }
 };
@@ -1307,7 +1307,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY constexpr
   typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type
   operator+(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-  typedef typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type _Cd;
+  using _Cd = typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type;
   return _Cd(_Cd(__lhs).count() + _Cd(__rhs).count());
 }
 
@@ -1318,7 +1318,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY constexpr
   typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type
   operator-(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-  typedef typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type _Cd;
+  using _Cd = typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type;
   return _Cd(_Cd(__lhs).count() - _Cd(__rhs).count());
 }
 
@@ -1330,8 +1330,8 @@ inline _LIBCUDACXX_INLINE_VISIBILITY constexpr __enable_if_t<
   duration<typename common_type<_Rep1, _Rep2>::type, _Period>>
 operator*(const duration<_Rep1, _Period>& __d, const _Rep2& __s)
 {
-  typedef typename common_type<_Rep1, _Rep2>::type _Cr;
-  typedef duration<_Cr, _Period> _Cd;
+  using _Cr = typename common_type<_Rep1, _Rep2>::type;
+  using _Cd = duration<_Cr, _Period>;
   return _Cd(_Cd(__d).count() * static_cast<_Cr>(__s));
 }
 
@@ -1352,8 +1352,8 @@ inline _LIBCUDACXX_INLINE_VISIBILITY constexpr __enable_if_t<
   duration<typename common_type<_Rep1, _Rep2>::type, _Period>>
 operator/(const duration<_Rep1, _Period>& __d, const _Rep2& __s)
 {
-  typedef typename common_type<_Rep1, _Rep2>::type _Cr;
-  typedef duration<_Cr, _Period> _Cd;
+  using _Cr = typename common_type<_Rep1, _Rep2>::type;
+  using _Cd = duration<_Cr, _Period>;
   return _Cd(_Cd(__d).count() / static_cast<_Cr>(__s));
 }
 
@@ -1361,7 +1361,7 @@ template <class _Rep1, class _Period1, class _Rep2, class _Period2>
 inline _LIBCUDACXX_INLINE_VISIBILITY constexpr typename common_type<_Rep1, _Rep2>::type
 operator/(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-  typedef typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type _Ct;
+  using _Ct = typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type;
   return _Ct(__lhs).count() / _Ct(__rhs).count();
 }
 
@@ -1373,8 +1373,8 @@ inline _LIBCUDACXX_INLINE_VISIBILITY constexpr __enable_if_t<
   duration<typename common_type<_Rep1, _Rep2>::type, _Period>>
 operator%(const duration<_Rep1, _Period>& __d, const _Rep2& __s)
 {
-  typedef typename common_type<_Rep1, _Rep2>::type _Cr;
-  typedef duration<_Cr, _Period> _Cd;
+  using _Cr = typename common_type<_Rep1, _Rep2>::type;
+  using _Cd = duration<_Cr, _Period>;
   return _Cd(_Cd(__d).count() % static_cast<_Cr>(__s));
 }
 
@@ -1383,8 +1383,8 @@ inline _LIBCUDACXX_INLINE_VISIBILITY constexpr
   typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type
   operator%(const duration<_Rep1, _Period1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-  typedef typename common_type<_Rep1, _Rep2>::type _Cr;
-  typedef typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type _Cd;
+  using _Cr = typename common_type<_Rep1, _Rep2>::type;
+  using _Cd = typename common_type<duration<_Rep1, _Period1>, duration<_Rep2, _Period2>>::type;
   return _Cd(static_cast<_Cr>(_Cd(__lhs).count()) % static_cast<_Cr>(_Cd(__rhs).count()));
 }
 
@@ -1399,10 +1399,10 @@ class _LIBCUDACXX_TEMPLATE_VIS time_point
                 "Second template parameter of time_point must be a std::chrono::duration");
 
 public:
-  typedef _Clock clock;
-  typedef _Duration duration;
-  typedef typename duration::rep rep;
-  typedef typename duration::period period;
+  using clock    = _Clock;
+  using duration = _Duration;
+  using rep      = typename duration::rep;
+  using period   = typename duration::period;
 
 private:
   duration __d_;
@@ -1460,7 +1460,7 @@ template <class _Clock, class _Duration1, class _Duration2>
 struct _LIBCUDACXX_TEMPLATE_VIS
 common_type<chrono::time_point<_Clock, _Duration1>, chrono::time_point<_Clock, _Duration2>>
 {
-  typedef chrono::time_point<_Clock, typename common_type<_Duration1, _Duration2>::type> type;
+  using type = chrono::time_point<_Clock, typename common_type<_Duration1, _Duration2>::type>;
 };
 
 namespace chrono
@@ -1567,7 +1567,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 _CCCL_CONSTEXPR_CXX14 time_point<_Clock, typename common_type<_Duration1, duration<_Rep2, _Period2>>::type>
 operator+(const time_point<_Clock, _Duration1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-  typedef time_point<_Clock, typename common_type<_Duration1, duration<_Rep2, _Period2>>::type> _Tr;
+  using _Tr = time_point<_Clock, typename common_type<_Duration1, duration<_Rep2, _Period2>>::type>;
   return _Tr(__lhs.time_since_epoch() + __rhs);
 }
 
@@ -1588,7 +1588,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 _CCCL_CONSTEXPR_CXX14 time_point<_Clock, typename common_type<_Duration1, duration<_Rep2, _Period2>>::type>
 operator-(const time_point<_Clock, _Duration1>& __lhs, const duration<_Rep2, _Period2>& __rhs)
 {
-  typedef time_point<_Clock, typename common_type<_Duration1, duration<_Rep2, _Period2>>::type> _Ret;
+  using _Ret = time_point<_Clock, typename common_type<_Duration1, duration<_Rep2, _Period2>>::type>;
   return _Ret(__lhs.time_since_epoch() - __rhs);
 }
 
@@ -1607,10 +1607,10 @@ operator-(const time_point<_Clock, _Duration1>& __lhs, const time_point<_Clock, 
 class _LIBCUDACXX_TYPE_VIS system_clock
 {
 public:
-  typedef _LIBCUDACXX_SYS_CLOCK_DURATION duration;
-  typedef duration::rep rep;
-  typedef duration::period period;
-  typedef chrono::time_point<system_clock> time_point;
+  using duration                                    = _LIBCUDACXX_SYS_CLOCK_DURATION;
+  using rep                                         = duration::rep;
+  using period                                      = duration::period;
+  using time_point                                  = chrono::time_point<system_clock>;
   static _CCCL_CONSTEXPR_CXX14 const bool is_steady = false;
 
   _CCCL_HOST_DEVICE static time_point now() noexcept;
@@ -1622,18 +1622,18 @@ public:
 class _LIBCUDACXX_TYPE_VIS steady_clock
 {
 public:
-  typedef nanoseconds duration;
-  typedef duration::rep rep;
-  typedef duration::period period;
-  typedef chrono::time_point<steady_clock, duration> time_point;
+  using duration                                    = nanoseconds;
+  using rep                                         = duration::rep;
+  using period                                      = duration::period;
+  using time_point                                  = chrono::time_point<steady_clock, duration>;
   static _CCCL_CONSTEXPR_CXX14 const bool is_steady = true;
 
   static time_point now() noexcept;
 };
 
-typedef steady_clock high_resolution_clock;
+using high_resolution_clock = steady_clock;
 #else
-typedef system_clock high_resolution_clock;
+using high_resolution_clock = system_clock;
 #endif
 
 #if _CCCL_STD_VER > 2011
@@ -3708,15 +3708,15 @@ _LIBCUDACXX_BEGIN_NAMESPACE_FILESYSTEM
 struct _FilesystemClock
 {
 #  if !defined(_LIBCUDACXX_HAS_NO_INT128)
-  typedef __int128_t rep;
-  typedef nano period;
+  using rep    = __int128_t;
+  using period = nano;
 #  else
-  typedef long long rep;
-  typedef nano period;
+  using rep    = long long;
+  using period = nano;
 #  endif
 
-  typedef chrono::duration<rep, period> duration;
-  typedef chrono::time_point<_FilesystemClock> time_point;
+  using duration   = chrono::duration<rep, period>;
+  using time_point = chrono::time_point<_FilesystemClock>;
 
   _LIBCUDACXX_EXPORTED_FROM_ABI static _CCCL_CONSTEXPR_CXX14 const bool is_steady = false;
 
@@ -3724,13 +3724,13 @@ struct _FilesystemClock
 
   _LIBCUDACXX_INLINE_VISIBILITY static time_t to_time_t(const time_point& __t) noexcept
   {
-    typedef chrono::duration<rep> __secs;
+    using __secs = chrono::duration<rep>;
     return time_t(chrono::duration_cast<__secs>(__t.time_since_epoch()).count());
   }
 
   _LIBCUDACXX_INLINE_VISIBILITY static time_point from_time_t(time_t __t) noexcept
   {
-    typedef chrono::duration<rep> __secs;
+    using __secs = chrono::duration<rep>;
     return time_point(__secs(__t));
   }
 };

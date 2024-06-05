@@ -68,7 +68,7 @@ TEST_ACCESSIBLE extern Incomplete inc_obj;
 int main(int, char**)
 {
   {
-    typedef cuda::std::pair<CopyAssignable, short> P;
+    using P = cuda::std::pair<CopyAssignable, short>;
     const P p1(CopyAssignable(), 4);
     P p2;
     p2 = p1;

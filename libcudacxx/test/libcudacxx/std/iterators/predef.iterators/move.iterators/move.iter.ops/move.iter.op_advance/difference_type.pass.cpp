@@ -40,9 +40,9 @@ int main(int, char**)
 #if TEST_STD_VER > 2011
   {
     constexpr const char* p = "123456789";
-    typedef cuda::std::move_iterator<const char*> MI;
-    constexpr MI it1 = cuda::std::make_move_iterator(p);
-    constexpr MI it2 = cuda::std::make_move_iterator(p + 5);
+    using MI                = cuda::std::move_iterator<const char*>;
+    constexpr MI it1        = cuda::std::make_move_iterator(p);
+    constexpr MI it2        = cuda::std::make_move_iterator(p + 5);
 #  ifndef TEST_COMPILER_ICC
     constexpr MI it3 = cuda::std::make_move_iterator(p) += 5;
 #  endif // TEST_COMPILER_ICC

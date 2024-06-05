@@ -26,8 +26,8 @@ __host__ __device__ constexpr bool test()
   using cuda::std::optional;
 
   {
-    typedef int T;
-    typedef optional<T> O;
+    using T = int;
+    using O = optional<T>;
 
     O o1; // disengaged
     O o2{1}; // engaged

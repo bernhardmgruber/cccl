@@ -21,7 +21,7 @@ template<class T>
 class complex
 {
 public:
-    typedef T value_type;
+    using value_type = T;
 
     complex(const T& re = T(), const T& im = T()); // constexpr in C++14
     complex(const complex&);  // constexpr in C++14
@@ -51,7 +51,7 @@ template<>
 class complex<float>
 {
 public:
-    typedef float value_type;
+    using value_type = float;
 
     constexpr complex(float re = 0.0f, float im = 0.0f);
     explicit constexpr complex(const complex<double>&);
@@ -80,7 +80,7 @@ template<>
 class complex<double>
 {
 public:
-    typedef double value_type;
+    using value_type = double;
 
     constexpr complex(double re = 0.0, double im = 0.0);
     constexpr complex(const complex<float>&);
@@ -109,7 +109,7 @@ template<>
 class complex<long double>
 {
 public:
-    typedef long double value_type;
+    using value_type = long double;
 
     constexpr complex(long double re = 0.0L, long double im = 0.0L);
     constexpr complex(const complex<float>&);

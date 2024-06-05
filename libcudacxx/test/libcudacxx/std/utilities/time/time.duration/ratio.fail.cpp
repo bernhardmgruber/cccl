@@ -26,7 +26,7 @@ public:
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::duration<int, Ratio<1>> D;
+  using D = cuda::std::chrono::duration<int, Ratio<1>>;
   D d;
 
   return 0;

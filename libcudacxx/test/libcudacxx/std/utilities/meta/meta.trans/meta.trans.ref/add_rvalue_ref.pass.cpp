@@ -11,7 +11,7 @@
 // type_traits
 
 // add_rvalue_reference
-// If T names a referenceable type then the member typedef type
+// If T names a referenceable type then the member alias type
 //   shall name T&&; otherwise, type shall name T.
 
 #include <cuda/std/type_traits>

@@ -31,7 +31,7 @@
 
 _LIBCUDACXX_BEGIN_NAMESPACE_STD
 
-typedef decltype(nullptr) nullptr_t;
+using nullptr_t = decltype(nullptr);
 
 _LIBCUDACXX_END_NAMESPACE_STD
 

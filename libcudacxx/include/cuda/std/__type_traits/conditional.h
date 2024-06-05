@@ -45,12 +45,12 @@ using _If _LIBCUDACXX_NODEBUG_TYPE = typename _IfImpl<_Cond>::template _Select<_
 template <bool _Bp, class _If, class _Then>
 struct _LIBCUDACXX_TEMPLATE_VIS conditional
 {
-  typedef _If type;
+  using type = _If;
 };
 template <class _If, class _Then>
 struct _LIBCUDACXX_TEMPLATE_VIS conditional<false, _If, _Then>
 {
-  typedef _Then type;
+  using type = _Then;
 };
 
 #if _CCCL_STD_VER > 2011

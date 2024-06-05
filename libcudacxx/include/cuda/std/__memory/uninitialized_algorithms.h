@@ -98,8 +98,8 @@ template <class _InputIterator, class _ForwardIterator>
 inline _LIBCUDACXX_HIDE_FROM_ABI _LIBCUDACXX_INLINE_VISIBILITY _ForwardIterator
 uninitialized_copy(_InputIterator __ifirst, _InputIterator __ilast, _ForwardIterator __ofirst)
 {
-  typedef typename iterator_traits<_ForwardIterator>::value_type _ValueType;
-  auto __result = _CUDA_VSTD::__uninitialized_copy<_ValueType>(
+  using _ValueType = typename iterator_traits<_ForwardIterator>::value_type;
+  auto __result    = _CUDA_VSTD::__uninitialized_copy<_ValueType>(
     _CUDA_VSTD::move(__ifirst), _CUDA_VSTD::move(__ilast), _CUDA_VSTD::move(__ofirst), __always_false{});
   return _CUDA_VSTD::move(__result.second);
 }
@@ -125,8 +125,8 @@ template <class _InputIterator, class _Size, class _ForwardIterator>
 inline _LIBCUDACXX_HIDE_FROM_ABI _LIBCUDACXX_INLINE_VISIBILITY _ForwardIterator
 uninitialized_copy_n(_InputIterator __ifirst, _Size __n, _ForwardIterator __ofirst)
 {
-  typedef typename iterator_traits<_ForwardIterator>::value_type _ValueType;
-  auto __result = _CUDA_VSTD::__uninitialized_copy_n<_ValueType>(
+  using _ValueType = typename iterator_traits<_ForwardIterator>::value_type;
+  auto __result    = _CUDA_VSTD::__uninitialized_copy_n<_ValueType>(
     _CUDA_VSTD::move(__ifirst), __n, _CUDA_VSTD::move(__ofirst), __always_false{});
   return _CUDA_VSTD::move(__result.second);
 }
@@ -152,7 +152,7 @@ template <class _ForwardIterator, class _Tp>
 inline _LIBCUDACXX_HIDE_FROM_ABI _LIBCUDACXX_INLINE_VISIBILITY void
 uninitialized_fill(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __x)
 {
-  typedef typename iterator_traits<_ForwardIterator>::value_type _ValueType;
+  using _ValueType = typename iterator_traits<_ForwardIterator>::value_type;
   (void) _CUDA_VSTD::__uninitialized_fill<_ValueType>(__first, __last, __x);
 }
 
@@ -177,7 +177,7 @@ template <class _ForwardIterator, class _Size, class _Tp>
 inline _LIBCUDACXX_HIDE_FROM_ABI _LIBCUDACXX_INLINE_VISIBILITY _ForwardIterator
 uninitialized_fill_n(_ForwardIterator __first, _Size __n, const _Tp& __x)
 {
-  typedef typename iterator_traits<_ForwardIterator>::value_type _ValueType;
+  using _ValueType = typename iterator_traits<_ForwardIterator>::value_type;
   return _CUDA_VSTD::__uninitialized_fill_n<_ValueType>(__first, __n, __x);
 }
 

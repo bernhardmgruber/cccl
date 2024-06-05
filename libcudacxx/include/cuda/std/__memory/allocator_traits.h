@@ -568,7 +568,7 @@ using __rebind_alloc _LIBCUDACXX_NODEBUG_TYPE = typename _Traits::template rebin
 template <class _Traits, class _Tp>
 struct __rebind_alloc_helper
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename _Traits::template rebind_alloc<_Tp> type;
+  using type = typename _Traits::template rebind_alloc<_Tp>;
 };
 
 // ASan choices

@@ -35,8 +35,8 @@ __host__ __device__ TEST_CONSTEXPR_CXX14 bool test()
   const unsigned sb = sizeof(ib) / sizeof(ib[0]);
   ((void) sb); // unused in C++11
 
-  typedef cpp17_input_iterator<const int*> II;
-  typedef random_access_iterator<const int*> RAI;
+  using II  = cpp17_input_iterator<const int*>;
+  using RAI = random_access_iterator<const int*>;
 
   assert(cuda::std::mismatch(II(ia), II(ia + sa), II(ib)) == (cuda::std::pair<II, II>(II(ia + 3), II(ib + 3))));
 

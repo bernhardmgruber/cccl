@@ -23,13 +23,13 @@
 template <class FromDuration, class ToDuration>
 __host__ __device__ void test(const FromDuration& df, const ToDuration& d)
 {
-  typedef cuda::std::chrono::system_clock Clock;
-  typedef cuda::std::chrono::time_point<Clock, FromDuration> FromTimePoint;
-  typedef cuda::std::chrono::time_point<Clock, ToDuration> ToTimePoint;
+  using Clock         = cuda::std::chrono::system_clock;
+  using FromTimePoint = cuda::std::chrono::time_point<Clock, FromDuration>;
+  using ToTimePoint   = cuda::std::chrono::time_point<Clock, ToDuration>;
   {
     FromTimePoint f(df);
     ToTimePoint t(d);
-    typedef decltype(cuda::std::chrono::time_point_cast<ToDuration>(f)) R;
+    using R = decltype(cuda::std::chrono::time_point_cast<ToDuration>(f));
     static_assert((cuda::std::is_same<R, ToTimePoint>::value), "");
     assert(cuda::std::chrono::time_point_cast<ToDuration>(f) == t);
   }
@@ -40,9 +40,9 @@ __host__ __device__ void test(const FromDuration& df, const ToDuration& d)
 template <class FromDuration, long long From, class ToDuration, long long To>
 __host__ __device__ void test_constexpr()
 {
-  typedef cuda::std::chrono::system_clock Clock;
-  typedef cuda::std::chrono::time_point<Clock, FromDuration> FromTimePoint;
-  typedef cuda::std::chrono::time_point<Clock, ToDuration> ToTimePoint;
+  using Clock         = cuda::std::chrono::system_clock;
+  using FromTimePoint = cuda::std::chrono::time_point<Clock, FromDuration>;
+  using ToTimePoint   = cuda::std::chrono::time_point<Clock, ToDuration>;
   {
     constexpr FromTimePoint f{FromDuration{From}};
     constexpr ToTimePoint t{ToDuration{To}};
@@ -72,7 +72,7 @@ int main(int, char**)
     test_constexpr<cuda::std::chrono::milliseconds, 7265000, cuda::std::chrono::milliseconds, 7265000>();
     test_constexpr<cuda::std::chrono::milliseconds, 7265000, cuda::std::chrono::microseconds, 7265000000LL>();
     test_constexpr<cuda::std::chrono::milliseconds, 7265000, cuda::std::chrono::nanoseconds, 7265000000000LL>();
-    typedef cuda::std::chrono::duration<int, cuda::std::ratio<3, 5>> T1;
+    using T1 = cuda::std::chrono::duration<int, cuda::std::ratio<3, 5>>;
     test_constexpr<cuda::std::chrono::duration<int, cuda::std::ratio<2, 3>>, 9, T1, 10>();
   }
 #endif

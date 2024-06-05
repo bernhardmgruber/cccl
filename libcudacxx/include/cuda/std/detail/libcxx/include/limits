@@ -149,7 +149,7 @@ template <class _Tp, bool = is_arithmetic<_Tp>::value>
 class __libcpp_numeric_limits
 {
 protected:
-  typedef _Tp type;
+  using type = _Tp;
 
   static constexpr bool is_specialized = false;
   _LIBCUDACXX_INLINE_VISIBILITY static constexpr type min() noexcept
@@ -236,7 +236,7 @@ template <class _Tp>
 class __libcpp_numeric_limits<_Tp, true>
 {
 protected:
-  typedef _Tp type;
+  using type = _Tp;
 
   static constexpr bool is_specialized = true;
 
@@ -315,7 +315,7 @@ template <>
 class __libcpp_numeric_limits<bool, true>
 {
 protected:
-  typedef bool type;
+  using type = bool;
 
   static constexpr bool is_specialized = true;
 
@@ -390,7 +390,7 @@ template <>
 class __libcpp_numeric_limits<float, true>
 {
 protected:
-  typedef float type;
+  using type = float;
 
   static constexpr bool is_specialized = true;
 
@@ -478,7 +478,7 @@ template <>
 class __libcpp_numeric_limits<double, true>
 {
 protected:
-  typedef double type;
+  using type = double;
 
   static constexpr bool is_specialized = true;
 
@@ -568,7 +568,7 @@ class __libcpp_numeric_limits<long double, true>
 #ifndef _LIBCUDACXX_HAS_NO_LONG_DOUBLE
 
 protected:
-  typedef long double type;
+  using type = long double;
 
   static constexpr bool is_specialized = true;
 
@@ -645,8 +645,8 @@ protected:
 template <class _Tp>
 class _LIBCUDACXX_TEMPLATE_VIS numeric_limits : private __libcpp_numeric_limits<__remove_cv_t<_Tp>>
 {
-  typedef __libcpp_numeric_limits<__remove_cv_t<_Tp>> __base;
-  typedef typename __base::type type;
+  using __base = __libcpp_numeric_limits<__remove_cv_t<_Tp>>;
+  using type   = typename __base::type;
 
 public:
   static constexpr bool is_specialized = __base::is_specialized;
@@ -765,8 +765,8 @@ constexpr float_round_style numeric_limits<_Tp>::round_style;
 template <class _Tp>
 class _LIBCUDACXX_TEMPLATE_VIS numeric_limits<const _Tp> : private numeric_limits<_Tp>
 {
-  typedef numeric_limits<_Tp> __base;
-  typedef _Tp type;
+  using __base = numeric_limits<_Tp>;
+  using type   = _Tp;
 
 public:
   static constexpr bool is_specialized = __base::is_specialized;
@@ -885,8 +885,8 @@ constexpr float_round_style numeric_limits<const _Tp>::round_style;
 template <class _Tp>
 class _LIBCUDACXX_TEMPLATE_VIS numeric_limits<volatile _Tp> : private numeric_limits<_Tp>
 {
-  typedef numeric_limits<_Tp> __base;
-  typedef _Tp type;
+  using __base = numeric_limits<_Tp>;
+  using type   = _Tp;
 
 public:
   static constexpr bool is_specialized = __base::is_specialized;
@@ -1005,8 +1005,8 @@ constexpr float_round_style numeric_limits<volatile _Tp>::round_style;
 template <class _Tp>
 class _LIBCUDACXX_TEMPLATE_VIS numeric_limits<const volatile _Tp> : private numeric_limits<_Tp>
 {
-  typedef numeric_limits<_Tp> __base;
-  typedef _Tp type;
+  using __base = numeric_limits<_Tp>;
+  using type   = _Tp;
 
 public:
   static constexpr bool is_specialized = __base::is_specialized;

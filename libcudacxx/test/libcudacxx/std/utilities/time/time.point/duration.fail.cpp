@@ -18,7 +18,7 @@
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::time_point<cuda::std::chrono::system_clock, int> T;
+  using T = cuda::std::chrono::time_point<cuda::std::chrono::system_clock, int>;
   T t;
 
   return 0;

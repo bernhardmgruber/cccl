@@ -587,7 +587,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::enable_if<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, bool>::type
 isgreater(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type type;
+  using type = typename std::__promote<_A1, _A2>::type;
   return __libcpp_isgreater((type) __lcpp_x, (type) __lcpp_y);
 }
 
@@ -610,7 +610,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::enable_if<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, bool>::type
 isgreaterequal(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type type;
+  using type = typename std::__promote<_A1, _A2>::type;
   return __libcpp_isgreaterequal((type) __lcpp_x, (type) __lcpp_y);
 }
 
@@ -633,7 +633,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::enable_if<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, bool>::type
 isless(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type type;
+  using type = typename std::__promote<_A1, _A2>::type;
   return __libcpp_isless((type) __lcpp_x, (type) __lcpp_y);
 }
 
@@ -656,7 +656,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::enable_if<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, bool>::type
 islessequal(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type type;
+  using type = typename std::__promote<_A1, _A2>::type;
   return __libcpp_islessequal((type) __lcpp_x, (type) __lcpp_y);
 }
 
@@ -679,7 +679,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::enable_if<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, bool>::type
 islessgreater(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type type;
+  using type = typename std::__promote<_A1, _A2>::type;
   return __libcpp_islessgreater((type) __lcpp_x, (type) __lcpp_y);
 }
 
@@ -702,7 +702,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::enable_if<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, bool>::type
 isunordered(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type type;
+  using type = typename std::__promote<_A1, _A2>::type;
   return __libcpp_isunordered((type) __lcpp_x, (type) __lcpp_y);
 }
 
@@ -847,7 +847,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 atan2(_A1 __lcpp_y, _A2 __lcpp_x) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::atan2((__result_type) __lcpp_y, (__result_type) __lcpp_x);
 }
@@ -990,7 +990,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 fmod(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::fmod((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1106,7 +1106,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 pow(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::pow((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1299,7 +1299,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 copysign(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::copysign((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1392,7 +1392,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 fdim(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::fdim((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1415,7 +1415,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY typename std::_EnableIf<
   std::__promote<_A1, _A2, _A3>>::type
 fma(_A1 __lcpp_x, _A2 __lcpp_y, _A3 __lcpp_z) noexcept
 {
-  typedef typename std::__promote<_A1, _A2, _A3>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2, _A3>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value
                    && std::_IsSame<_A3, __result_type>::value)),
                 "");
@@ -1438,7 +1438,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 fmax(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::fmax((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1459,7 +1459,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 fmin(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::fmin((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1480,7 +1480,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 hypot(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::hypot((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1683,7 +1683,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 nextafter(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::nextafter((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1722,7 +1722,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 remainder(_A1 __lcpp_x, _A2 __lcpp_y) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::remainder((__result_type) __lcpp_x, (__result_type) __lcpp_y);
 }
@@ -1744,7 +1744,7 @@ inline _LIBCUDACXX_INLINE_VISIBILITY
 typename std::_EnableIf<std::is_arithmetic<_A1>::value && std::is_arithmetic<_A2>::value, std::__promote<_A1, _A2>>::type
 remquo(_A1 __lcpp_x, _A2 __lcpp_y, int* __lcpp_z) noexcept
 {
-  typedef typename std::__promote<_A1, _A2>::type __result_type;
+  using __result_type = typename std::__promote<_A1, _A2>::type;
   static_assert((!(std::_IsSame<_A1, __result_type>::value && std::_IsSame<_A2, __result_type>::value)), "");
   return ::remquo((__result_type) __lcpp_x, (__result_type) __lcpp_y, __lcpp_z);
 }

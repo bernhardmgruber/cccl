@@ -142,14 +142,14 @@ template <size_t _N_words, size_t _Size>
 class __bitset
 {
 public:
-  typedef ptrdiff_t difference_type;
-  typedef size_t size_type;
-  typedef size_type __storage_type;
+  using difference_type = ptrdiff_t;
+  using size_type       = size_t;
+  using __storage_type  = size_type;
 
 protected:
-  typedef __bitset __self;
-  typedef __storage_type* __storage_pointer;
-  typedef const __storage_type* __const_storage_pointer;
+  using __self                          = __bitset;
+  using __storage_pointer               = __storage_type*;
+  using __const_storage_pointer         = const __storage_type*;
   static const unsigned __bits_per_word = static_cast<unsigned>(sizeof(__storage_type) * CHAR_BIT);
 
   friend class __bit_reference<__bitset>;
@@ -160,10 +160,10 @@ protected:
 
   __storage_type __first_[_N_words];
 
-  typedef __bit_reference<__bitset> reference;
-  typedef __bit_const_reference<__bitset> const_reference;
-  typedef __bit_iterator<__bitset, false> iterator;
-  typedef __bit_iterator<__bitset, true> const_iterator;
+  using reference       = __bit_reference<__bitset>;
+  using const_reference = __bit_const_reference<__bitset>;
+  using iterator        = __bit_iterator<__bitset, false>;
+  using const_iterator  = __bit_iterator<__bitset, true>;
 
   _LIBCUDACXX_INLINE_VISIBILITY constexpr __bitset() noexcept;
   _LIBCUDACXX_INLINE_VISIBILITY explicit constexpr __bitset(unsigned long long __v) noexcept;
@@ -399,14 +399,14 @@ template <size_t _Size>
 class __bitset<1, _Size>
 {
 public:
-  typedef ptrdiff_t difference_type;
-  typedef size_t size_type;
-  typedef size_type __storage_type;
+  using difference_type = ptrdiff_t;
+  using size_type       = size_t;
+  using __storage_type  = size_type;
 
 protected:
-  typedef __bitset __self;
-  typedef __storage_type* __storage_pointer;
-  typedef const __storage_type* __const_storage_pointer;
+  using __self                          = __bitset;
+  using __storage_pointer               = __storage_type*;
+  using __const_storage_pointer         = const __storage_type*;
   static const unsigned __bits_per_word = static_cast<unsigned>(sizeof(__storage_type) * CHAR_BIT);
 
   friend class __bit_reference<__bitset>;
@@ -417,10 +417,10 @@ protected:
 
   __storage_type __first_;
 
-  typedef __bit_reference<__bitset> reference;
-  typedef __bit_const_reference<__bitset> const_reference;
-  typedef __bit_iterator<__bitset, false> iterator;
-  typedef __bit_iterator<__bitset, true> const_iterator;
+  using reference       = __bit_reference<__bitset>;
+  using const_reference = __bit_const_reference<__bitset>;
+  using iterator        = __bit_iterator<__bitset, false>;
+  using const_iterator  = __bit_iterator<__bitset, true>;
 
   _LIBCUDACXX_INLINE_VISIBILITY constexpr __bitset() noexcept;
   _LIBCUDACXX_INLINE_VISIBILITY explicit constexpr __bitset(unsigned long long __v) noexcept;
@@ -530,14 +530,14 @@ template <>
 class __bitset<0, 0>
 {
 public:
-  typedef ptrdiff_t difference_type;
-  typedef size_t size_type;
-  typedef size_type __storage_type;
+  using difference_type = ptrdiff_t;
+  using size_type       = size_t;
+  using __storage_type  = size_type;
 
 protected:
-  typedef __bitset __self;
-  typedef __storage_type* __storage_pointer;
-  typedef const __storage_type* __const_storage_pointer;
+  using __self                          = __bitset;
+  using __storage_pointer               = __storage_type*;
+  using __const_storage_pointer         = const __storage_type*;
   static const unsigned __bits_per_word = static_cast<unsigned>(sizeof(__storage_type) * CHAR_BIT);
 
   friend class __bit_reference<__bitset>;
@@ -546,10 +546,10 @@ protected:
   friend class __bit_iterator<__bitset, true>;
   friend struct __bit_array<__bitset>;
 
-  typedef __bit_reference<__bitset> reference;
-  typedef __bit_const_reference<__bitset> const_reference;
-  typedef __bit_iterator<__bitset, false> iterator;
-  typedef __bit_iterator<__bitset, true> const_iterator;
+  using reference       = __bit_reference<__bitset>;
+  using const_reference = __bit_const_reference<__bitset>;
+  using iterator        = __bit_iterator<__bitset, false>;
+  using const_iterator  = __bit_iterator<__bitset, true>;
 
   _LIBCUDACXX_INLINE_VISIBILITY constexpr __bitset() noexcept;
   _LIBCUDACXX_INLINE_VISIBILITY explicit constexpr __bitset(unsigned long long) noexcept;
@@ -616,11 +616,11 @@ class _LIBCUDACXX_TEMPLATE_VIS bitset
 {
 public:
   static const unsigned __n_words = _Size == 0 ? 0 : (_Size - 1) / (sizeof(size_t) * CHAR_BIT) + 1;
-  typedef __bitset<__n_words, _Size> base;
+  using base                      = __bitset<__n_words, _Size>;
 
 public:
-  typedef typename base::reference reference;
-  typedef typename base::const_reference const_reference;
+  using reference       = typename base::reference;
+  using const_reference = typename base::const_reference;
 
   // 23.3.5.1 constructors:
   _LIBCUDACXX_INLINE_VISIBILITY constexpr bitset() noexcept {}

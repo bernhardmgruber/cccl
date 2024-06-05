@@ -43,28 +43,26 @@ struct decay
 template <class _Up, bool>
 struct __decay_impl
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE __remove_cv_t<_Up> type;
+  using type = __remove_cv_t<_Up>;
 };
 
 template <class _Up>
 struct __decay_impl<_Up, true>
 {
 public:
-  typedef _LIBCUDACXX_NODEBUG_TYPE
-    __conditional_t<is_array<_Up>::value,
-                    __remove_extent_t<_Up>*,
-                    __conditional_t<is_function<_Up>::value, __add_pointer_t<_Up>, __remove_cv_t<_Up>>>
-      type;
+  using type = __conditional_t<is_array<_Up>::value,
+                               __remove_extent_t<_Up>*,
+                               __conditional_t<is_function<_Up>::value, __add_pointer_t<_Up>, __remove_cv_t<_Up>>>;
 };
 
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS decay
 {
 private:
-  typedef _LIBCUDACXX_NODEBUG_TYPE __libcpp_remove_reference_t<_Tp> _Up;
+  using _Up = __libcpp_remove_reference_t<_Tp>;
 
 public:
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename __decay_impl<_Up, __libcpp_is_referenceable<_Up>::value>::type type;
+  using type = typename __decay_impl<_Up, __libcpp_is_referenceable<_Up>::value>::type;
 };
 #endif // defined(_LIBCUDACXX_DECAY) && !defined(_LIBCUDACXX_USE_DECAY_FALLBACK)
 

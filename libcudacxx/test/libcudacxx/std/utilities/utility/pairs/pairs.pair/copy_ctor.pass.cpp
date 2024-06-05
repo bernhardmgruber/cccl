@@ -20,7 +20,7 @@
 int main(int, char**)
 {
   {
-    typedef cuda::std::pair<int, short> P1;
+    using P1 = cuda::std::pair<int, short>;
     P1 p1(3, static_cast<short>(4));
     P1 p2 = p1;
     assert(p2.first == 3);
@@ -28,7 +28,7 @@ int main(int, char**)
   }
 #if TEST_STD_VER > 2011
   {
-    typedef cuda::std::pair<int, short> P1;
+    using P1 = cuda::std::pair<int, short>;
     constexpr P1 p1(3, static_cast<short>(4));
     constexpr P1 p2 = p1;
     static_assert(p2.first == 3, "");

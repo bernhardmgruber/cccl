@@ -63,7 +63,7 @@ __host__ __device__ double operator+(__nv_bfloat16, double);
 template <class T, class U>
 __host__ __device__ void test(T x, const cuda::std::complex<U>& y)
 {
-  typedef decltype(promote(x) + promote(real(y))) V;
+  using V = decltype(promote(x) + promote(real(y)));
   static_assert((cuda::std::is_same<decltype(cuda::std::pow(x, y)), cuda::std::complex<V>>::value), "");
   assert(cuda::std::pow(x, y) == pow(cuda::std::complex<V>(x, 0), cuda::std::complex<V>(y)));
 }
@@ -71,7 +71,7 @@ __host__ __device__ void test(T x, const cuda::std::complex<U>& y)
 template <class T, class U>
 __host__ __device__ void test(const cuda::std::complex<T>& x, U y)
 {
-  typedef decltype(promote(real(x)) + promote(y)) V;
+  using V = decltype(promote(real(x)) + promote(y));
   static_assert((cuda::std::is_same<decltype(cuda::std::pow(x, y)), cuda::std::complex<V>>::value), "");
   assert(cuda::std::pow(x, y) == pow(cuda::std::complex<V>(x), cuda::std::complex<V>(y, 0)));
 }
@@ -79,7 +79,7 @@ __host__ __device__ void test(const cuda::std::complex<T>& x, U y)
 template <class T, class U>
 __host__ __device__ void test(const cuda::std::complex<T>& x, const cuda::std::complex<U>& y)
 {
-  typedef decltype(promote(real(x)) + promote(real(y))) V;
+  using V = decltype(promote(real(x)) + promote(real(y)));
   static_assert((cuda::std::is_same<decltype(cuda::std::pow(x, y)), cuda::std::complex<V>>::value), "");
   assert(cuda::std::pow(x, y) == pow(cuda::std::complex<V>(x), cuda::std::complex<V>(y)));
 }

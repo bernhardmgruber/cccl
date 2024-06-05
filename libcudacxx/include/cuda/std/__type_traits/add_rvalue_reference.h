@@ -34,12 +34,12 @@ using __add_rvalue_reference_t = _LIBCUDACXX_ADD_RVALUE_REFERENCE(_Tp);
 template <class _Tp, bool = __libcpp_is_referenceable<_Tp>::value>
 struct __add_rvalue_reference_impl
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct __add_rvalue_reference_impl<_Tp, true>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp&& type;
+  using type = _Tp&&;
 };
 
 template <class _Tp>

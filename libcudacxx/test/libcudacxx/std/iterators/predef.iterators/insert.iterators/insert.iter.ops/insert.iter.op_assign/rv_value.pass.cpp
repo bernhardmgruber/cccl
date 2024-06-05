@@ -59,8 +59,8 @@ struct do_nothing
 int main(int, char**)
 {
   {
-    typedef cuda::std::unique_ptr<int, do_nothing> Ptr;
-    typedef cuda::std::vector<Ptr> C;
+    using Ptr = cuda::std::unique_ptr<int, do_nothing>;
+    using C   = cuda::std::vector<Ptr>;
     C c1;
     int x[6] = {0};
     for (int i = 0; i < 3; ++i)

@@ -23,7 +23,7 @@ template <class Duration>
 __host__ __device__ void test(const Duration& f, const Duration& d)
 {
   {
-    typedef decltype(cuda::std::chrono::abs(f)) R;
+    using R = decltype(cuda::std::chrono::abs(f));
     static_assert((cuda::std::is_same<R, Duration>::value), "");
     assert(cuda::std::chrono::abs(f) == d);
   }

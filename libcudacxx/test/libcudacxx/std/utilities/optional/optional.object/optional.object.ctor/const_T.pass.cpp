@@ -34,7 +34,7 @@ struct Z
 
 void test_exceptions()
 {
-  typedef Z T;
+  using T = Z;
   try
   {
     const T t(3);
@@ -52,7 +52,7 @@ int main(int, char**)
 {
 #if !(defined(TEST_COMPILER_CUDACC_BELOW_11_3) && defined(TEST_COMPILER_CLANG))
   {
-    typedef int T;
+    using T = int;
     constexpr T t(5);
     constexpr optional<T> opt(t);
     static_assert(static_cast<bool>(opt) == true, "");
@@ -64,7 +64,7 @@ int main(int, char**)
     };
   }
   {
-    typedef double T;
+    using T = double;
     constexpr T t(3);
     constexpr optional<T> opt(t);
     static_assert(static_cast<bool>(opt) == true, "");
@@ -82,7 +82,7 @@ int main(int, char**)
     assert(*o == x);
   }
   {
-    typedef TestTypes::TestType T;
+    using T = TestTypes::TestType;
     T::reset();
     const T t(3);
     optional<T> opt = t;
@@ -92,7 +92,7 @@ int main(int, char**)
     assert(opt.value().value == 3);
   }
   {
-    typedef ExplicitTestTypes::TestType T;
+    using T = ExplicitTestTypes::TestType;
     static_assert(!cuda::std::is_convertible<T const&, optional<T>>::value, "");
     T::reset();
     const T t(3);
@@ -104,7 +104,7 @@ int main(int, char**)
   }
 #if !(defined(TEST_COMPILER_CUDACC_BELOW_11_3) && defined(TEST_COMPILER_CLANG))
   {
-    typedef ConstexprTestTypes::TestType T;
+    using T = ConstexprTestTypes::TestType;
     constexpr T t(3);
     constexpr optional<T> opt = {t};
     static_assert(static_cast<bool>(opt) == true, "");
@@ -116,7 +116,7 @@ int main(int, char**)
     };
   }
   {
-    typedef ExplicitConstexprTestTypes::TestType T;
+    using T = ExplicitConstexprTestTypes::TestType;
     static_assert(!cuda::std::is_convertible<const T&, optional<T>>::value, "");
     constexpr T t(3);
     constexpr optional<T> opt(t);

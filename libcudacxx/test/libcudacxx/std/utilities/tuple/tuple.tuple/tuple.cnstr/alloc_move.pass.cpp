@@ -27,18 +27,18 @@
 int main(int, char**)
 {
   {
-    typedef cuda::std::tuple<> T;
+    using T = cuda::std::tuple<>;
     T t0;
     T t(cuda::std::allocator_arg, A1<int>(), cuda::std::move(t0));
   }
   {
-    typedef cuda::std::tuple<MoveOnly> T;
+    using T = cuda::std::tuple<MoveOnly>;
     T t0(MoveOnly(0));
     T t(cuda::std::allocator_arg, A1<int>(), cuda::std::move(t0));
     assert(cuda::std::get<0>(t) == 0);
   }
   {
-    typedef cuda::std::tuple<alloc_first> T;
+    using T = cuda::std::tuple<alloc_first>;
     T t0(1);
     alloc_first::allocator_constructed() = false;
     T t(cuda::std::allocator_arg, A1<int>(5), cuda::std::move(t0));
@@ -46,7 +46,7 @@ int main(int, char**)
     assert(cuda::std::get<0>(t) == 1);
   }
   {
-    typedef cuda::std::tuple<alloc_last> T;
+    using T = cuda::std::tuple<alloc_last>;
     T t0(1);
     alloc_last::allocator_constructed() = false;
     T t(cuda::std::allocator_arg, A1<int>(5), cuda::std::move(t0));
@@ -56,7 +56,7 @@ int main(int, char**)
 // testing extensions
 #ifdef _LIBCUDACXX_VERSION
   {
-    typedef cuda::std::tuple<MoveOnly, alloc_first> T;
+    using T = cuda::std::tuple<MoveOnly, alloc_first>;
     T t0(0, 1);
     alloc_first::allocator_constructed() = false;
     T t(cuda::std::allocator_arg, A1<int>(5), cuda::std::move(t0));
@@ -65,7 +65,7 @@ int main(int, char**)
     assert(cuda::std::get<1>(t) == 1);
   }
   {
-    typedef cuda::std::tuple<MoveOnly, alloc_first, alloc_last> T;
+    using T = cuda::std::tuple<MoveOnly, alloc_first, alloc_last>;
     T t0(1, 2, 3);
     alloc_first::allocator_constructed() = false;
     alloc_last::allocator_constructed()  = false;

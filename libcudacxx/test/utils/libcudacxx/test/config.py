@@ -1233,7 +1233,7 @@ class Configuration(object):
                     addIfHostSupports('-Wno-literal-suffix') # GCC warning about reserved UDLs
                 addIfHostSupports('-Wno-user-defined-literals') # Clang warning about reserved UDLs
                 addIfHostSupports('-Wno-unused-parameter')
-                addIfHostSupports('-Wno-unused-local-typedefs') # GCC warning local typdefs
+                addIfHostSupports('-Wno-unused-local-typedefs') # GCC warning local typedefs
                 addIfHostSupports('-Wno-deprecated-declarations')
                 addIfHostSupports('-Wno-noexcept-type')
                 addIfHostSupports('-Wno-unused-function')
@@ -1274,7 +1274,7 @@ class Configuration(object):
         if std in ['c++98', 'c++03']:
             if 'nvcc' not in self.config.available_features:
                 # The '#define static_assert' provided by libc++ in C++03 mode
-                # causes an unused local typedef whenever it is used.
+                # causes an unused local alias whenever it is used.
                 self.cxx.addWarningFlagIfSupported('-Wno-unused-local-typedef')
 
     def configure_sanitizer(self):

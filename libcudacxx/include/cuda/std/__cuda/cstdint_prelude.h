@@ -24,20 +24,20 @@
 #ifndef _CCCL_COMPILER_NVRTC
 #  include <cstdint>
 #else // ^^^ !_CCCL_COMPILER_NVRTC ^^^ / vvv _CCCL_COMPILER_NVRTC vvv
-typedef signed char int8_t;
-typedef unsigned char uint8_t;
-typedef signed short int16_t;
-typedef unsigned short uint16_t;
-typedef signed int int32_t;
-typedef unsigned int uint32_t;
-typedef signed long long int64_t;
-typedef unsigned long long uint64_t;
+using int8_t   = signed char;
+using uint8_t  = unsigned char;
+using int16_t  = signed short;
+using uint16_t = unsigned short;
+using int32_t  = signed int;
+using uint32_t = unsigned int;
+using int64_t  = signed long long;
+using uint64_t = unsigned long long;
 
-#  define _LIBCUDACXX_ADDITIONAL_INTS(N)  \
-    typedef int##N##_t int_fast##N##_t;   \
-    typedef uint##N##_t uint_fast##N##_t; \
-    typedef int##N##_t int_least##N##_t;  \
-    typedef uint##N##_t uint_least##N##_t
+#  define _LIBCUDACXX_ADDITIONAL_INTS(N)   \
+    using int_fast##N##_t   = int##N##_t;  \
+    using uint_fast##N##_t  = uint##N##_t; \
+    using int_least##N##_t  = int##N##_t;  \
+    using uint_least##N##_t = uint##N##_t
 
 _LIBCUDACXX_ADDITIONAL_INTS(8);
 _LIBCUDACXX_ADDITIONAL_INTS(16);
@@ -45,10 +45,10 @@ _LIBCUDACXX_ADDITIONAL_INTS(32);
 _LIBCUDACXX_ADDITIONAL_INTS(64);
 #  undef _LIBCUDACXX_ADDITIONAL_INTS
 
-typedef int64_t intptr_t;
-typedef uint64_t uintptr_t;
-typedef int64_t intmax_t;
-typedef uint64_t uintmax_t;
+using intptr_t  = int64_t;
+using uintptr_t = uint64_t;
+using intmax_t  = int64_t;
+using uintmax_t = uint64_t;
 
 #  define INT8_MIN        SCHAR_MIN
 #  define INT16_MIN       SHRT_MIN

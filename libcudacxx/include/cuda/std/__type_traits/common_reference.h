@@ -196,7 +196,7 @@ struct __common_reference_sub_bullet1 : __common_reference_sub_bullet2<_Tp, _Up>
 {};
 
 // sub-bullet 1 - If T1 and T2 are reference types and COMMON-REF(T1, T2) is well-formed, then
-// the member typedef `type` denotes that type.
+// the member alias `type` denotes that type.
 template <class _Tp, class _Up>
 struct common_reference<_Tp, _Up> : __common_reference_sub_bullet1<_Tp, _Up>
 {};
@@ -211,7 +211,7 @@ struct __common_reference_sub_bullet1<
 };
 
 // sub-bullet 2 - Otherwise, if basic_common_reference<remove_cvref_t<T1>, remove_cvref_t<T2>, XREF(T1), XREF(T2)>::type
-// is well-formed, then the member typedef `type` denotes that type.
+// is well-formed, then the member alias `type` denotes that type.
 template <class, class, template <class> class, template <class> class>
 struct basic_common_reference
 {};
@@ -230,7 +230,7 @@ struct __common_reference_sub_bullet2<_Tp, _Up, void_t<__basic_common_reference_
 };
 
 // sub-bullet 3 - Otherwise, if COND-RES(T1, T2) is well-formed,
-// then the member typedef `type` denotes that type.
+// then the member alias `type` denotes that type.
 template <class _Tp, class _Up>
 struct __common_reference_sub_bullet3<_Tp, _Up, void_t<__cond_res<_Tp, _Up>>>
 {
@@ -238,13 +238,13 @@ struct __common_reference_sub_bullet3<_Tp, _Up, void_t<__cond_res<_Tp, _Up>>>
 };
 
 // sub-bullet 4 & 5 - Otherwise, if common_type_t<T1, T2> is well-formed,
-//                    then the member typedef `type` denotes that type.
+//                    then the member alias `type` denotes that type.
 //                  - Otherwise, there shall be no member `type`.
 template <class _Tp, class _Up, class>
 struct __common_reference_sub_bullet3 : common_type<_Tp, _Up>
 {};
 
-// bullet 4 - If there is such a type `C`, the member typedef type shall denote the same type, if
+// bullet 4 - If there is such a type `C`, the member alias type shall denote the same type, if
 //            any, as `common_reference_t<C, Rest...>`.
 template <class _Tp, class _Up, class _Vp, class... _Rest>
 struct common_reference<_Tp, _Up, _Vp, void_t<common_reference_t<_Tp, _Up>>, _Rest...>

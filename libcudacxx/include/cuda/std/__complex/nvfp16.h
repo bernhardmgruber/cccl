@@ -56,8 +56,8 @@ struct __type_to_vector<__half>
 template <>
 struct __libcpp_complex_overload_traits<__half, false, false>
 {
-  typedef __half _ValueType;
-  typedef complex<__half> _ComplexType;
+  using _ValueType   = __half;
+  using _ComplexType = complex<__half>;
 };
 
 template <>

@@ -37,7 +37,7 @@
 template <typename S, typename Iter>
 __host__ __device__ void testIterator()
 {
-  typedef cuda::std::iterator_traits<Iter> ItT;
+  using ItT = cuda::std::iterator_traits<Iter>;
 
   ASSERT_SAME_TYPE(typename ItT::iterator_category, cuda::std::random_access_iterator_tag);
   ASSERT_SAME_TYPE(typename ItT::value_type, typename S::value_type);

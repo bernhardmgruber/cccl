@@ -28,7 +28,7 @@ struct _LIBCUDACXX_TEMPLATE_VIS enable_if
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS enable_if<true, _Tp>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 
 template <bool _Bp, class _Tp = void>

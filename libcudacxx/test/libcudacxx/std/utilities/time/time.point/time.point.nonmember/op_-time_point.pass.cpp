@@ -21,9 +21,9 @@
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::system_clock Clock;
-  typedef cuda::std::chrono::milliseconds Duration1;
-  typedef cuda::std::chrono::microseconds Duration2;
+  using Clock     = cuda::std::chrono::system_clock;
+  using Duration1 = cuda::std::chrono::milliseconds;
+  using Duration2 = cuda::std::chrono::microseconds;
   {
     cuda::std::chrono::time_point<Clock, Duration1> t1(Duration1(3));
     cuda::std::chrono::time_point<Clock, Duration2> t2(Duration2(5));

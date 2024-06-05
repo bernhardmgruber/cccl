@@ -25,7 +25,7 @@ template <class ToDuration, class FromDuration>
 __host__ __device__ void test(const FromDuration& f, const ToDuration& d)
 {
   {
-    typedef decltype(cuda::std::chrono::duration_cast<ToDuration>(f)) R;
+    using R = decltype(cuda::std::chrono::duration_cast<ToDuration>(f));
     static_assert((cuda::std::is_same<R, ToDuration>::value), "");
     assert(cuda::std::chrono::duration_cast<ToDuration>(f) == d);
   }

@@ -11,7 +11,7 @@
 
 // reference_wrapper
 
-// check for member typedef type
+// check for member alias type
 
 // #include <cuda/std/functional>
 #include <cuda/std/type_traits>

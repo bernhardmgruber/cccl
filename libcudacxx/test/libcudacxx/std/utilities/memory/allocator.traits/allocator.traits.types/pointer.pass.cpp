@@ -12,7 +12,7 @@
 // template <class Alloc>
 // struct allocator_traits
 // {
-//     typedef Alloc::pointer | value_type* pointer;
+//     using pointer = Alloc::pointer | value_type*;
 //     ...
 // };
 
@@ -28,24 +28,24 @@ struct Ptr
 template <class T>
 struct A
 {
-  typedef T value_type;
-  typedef Ptr<T> pointer;
+  using value_type = T;
+  using pointer    = Ptr<T>;
 };
 
 template <class T>
 struct B
 {
-  typedef T value_type;
+  using value_type = T;
 };
 
 #if !defined(TEST_COMPILER_MSVC_2017) // pointer is inaccessible
 template <class T>
 struct C
 {
-  typedef T value_type;
+  using value_type = T;
 
 private:
-  typedef void pointer;
+  using pointer = void;
 };
 #endif // !TEST_COMPILER_MSVC_2017
 

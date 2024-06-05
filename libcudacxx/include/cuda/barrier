@@ -28,12 +28,11 @@
 // functions. These functions take a pointer to CUtensorMap, so do not need to
 // know its size. This type is defined in cuda.h (driver API) as:
 //
-//     typedef struct CUtensorMap_st {  [ .. snip .. ] } CUtensorMap;
+//     using CUtensorMap = struct CUtensorMap_st {  [ .. snip .. ] };
 //
-// We need to forward-declare both CUtensorMap_st (the struct) and CUtensorMap
-// (the typedef):
+// We need to forward-declare both CUtensorMap_st (the struct) and CUtensorMap (the alias):
 struct CUtensorMap_st;
-typedef struct CUtensorMap_st CUtensorMap;
+using CUtensorMap = struct CUtensorMap_st;
 
 _LIBCUDACXX_BEGIN_NAMESPACE_CUDA_DEVICE_EXPERIMENTAL
 

@@ -37,12 +37,12 @@ using __remove_const_t = _LIBCUDACXX_REMOVE_CONST(_Tp);
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_const
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_const<const _Tp>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 
 template <class _Tp>

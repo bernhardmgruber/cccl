@@ -37,12 +37,12 @@ using __add_pointer_t = _LIBCUDACXX_ADD_POINTER(_Tp);
 template <class _Tp, bool = __libcpp_is_referenceable<_Tp>::value || is_void<_Tp>::value>
 struct __add_pointer_impl
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE __libcpp_remove_reference_t<_Tp>* type;
+  using type = __libcpp_remove_reference_t<_Tp>*;
 };
 template <class _Tp>
 struct __add_pointer_impl<_Tp, false>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Tp type;
+  using type = _Tp;
 };
 
 template <class _Tp>

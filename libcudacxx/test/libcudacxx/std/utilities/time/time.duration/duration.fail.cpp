@@ -19,7 +19,7 @@
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::duration<cuda::std::chrono::milliseconds> D;
+  using D = cuda::std::chrono::duration<cuda::std::chrono::milliseconds>;
   D d;
 
   return 0;

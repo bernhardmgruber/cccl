@@ -18,8 +18,8 @@ constexpr auto dyn = cuda::std::dynamic_extent;
 int main(int, char**)
 {
   {
-    typedef int data_t;
-    typedef size_t index_t;
+    using data_t  = int;
+    using index_t = size_t;
 
     cuda::std::mdspan<data_t, cuda::std::dextents<index_t, 1>> m;
 

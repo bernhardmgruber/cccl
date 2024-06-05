@@ -18,7 +18,7 @@
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::duration<int, cuda::std::ratio<5, -1>> D;
+  using D = cuda::std::chrono::duration<int, cuda::std::ratio<5, -1>>;
   D d;
 
   return 0;

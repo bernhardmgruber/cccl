@@ -31,7 +31,7 @@ template <class _Tp>
 struct __align_type
 {
   static const size_t value = _LIBCUDACXX_PREFERRED_ALIGNOF(_Tp);
-  typedef _Tp type;
+  using type                = _Tp;
 };
 
 struct __struct_double
@@ -43,7 +43,7 @@ struct __struct_double4
   double __lx[4];
 };
 
-typedef __type_list<
+using __all_types = __type_list<
   __align_type<unsigned char>,
   __type_list<
     __align_type<unsigned short>,
@@ -56,8 +56,7 @@ typedef __type_list<
                                 __type_list<__align_type<long double>,
                                             __type_list<__align_type<__struct_double>,
                                                         __type_list<__align_type<__struct_double4>,
-                                                                    __type_list<__align_type<int*>, __nat>>>>>>>>>>
-  __all_types;
+                                                                    __type_list<__align_type<int*>, __nat>>>>>>>>>>;
 
 template <size_t _Align>
 struct _CCCL_ALIGNAS(_Align) __fallback_overaligned
@@ -69,13 +68,13 @@ struct __find_pod;
 template <class _Hp, size_t _Align>
 struct __find_pod<__type_list<_Hp, __nat>, _Align>
 {
-  typedef __conditional_t<_Align == _Hp::value, typename _Hp::type, __fallback_overaligned<_Align>> type;
+  using type = __conditional_t<_Align == _Hp::value, typename _Hp::type, __fallback_overaligned<_Align>>;
 };
 
 template <class _Hp, class _Tp, size_t _Align>
 struct __find_pod<__type_list<_Hp, _Tp>, _Align>
 {
-  typedef __conditional_t<_Align == _Hp::value, typename _Hp::type, typename __find_pod<_Tp, _Align>::type> type;
+  using type = __conditional_t<_Align == _Hp::value, typename _Hp::type, typename __find_pod<_Tp, _Align>::type>;
 };
 
 template <class _TL, size_t _Len>
@@ -104,7 +103,7 @@ struct __find_max_align<__type_list<_Hp, _Tp>, _Len>
 template <size_t _Len, size_t _Align = __find_max_align<__all_types, _Len>::value>
 struct _LIBCUDACXX_TEMPLATE_VIS aligned_storage
 {
-  typedef typename __find_pod<__all_types, _Align>::type _Aligner;
+  using _Aligner = typename __find_pod<__all_types, _Align>::type;
   union type
   {
     _Aligner __align;

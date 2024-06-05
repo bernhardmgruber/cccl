@@ -38,17 +38,17 @@ using __remove_extent_t = _LIBCUDACXX_REMOVE_EXTENT(_Tp);
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_extent
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_extent<_Tp[]>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 template <class _Tp, size_t _Np>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_extent<_Tp[_Np]>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 
 template <class _Tp>

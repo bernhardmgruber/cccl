@@ -11,7 +11,7 @@
 // aligned_union<size_t Len, class ...Types>
 
 //  Issue 3034 added:
-//  The member typedef type shall be a trivial standard-layout type.
+//  The member alias type shall be a trivial standard-layout type.
 
 #include <cuda/std/type_traits>
 
@@ -20,7 +20,7 @@
 int main(int, char**)
 {
   {
-    typedef cuda::std::aligned_union<10, char>::type T1;
+    using T1 = cuda::std::aligned_union<10, char>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<10, char>);
 #endif
@@ -30,7 +30,7 @@ int main(int, char**)
     static_assert(sizeof(T1) == 10, "");
   }
   {
-    typedef cuda::std::aligned_union<10, short>::type T1;
+    using T1 = cuda::std::aligned_union<10, short>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<10, short>);
 #endif
@@ -40,7 +40,7 @@ int main(int, char**)
     static_assert(sizeof(T1) == 10, "");
   }
   {
-    typedef cuda::std::aligned_union<10, int>::type T1;
+    using T1 = cuda::std::aligned_union<10, int>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<10, int>);
 #endif
@@ -50,7 +50,7 @@ int main(int, char**)
     static_assert(sizeof(T1) == 12, "");
   }
   {
-    typedef cuda::std::aligned_union<10, double>::type T1;
+    using T1 = cuda::std::aligned_union<10, double>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<10, double>);
 #endif
@@ -60,7 +60,7 @@ int main(int, char**)
     static_assert(sizeof(T1) == 16, "");
   }
   {
-    typedef cuda::std::aligned_union<10, short, char>::type T1;
+    using T1 = cuda::std::aligned_union<10, short, char>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<10, short, char>);
 #endif
@@ -70,7 +70,7 @@ int main(int, char**)
     static_assert(sizeof(T1) == 10, "");
   }
   {
-    typedef cuda::std::aligned_union<10, char, short>::type T1;
+    using T1 = cuda::std::aligned_union<10, char, short>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<10, char, short>);
 #endif
@@ -80,7 +80,7 @@ int main(int, char**)
     static_assert(sizeof(T1) == 10, "");
   }
   {
-    typedef cuda::std::aligned_union<2, int, char, short>::type T1;
+    using T1 = cuda::std::aligned_union<2, int, char, short>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<2, int, char, short>);
 #endif
@@ -90,7 +90,7 @@ int main(int, char**)
     static_assert(sizeof(T1) == 4, "");
   }
   {
-    typedef cuda::std::aligned_union<2, char, int, short>::type T1;
+    using T1 = cuda::std::aligned_union<2, char, int, short>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<2, char, int, short>);
 #endif
@@ -100,7 +100,7 @@ int main(int, char**)
     static_assert(sizeof(T1) == 4, "");
   }
   {
-    typedef cuda::std::aligned_union<2, char, short, int>::type T1;
+    using T1 = cuda::std::aligned_union<2, char, short, int>::type;
 #if TEST_STD_VER > 2011
     ASSERT_SAME_TYPE(T1, cuda::std::aligned_union_t<2, char, short, int>);
 #endif

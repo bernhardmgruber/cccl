@@ -74,13 +74,13 @@ struct __make_tuple_types
 template <class... _Types, size_t _Ep>
 struct __make_tuple_types<tuple<_Types...>, _Ep, 0, true>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE __tuple_types<_Types...> type;
+  using type = __tuple_types<_Types...>;
 };
 
 template <class... _Types, size_t _Ep>
 struct __make_tuple_types<__tuple_types<_Types...>, _Ep, 0, true>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE __tuple_types<_Types...> type;
+  using type = __tuple_types<_Types...>;
 };
 
 template <class _Tp, size_t _Ep = tuple_size<__libcpp_remove_reference_t<_Tp>>::value, size_t _Sp = 0>

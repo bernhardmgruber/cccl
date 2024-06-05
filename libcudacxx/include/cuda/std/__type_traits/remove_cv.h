@@ -40,7 +40,7 @@ using __remove_cv_t = _LIBCUDACXX_REMOVE_CV(_Tp);
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_cv
 {
-  typedef __remove_volatile_t<__remove_const_t<_Tp>> type;
+  using type = __remove_volatile_t<__remove_const_t<_Tp>>;
 };
 
 template <class _Tp>

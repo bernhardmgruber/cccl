@@ -51,7 +51,7 @@ insert3at(C& c, typename C::iterator i, typename C::value_type x1, typename C::v
 int main(int, char**)
 {
   {
-    typedef cuda::std::vector<int> C;
+    using C = cuda::std::vector<int>;
     C c1;
     for (int i = 0; i < 3; ++i)
     {
@@ -71,7 +71,7 @@ int main(int, char**)
     test(c1, 3, 'a', 'b', 'c', c2);
   }
   {
-    typedef nasty_vector<int> C;
+    using C = nasty_vector<int>;
     C c1;
     for (int i = 0; i < 3; ++i)
     {

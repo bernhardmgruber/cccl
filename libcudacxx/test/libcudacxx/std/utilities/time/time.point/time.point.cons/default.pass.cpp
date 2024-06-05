@@ -20,8 +20,8 @@
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::system_clock Clock;
-  typedef cuda::std::chrono::duration<Rep, cuda::std::milli> Duration;
+  using Clock    = cuda::std::chrono::system_clock;
+  using Duration = cuda::std::chrono::duration<Rep, cuda::std::milli>;
   {
     cuda::std::chrono::time_point<Clock, Duration> t;
     assert(t.time_since_epoch() == Duration::zero());

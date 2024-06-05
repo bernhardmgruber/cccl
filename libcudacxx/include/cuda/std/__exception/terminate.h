@@ -41,7 +41,7 @@ _CCCL_NORETURN inline _LIBCUDACXX_INLINE_VISIBILITY void __cccl_terminate() noex
 
 #if 0 // Expose once atomic is universally available
 
-typedef void (*terminate_handler)();
+using terminate_handler = void (*)();
 
 #  ifdef __CUDA_ARCH__
 __device__

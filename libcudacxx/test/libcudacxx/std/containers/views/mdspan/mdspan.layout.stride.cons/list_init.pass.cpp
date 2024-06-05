@@ -48,7 +48,7 @@ int main(int, char**)
 
   // From another mapping
   {
-    typedef size_t index_t;
+    using index_t = size_t;
 
     cuda::std::layout_stride::mapping<cuda::std::extents<index_t, dyn, dyn>> m0{
       cuda::std::dextents<index_t, 2>{16, 32}, cuda::std::array<int, 2>{1, 128}};

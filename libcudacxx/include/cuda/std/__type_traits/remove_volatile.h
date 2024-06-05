@@ -36,12 +36,12 @@ using __remove_volatile_t = _LIBCUDACXX_REMOVE_VOLATILE(_Tp);
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_volatile
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_volatile<volatile _Tp>
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 
 template <class _Tp>

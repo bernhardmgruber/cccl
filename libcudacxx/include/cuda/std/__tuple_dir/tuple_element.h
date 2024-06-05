@@ -38,19 +38,19 @@ using __tuple_element_t _LIBCUDACXX_NODEBUG_TYPE = typename tuple_element<_Ip, _
 template <size_t _Ip, class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS tuple_element<_Ip, const _Tp>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename add_const<__tuple_element_t<_Ip, _Tp>>::type type;
+  using type = typename add_const<__tuple_element_t<_Ip, _Tp>>::type;
 };
 
 template <size_t _Ip, class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS tuple_element<_Ip, volatile _Tp>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename add_volatile<__tuple_element_t<_Ip, _Tp>>::type type;
+  using type = typename add_volatile<__tuple_element_t<_Ip, _Tp>>::type;
 };
 
 template <size_t _Ip, class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS tuple_element<_Ip, const volatile _Tp>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename add_cv<__tuple_element_t<_Ip, _Tp>>::type type;
+  using type = typename add_cv<__tuple_element_t<_Ip, _Tp>>::type;
 };
 
 #ifdef _CCCL_COMPILER_MSVC
@@ -118,7 +118,7 @@ template <size_t _Ip, class... _Types>
 struct _LIBCUDACXX_TEMPLATE_VIS tuple_element<_Ip, __tuple_types<_Types...>>
 {
   static_assert(_Ip < sizeof...(_Types), "tuple_element index out of range");
-  typedef _LIBCUDACXX_NODEBUG_TYPE __type_pack_element<_Ip, _Types...> type;
+  using type = __type_pack_element<_Ip, _Types...>;
 };
 
 #if _CCCL_STD_VER > 2011

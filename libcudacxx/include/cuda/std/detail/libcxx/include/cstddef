@@ -61,7 +61,7 @@ using ::size_t;
 // Re-use the compiler's <stddef.h> max_align_t where possible.
 using ::max_align_t;
 #else
-typedef long double max_align_t;
+using max_align_t = long double;
 #endif
 
 _LIBCUDACXX_END_NAMESPACE_STD

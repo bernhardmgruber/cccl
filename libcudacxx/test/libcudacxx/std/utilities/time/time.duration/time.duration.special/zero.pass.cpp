@@ -26,12 +26,12 @@ __host__ __device__ void test()
   ASSERT_NOEXCEPT(cuda::std::chrono::duration_values<typename D::rep>::zero());
 #endif
   {
-    typedef typename D::rep Rep;
+    using Rep    = typename D::rep;
     Rep zero_rep = cuda::std::chrono::duration_values<Rep>::zero();
     assert(D::zero().count() == zero_rep);
   }
   {
-    typedef typename D::rep Rep;
+    using Rep              = typename D::rep;
     constexpr Rep zero_rep = cuda::std::chrono::duration_values<Rep>::zero();
     static_assert(D::zero().count() == zero_rep, "");
   }

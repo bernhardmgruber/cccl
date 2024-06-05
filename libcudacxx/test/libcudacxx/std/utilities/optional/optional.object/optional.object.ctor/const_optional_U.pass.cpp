@@ -134,8 +134,8 @@ __host__ __device__ void test_exception(const optional<U>& rhs)
 
 void test_exceptions()
 {
-  typedef Z T;
-  typedef int U;
+  using T = Z;
+  using U = int;
   optional<U> rhs(U{3});
   test_exception<T>(rhs);
 }
@@ -152,8 +152,8 @@ int main(int, char**)
   static_assert(test_all<Y, int>());
 #endif
   {
-    typedef TerminatesOnConstruction T;
-    typedef int U;
+    using T = TerminatesOnConstruction;
+    using U = int;
     optional<U> rhs;
     test<T>(rhs);
   }

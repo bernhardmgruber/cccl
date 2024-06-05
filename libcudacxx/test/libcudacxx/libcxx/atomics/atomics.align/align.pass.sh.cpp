@@ -41,11 +41,11 @@ struct atomic_test : public cuda::std::__atomic_base<T>
 int main(int, char**)
 {
 // structs and unions can't be defined in the template invocation.
-// Work around this with a typedef.
+// Work around this with an alias.
 #define CHECK_ALIGNMENT(T) \
   do                       \
   {                        \
-    typedef T type;        \
+    using type = T;        \
     atomic_test<type> t;   \
   } while (0)
 

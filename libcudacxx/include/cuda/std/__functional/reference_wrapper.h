@@ -35,7 +35,7 @@ class _LIBCUDACXX_TEMPLATE_VIS reference_wrapper : public __weak_result_type<_Tp
 {
 public:
   // types
-  typedef _Tp type;
+  using type = _Tp;
 
 private:
   type* __f_;

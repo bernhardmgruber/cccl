@@ -107,7 +107,7 @@ struct _C_node : public __c_node
 template <class _Cont>
 inline bool _C_node<_Cont>::__dereferenceable(const void* __i) const
 {
-  typedef typename _Cont::const_iterator iterator;
+  using iterator      = typename _Cont::const_iterator;
   const iterator* __j = static_cast<const iterator*>(__i);
   _Cont* _Cp          = static_cast<_Cont*>(__c_);
   return _Cp->__dereferenceable(__j);
@@ -116,7 +116,7 @@ inline bool _C_node<_Cont>::__dereferenceable(const void* __i) const
 template <class _Cont>
 inline bool _C_node<_Cont>::__decrementable(const void* __i) const
 {
-  typedef typename _Cont::const_iterator iterator;
+  using iterator      = typename _Cont::const_iterator;
   const iterator* __j = static_cast<const iterator*>(__i);
   _Cont* _Cp          = static_cast<_Cont*>(__c_);
   return _Cp->__decrementable(__j);
@@ -125,7 +125,7 @@ inline bool _C_node<_Cont>::__decrementable(const void* __i) const
 template <class _Cont>
 inline bool _C_node<_Cont>::__addable(const void* __i, ptrdiff_t __n) const
 {
-  typedef typename _Cont::const_iterator iterator;
+  using iterator      = typename _Cont::const_iterator;
   const iterator* __j = static_cast<const iterator*>(__i);
   _Cont* _Cp          = static_cast<_Cont*>(__c_);
   return _Cp->__addable(__j, __n);
@@ -134,7 +134,7 @@ inline bool _C_node<_Cont>::__addable(const void* __i, ptrdiff_t __n) const
 template <class _Cont>
 inline bool _C_node<_Cont>::__subscriptable(const void* __i, ptrdiff_t __n) const
 {
-  typedef typename _Cont::const_iterator iterator;
+  using iterator      = typename _Cont::const_iterator;
   const iterator* __j = static_cast<const iterator*>(__i);
   _Cont* _Cp          = static_cast<_Cont*>(__c_);
   return _Cp->__subscriptable(__j, __n);
@@ -165,7 +165,7 @@ public:
   __db_c_const_iterator __c_end() const;
   __db_i_const_iterator __i_end() const;
 
-  typedef __c_node*(_InsertConstruct) (void*, void*, __c_node*);
+  using _InsertConstruct = __c_node*()(void*, void*, __c_node*);
 
   template <class _Cont>
   _LIBCUDACXX_INLINE_VISIBILITY static __c_node* __create_C_node(void* __mem, void* __c, __c_node* __next)

@@ -50,42 +50,42 @@ template <class charT, class traits = char_traits<charT> > class basic_fstream;
 template <class charT, class traits = char_traits<charT> > class istreambuf_iterator;
 template <class charT, class traits = char_traits<charT> > class ostreambuf_iterator;
 
-typedef basic_ios<char>              ios;
-typedef basic_ios<wchar_t>           wios;
+using ios = basic_ios<char>             ;
+using wios = basic_ios<wchar_t>          ;
 
-typedef basic_streambuf<char>        streambuf;
-typedef basic_istream<char>          istream;
-typedef basic_ostream<char>          ostream;
-typedef basic_iostream<char>         iostream;
+using streambuf = basic_streambuf<char>       ;
+using istream = basic_istream<char>         ;
+using ostream = basic_ostream<char>         ;
+using iostream = basic_iostream<char>        ;
 
-typedef basic_stringbuf<char>        stringbuf;
-typedef basic_istringstream<char>    istringstream;
-typedef basic_ostringstream<char>    ostringstream;
-typedef basic_stringstream<char>     stringstream;
+using stringbuf = basic_stringbuf<char>       ;
+using istringstream = basic_istringstream<char>   ;
+using ostringstream = basic_ostringstream<char>   ;
+using stringstream = basic_stringstream<char>    ;
 
-typedef basic_filebuf<char>          filebuf;
-typedef basic_ifstream<char>         ifstream;
-typedef basic_ofstream<char>         ofstream;
-typedef basic_fstream<char>          fstream;
+using filebuf = basic_filebuf<char>         ;
+using ifstream = basic_ifstream<char>        ;
+using ofstream = basic_ofstream<char>        ;
+using fstream = basic_fstream<char>         ;
 
-typedef basic_streambuf<wchar_t>     wstreambuf;
-typedef basic_istream<wchar_t>       wistream;
-typedef basic_ostream<wchar_t>       wostream;
-typedef basic_iostream<wchar_t>      wiostream;
+using wstreambuf = basic_streambuf<wchar_t>    ;
+using wistream = basic_istream<wchar_t>      ;
+using wostream = basic_ostream<wchar_t>      ;
+using wiostream = basic_iostream<wchar_t>     ;
 
-typedef basic_stringbuf<wchar_t>     wstringbuf;
-typedef basic_istringstream<wchar_t> wistringstream;
-typedef basic_ostringstream<wchar_t> wostringstream;
-typedef basic_stringstream<wchar_t>  wstringstream;
+using wstringbuf = basic_stringbuf<wchar_t>    ;
+using wistringstream = basic_istringstream<wchar_t>;
+using wostringstream = basic_ostringstream<wchar_t>;
+using wstringstream = basic_stringstream<wchar_t> ;
 
-typedef basic_filebuf<wchar_t>       wfilebuf;
-typedef basic_ifstream<wchar_t>      wifstream;
-typedef basic_ofstream<wchar_t>      wofstream;
-typedef basic_fstream<wchar_t>       wfstream;
+using wfilebuf = basic_filebuf<wchar_t>      ;
+using wifstream = basic_ifstream<wchar_t>     ;
+using wofstream = basic_ofstream<wchar_t>     ;
+using wfstream = basic_fstream<wchar_t>      ;
 
 template <class state> class fpos;
-typedef fpos<char_traits<char>::state_type>    streampos;
-typedef fpos<char_traits<wchar_t>::state_type> wstreampos;
+using streampos = fpos<char_traits<char>::state_type>   ;
+using wstreampos = fpos<char_traits<wchar_t>::state_type>;
 
 }  // std
 
@@ -144,58 +144,58 @@ class _LIBCUDACXX_TEMPLATE_VIS istreambuf_iterator;
 template <class _CharT, class _Traits = char_traits<_CharT>>
 class _LIBCUDACXX_TEMPLATE_VIS ostreambuf_iterator;
 
-typedef basic_ios<char> ios;
-typedef basic_ios<wchar_t> wios;
+using ios  = basic_ios<char>;
+using wios = basic_ios<wchar_t>;
 
-typedef basic_streambuf<char> streambuf;
-typedef basic_istream<char> istream;
-typedef basic_ostream<char> ostream;
-typedef basic_iostream<char> iostream;
+using streambuf = basic_streambuf<char>;
+using istream   = basic_istream<char>;
+using ostream   = basic_ostream<char>;
+using iostream  = basic_iostream<char>;
 
-typedef basic_stringbuf<char> stringbuf;
-typedef basic_istringstream<char> istringstream;
-typedef basic_ostringstream<char> ostringstream;
-typedef basic_stringstream<char> stringstream;
+using stringbuf     = basic_stringbuf<char>;
+using istringstream = basic_istringstream<char>;
+using ostringstream = basic_ostringstream<char>;
+using stringstream  = basic_stringstream<char>;
 
-typedef basic_filebuf<char> filebuf;
-typedef basic_ifstream<char> ifstream;
-typedef basic_ofstream<char> ofstream;
-typedef basic_fstream<char> fstream;
+using filebuf  = basic_filebuf<char>;
+using ifstream = basic_ifstream<char>;
+using ofstream = basic_ofstream<char>;
+using fstream  = basic_fstream<char>;
 
-typedef basic_streambuf<wchar_t> wstreambuf;
-typedef basic_istream<wchar_t> wistream;
-typedef basic_ostream<wchar_t> wostream;
-typedef basic_iostream<wchar_t> wiostream;
+using wstreambuf = basic_streambuf<wchar_t>;
+using wistream   = basic_istream<wchar_t>;
+using wostream   = basic_ostream<wchar_t>;
+using wiostream  = basic_iostream<wchar_t>;
 
-typedef basic_stringbuf<wchar_t> wstringbuf;
-typedef basic_istringstream<wchar_t> wistringstream;
-typedef basic_ostringstream<wchar_t> wostringstream;
-typedef basic_stringstream<wchar_t> wstringstream;
+using wstringbuf     = basic_stringbuf<wchar_t>;
+using wistringstream = basic_istringstream<wchar_t>;
+using wostringstream = basic_ostringstream<wchar_t>;
+using wstringstream  = basic_stringstream<wchar_t>;
 
-typedef basic_filebuf<wchar_t> wfilebuf;
-typedef basic_ifstream<wchar_t> wifstream;
-typedef basic_ofstream<wchar_t> wofstream;
-typedef basic_fstream<wchar_t> wfstream;
+using wfilebuf  = basic_filebuf<wchar_t>;
+using wifstream = basic_ifstream<wchar_t>;
+using wofstream = basic_ofstream<wchar_t>;
+using wfstream  = basic_fstream<wchar_t>;
 
 #if !defined(_LIBCUDACXX_HAS_NO_WCHAR_H)
 template <class _State>
 class _LIBCUDACXX_TEMPLATE_VIS fpos;
-typedef fpos<mbstate_t> streampos;
-typedef fpos<mbstate_t> wstreampos;
+using streampos  = fpos<mbstate_t>;
+using wstreampos = fpos<mbstate_t>;
 #  ifndef _LIBCUDACXX_NO_HAS_CHAR8_T
-typedef fpos<mbstate_t> u8streampos;
+using u8streampos = fpos<mbstate_t>;
 #  endif
 #  ifndef _LIBCUDACXX_HAS_NO_UNICODE_CHARS
-typedef fpos<mbstate_t> u16streampos;
-typedef fpos<mbstate_t> u32streampos;
+using u16streampos = fpos<mbstate_t>;
+using u32streampos = fpos<mbstate_t>;
 #  endif // _LIBCUDACXX_HAS_NO_UNICODE_CHARS
 #endif
 
 #if defined(_NEWLIB_VERSION)
 // On newlib, off_t is 'long int'
-typedef long int streamoff; // for char_traits in <string>
+using streamoff = long int; // for char_traits in <string>
 #else
-typedef long long streamoff; // for char_traits in <string>
+using streamoff = long long; // for char_traits in <string>
 #endif
 
 // Include other forward declarations here

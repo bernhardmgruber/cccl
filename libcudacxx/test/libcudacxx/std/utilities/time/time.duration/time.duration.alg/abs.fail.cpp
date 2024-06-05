@@ -20,7 +20,7 @@
 
 #include <cuda/std/chrono>
 
-typedef cuda::std::chrono::duration<unsigned> unsigned_secs;
+using unsigned_secs = cuda::std::chrono::duration<unsigned>;
 
 int main(int, char**)
 {

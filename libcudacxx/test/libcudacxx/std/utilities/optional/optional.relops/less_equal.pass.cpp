@@ -36,7 +36,7 @@ __host__ __device__ constexpr bool operator<=(const X& lhs, const X& rhs)
 __host__ __device__ constexpr bool test()
 {
   {
-    typedef optional<X> O;
+    using O = optional<X>;
 
     O o1; // disengaged
     O o2; // disengaged

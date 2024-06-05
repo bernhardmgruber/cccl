@@ -137,7 +137,7 @@ public:
   using index_type = _ThisIndexType;
   using size_type  = make_unsigned_t<index_type>;
 
-  // internal typedefs which for technical reasons are public
+  // internal aliases which for technical reasons are public
   using __storage_t =
     __detail::__partially_static_sizes_tagged<__detail::__extents_tag, index_type, size_t, _Extents...>;
 

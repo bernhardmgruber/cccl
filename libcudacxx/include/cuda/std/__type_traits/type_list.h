@@ -27,8 +27,8 @@ _LIBCUDACXX_BEGIN_NAMESPACE_STD
 template <class _Hp, class _Tp>
 struct __type_list
 {
-  typedef _Hp _Head;
-  typedef _Tp _Tail;
+  using _Head = _Hp;
+  using _Tail = _Tp;
 };
 
 template <class _TypeList, size_t _Size, bool = _Size <= sizeof(typename _TypeList::_Head)>
@@ -37,13 +37,13 @@ struct __find_first;
 template <class _Hp, class _Tp, size_t _Size>
 struct __find_first<__type_list<_Hp, _Tp>, _Size, true>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE _Hp type;
+  using type = _Hp;
 };
 
 template <class _Hp, class _Tp, size_t _Size>
 struct __find_first<__type_list<_Hp, _Tp>, _Size, false>
 {
-  typedef _LIBCUDACXX_NODEBUG_TYPE typename __find_first<_Tp, _Size>::type type;
+  using type = typename __find_first<_Tp, _Size>::type;
 };
 
 _LIBCUDACXX_END_NAMESPACE_STD

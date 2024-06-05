@@ -39,17 +39,17 @@ using __remove_all_extents_t = _LIBCUDACXX_REMOVE_ALL_EXTENTS(_Tp);
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_all_extents
 {
-  typedef _Tp type;
+  using type = _Tp;
 };
 template <class _Tp>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_all_extents<_Tp[]>
 {
-  typedef typename remove_all_extents<_Tp>::type type;
+  using type = typename remove_all_extents<_Tp>::type;
 };
 template <class _Tp, size_t _Np>
 struct _LIBCUDACXX_TEMPLATE_VIS remove_all_extents<_Tp[_Np]>
 {
-  typedef typename remove_all_extents<_Tp>::type type;
+  using type = typename remove_all_extents<_Tp>::type;
 };
 
 template <class _Tp>

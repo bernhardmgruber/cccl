@@ -12,8 +12,7 @@
 // template <class Alloc>
 // struct allocator_traits
 // {
-//   typedef Alloc::is_always_equal
-//         | is_empty                     is_always_equal;
+//   using is_always_equal = Alloc::is_always_equal | is_empty;
 //     ...
 // };
 
@@ -25,20 +24,20 @@
 template <class T>
 struct A
 {
-  typedef T value_type;
-  typedef cuda::std::true_type is_always_equal;
+  using value_type      = T;
+  using is_always_equal = cuda::std::true_type;
 };
 
 template <class T>
 struct B
 {
-  typedef T value_type;
+  using value_type = T;
 };
 
 template <class T>
 struct C
 {
-  typedef T value_type;
+  using value_type = T;
   int not_empty_; // some random member variable
 };
 

@@ -31,7 +31,7 @@
 
 __host__ __device__ TEST_CONSTEXPR_CXX14 bool test()
 {
-  typedef cuda::std::equal_to<int> EQ;
+  using EQ = cuda::std::equal_to<int>;
 
   int ia[]         = {0, 1, 2, 3, 4, 5};
   const unsigned s = sizeof(ia) / sizeof(ia[0]);

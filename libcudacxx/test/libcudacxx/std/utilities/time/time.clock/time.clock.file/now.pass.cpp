@@ -25,7 +25,7 @@
 
 int main(int, char**)
 {
-  typedef cuda::std::chrono::file_clock C;
+  using C = cuda::std::chrono::file_clock;
   ASSERT_NOEXCEPT(C::now());
 
   C::time_point t1 = C::now();

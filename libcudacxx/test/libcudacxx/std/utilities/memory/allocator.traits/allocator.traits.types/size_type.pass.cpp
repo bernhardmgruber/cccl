@@ -12,7 +12,7 @@
 // template <class Alloc>
 // struct allocator_traits
 // {
-//     typedef Alloc::size_type | size_t    size_type;
+//     using size_type = Alloc::size_type | size_t;
 //     ...
 // };
 
@@ -24,20 +24,20 @@
 template <class T>
 struct A
 {
-  typedef T value_type;
-  typedef unsigned short size_type;
+  using value_type = T;
+  using size_type  = unsigned short;
 };
 
 template <class T>
 struct B
 {
-  typedef T value_type;
+  using value_type = T;
 };
 
 template <class T>
 struct C
 {
-  typedef T value_type;
+  using value_type = T;
   struct pointer
   {};
   struct const_pointer
@@ -52,11 +52,11 @@ struct C
 template <class T>
 struct D
 {
-  typedef T value_type;
-  typedef short difference_type;
+  using value_type      = T;
+  using difference_type = short;
 
 private:
-  typedef void size_type;
+  using size_type = void;
 };
 #endif // !TEST_COMPILER_MSVC_2017
 
@@ -68,7 +68,7 @@ namespace std
 template <>
 struct pointer_traits<C<char>::pointer>
 {
-  typedef signed char difference_type;
+  using difference_type = signed char;
 };
 
 } // namespace std

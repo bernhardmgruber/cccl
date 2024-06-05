@@ -19,16 +19,16 @@ namespace std
 template <class Arg, class Result>
 struct unary_function
 {
-    typedef Arg    argument_type;
-    typedef Result result_type;
+    using argument_type = Arg   ;
+    using result_type = Result;
 };
 
 template <class Arg1, class Arg2, class Result>
 struct binary_function
 {
-    typedef Arg1   first_argument_type;
-    typedef Arg2   second_argument_type;
-    typedef Result result_type;
+    using first_argument_type = Arg1  ;
+    using second_argument_type = Arg2  ;
+    using result_type = Result;
 };
 
 template <class T>
@@ -38,8 +38,8 @@ class reference_wrapper
 {
 public:
     // types
-    typedef T type;
-    typedef see below result_type; // Not always defined
+    using type = T;
+    using result_type = see below; // Not always defined
 
     // construct/copy/destroy
     reference_wrapper(T&) noexcept;
@@ -398,7 +398,7 @@ class function<R(ArgTypes...)>
                                       // ArgTypes contains T1 and T2
 {
 public:
-    typedef R result_type;
+    using result_type = R;
 
     // construct/copy/destroy:
     function() noexcept;
