@@ -407,8 +407,8 @@ _CCCL_DEVICE _CCCL_FORCEINLINE void reg_to_shared(It output, T (&input)[ITEMS_PE
 #pragma unroll
   for (int item = 0; item < ITEMS_PER_THREAD; ++item)
   {
-    int idx     = BLOCK_THREADS * item + threadIdx.x;
-    output[idx] = input[item];
+    const int idx = BLOCK_THREADS * item + threadIdx.x;
+    output[idx]   = input[item];
   }
 }
 } // namespace detail
