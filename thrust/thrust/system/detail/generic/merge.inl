@@ -59,19 +59,6 @@ _CCCL_HOST_DEVICE OutputIterator merge(
   return result;
 } // end merge()
 
-template <typename DerivedPolicy, typename InputIterator1, typename InputIterator2, typename OutputIterator>
-_CCCL_HOST_DEVICE OutputIterator merge(
-  thrust::execution_policy<DerivedPolicy>& exec,
-  InputIterator1 first1,
-  InputIterator1 last1,
-  InputIterator2 first2,
-  InputIterator2 last2,
-  OutputIterator result)
-{
-  typedef typename thrust::iterator_value<InputIterator1>::type value_type;
-  return thrust::merge(exec, first1, last1, first2, last2, result, thrust::less<value_type>());
-} // end merge()
-
 template <typename DerivedPolicy,
           typename InputIterator1,
           typename InputIterator2,
@@ -115,38 +102,6 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> merge_by_key(
       .get_iterator_tuple();
 
   return thrust::make_pair(thrust::get<0>(result), thrust::get<1>(result));
-} // end merge_by_key()
-
-template <typename DerivedPolicy,
-          typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename InputIterator4,
-          typename OutputIterator1,
-          typename OutputIterator2>
-_CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> merge_by_key(
-  thrust::execution_policy<DerivedPolicy>& exec,
-  InputIterator1 keys_first1,
-  InputIterator1 keys_last1,
-  InputIterator2 keys_first2,
-  InputIterator2 keys_last2,
-  InputIterator3 values_first1,
-  InputIterator4 values_first2,
-  OutputIterator1 keys_result,
-  OutputIterator2 values_result)
-{
-  typedef typename thrust::iterator_value<InputIterator1>::type value_type;
-  return thrust::merge_by_key(
-    exec,
-    keys_first1,
-    keys_last1,
-    keys_first2,
-    keys_last2,
-    values_first1,
-    values_first2,
-    keys_result,
-    values_result,
-    thrust::less<value_type>());
 } // end merge_by_key()
 
 } // end namespace generic

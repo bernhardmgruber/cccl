@@ -40,7 +40,7 @@ template <typename DerivedPolicy,
           typename InputIterator1,
           typename InputIterator2,
           typename OutputIterator,
-          typename StrictWeakOrdering>
+          typename StrictWeakOrdering = less<typename iterator_value<InputIterator1>::type>>
 _CCCL_HOST_DEVICE OutputIterator merge(
   thrust::execution_policy<DerivedPolicy>& exec,
   InputIterator1 first1,
@@ -48,16 +48,7 @@ _CCCL_HOST_DEVICE OutputIterator merge(
   InputIterator2 first2,
   InputIterator2 last2,
   OutputIterator result,
-  StrictWeakOrdering comp);
-
-template <typename DerivedPolicy, typename InputIterator1, typename InputIterator2, typename OutputIterator>
-_CCCL_HOST_DEVICE OutputIterator merge(
-  thrust::execution_policy<DerivedPolicy>& exec,
-  InputIterator1 first1,
-  InputIterator1 last1,
-  InputIterator2 first2,
-  InputIterator2 last2,
-  OutputIterator result);
+  StrictWeakOrdering comp = {});
 
 template <typename DerivedPolicy,
           typename InputIterator1,
@@ -66,7 +57,7 @@ template <typename DerivedPolicy,
           typename InputIterator4,
           typename OutputIterator1,
           typename OutputIterator2,
-          typename Compare>
+          typename Compare = less<typename iterator_value<InputIterator1>::type>>
 _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> merge_by_key(
   thrust::execution_policy<DerivedPolicy>& exec,
   InputIterator1 keys_first1,
@@ -77,25 +68,7 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> merge_by_key(
   InputIterator4 values_first2,
   OutputIterator1 keys_result,
   OutputIterator2 values_result,
-  Compare comp);
-
-template <typename DerivedPolicy,
-          typename InputIterator1,
-          typename InputIterator2,
-          typename InputIterator3,
-          typename InputIterator4,
-          typename OutputIterator1,
-          typename OutputIterator2>
-_CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> merge_by_key(
-  thrust::execution_policy<DerivedPolicy>& exec,
-  InputIterator1 keys_first1,
-  InputIterator1 keys_last1,
-  InputIterator2 keys_first2,
-  InputIterator2 keys_last2,
-  InputIterator3 values_first1,
-  InputIterator4 values_first2,
-  OutputIterator1 keys_result,
-  OutputIterator2 values_result);
+  Compare comp = {});
 
 } // end namespace generic
 } // end namespace detail
