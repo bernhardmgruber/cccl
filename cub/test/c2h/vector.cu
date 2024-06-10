@@ -1,5 +1,5 @@
 /******************************************************************************
- * Copyright (c) 2011-2024, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2024, NVIDIA CORPORATION.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are met:
@@ -25,50 +25,30 @@
  *
  ******************************************************************************/
 
-#pragma once
-
-#include <thrust/detail/vector_base.h>
-
-#include <memory>
-
-#include <c2h/checked_allocator.cuh>
-
-namespace c2h
-{
-
-template <typename T>
-using host_vector = thrust::detail::vector_base<T, c2h::checked_host_allocator<T>>;
-
-template <typename T>
-using device_vector = thrust::detail::vector_base<T, c2h::checked_cuda_allocator<T>>;
-
-} // namespace c2h
+#include "vector.cuh"
 
 THRUST_NAMESPACE_BEGIN
 namespace detail
 {
-// We declare commonly used instantiations of host_vector and device_vector, so they are only compiled once for all
-// tests and in case of incremental builds.
+#define DEFINE_EXTERN_TEMPLATE(type)                                     \
+  template class vector_base<type, ::c2h::checked_host_allocator<type>>; \
+  template class vector_base<type, ::c2h::checked_cuda_allocator<type>>;
 
-#define DECLARE_EXTERN_TEMPLATE(type)                                           \
-  extern template class vector_base<type, ::c2h::checked_host_allocator<type>>; \
-  extern template class vector_base<type, ::c2h::checked_cuda_allocator<type>>;
+DEFINE_EXTERN_TEMPLATE(signed char);
+DEFINE_EXTERN_TEMPLATE(unsigned char);
 
-DECLARE_EXTERN_TEMPLATE(signed char);
-DECLARE_EXTERN_TEMPLATE(unsigned char);
+DEFINE_EXTERN_TEMPLATE(short);
+DEFINE_EXTERN_TEMPLATE(unsigned short);
+DEFINE_EXTERN_TEMPLATE(int);
+DEFINE_EXTERN_TEMPLATE(unsigned int);
+DEFINE_EXTERN_TEMPLATE(long);
+DEFINE_EXTERN_TEMPLATE(unsigned long);
+DEFINE_EXTERN_TEMPLATE(long long);
+DEFINE_EXTERN_TEMPLATE(unsigned long long);
 
-DECLARE_EXTERN_TEMPLATE(short);
-DECLARE_EXTERN_TEMPLATE(unsigned short);
-DECLARE_EXTERN_TEMPLATE(int);
-DECLARE_EXTERN_TEMPLATE(unsigned int);
-DECLARE_EXTERN_TEMPLATE(long);
-DECLARE_EXTERN_TEMPLATE(unsigned long);
-DECLARE_EXTERN_TEMPLATE(long long);
-DECLARE_EXTERN_TEMPLATE(unsigned long long);
+DEFINE_EXTERN_TEMPLATE(float);
+DEFINE_EXTERN_TEMPLATE(double);
 
-DECLARE_EXTERN_TEMPLATE(float);
-DECLARE_EXTERN_TEMPLATE(double);
-
-#undef DECLARE_EXTERN_TEMPLATE
+#undef DEFINE_EXTERN_TEMPLATE
 } // namespace detail
 THRUST_NAMESPACE_END

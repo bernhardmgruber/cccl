@@ -190,7 +190,7 @@ function(cub_add_test target_name_var test_name test_src cub_target launcher_id)
     # Per config helper library:
     set(config_c2h_target ${config_prefix}.test.catch2_helper.lid_${launcher_id})
     if (NOT TARGET ${config_c2h_target})
-      add_library(${config_c2h_target} STATIC c2h/generators.cu)
+      add_library(${config_c2h_target} STATIC c2h/generators.cu c2h/vector.cu)
       target_include_directories(${config_c2h_target} PUBLIC "${CUB_SOURCE_DIR}/test")
       cub_clone_target_properties(${config_c2h_target} ${cub_target})
       cub_configure_cuda_target(${config_c2h_target} RDC ${cdp_val})
