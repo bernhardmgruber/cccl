@@ -114,7 +114,7 @@ constexpr _CCCL_HOST_DEVICE auto max CUB_PREVENT_MACRO_SUBSTITUTION(T&& t, U&& u
 #  endif // DOXYGEN_SHOULD_SKIP_THIS
 
 /// Static assert
-#  define CUB_STATIC_ASSERT(cond, msg) typedef int CUB_CAT(cub_static_assert, __LINE__)[(cond) ? 1 : -1]
+#  define CUB_STATIC_ASSERT(cond, msg) static_assert(cond, msg)
 #endif
 
 #ifndef CUB_DETAIL_KERNEL_ATTRIBUTES
