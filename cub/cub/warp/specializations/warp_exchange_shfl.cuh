@@ -44,15 +44,13 @@ CUB_NAMESPACE_BEGIN
 
 namespace detail
 {
-
 template <typename InputT, int ITEMS_PER_THREAD, int LOGICAL_WARP_THREADS = CUB_PTX_WARP_THREADS>
 class WarpExchangeShfl
 {
   static_assert(PowerOfTwo<LOGICAL_WARP_THREADS>::VALUE, "LOGICAL_WARP_THREADS must be a power of two");
 
   static_assert(ITEMS_PER_THREAD == LOGICAL_WARP_THREADS,
-                "WARP_EXCHANGE_SHUFFLE currently only works when ITEMS_PER_THREAD == "
-                "LOGICAL_WARP_THREADS");
+                "WARP_EXCHANGE_SHUFFLE currently only works when ITEMS_PER_THREAD == LOGICAL_WARP_THREADS");
 
   static constexpr bool IS_ARCH_WARP = LOGICAL_WARP_THREADS == CUB_WARP_THREADS(0);
 
@@ -293,8 +291,7 @@ public:
     BlockedToStriped(input_items, output_items);
   }
 
-  // Trick to keep the compiler from inferring that the
-  // condition in the static_assert is always false.
+  // Trick to keep the compiler from inferring that the condition in the static_assert is always false.
   template <typename T>
   struct dependent_false
   {
