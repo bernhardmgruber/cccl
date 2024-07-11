@@ -89,28 +89,8 @@ _CCCL_HOST_DEVICE inline bool operator>(const null_type&, const null_type&)
  *  \{
  */
 
-/*! This metafunction returns the type of a
- *  \p tuple's <tt>N</tt>th element.
- *
- *  \tparam N This parameter selects the element of interest.
- *  \tparam T A \c tuple type of interest.
- *
- *  \see pair
- *  \see tuple
- */
-template <size_t N, class T>
-using tuple_element = _CUDA_VSTD::tuple_element<N, T>;
-
-/*! This metafunction returns the number of elements
- *  of a \p tuple type of interest.
- *
- *  \tparam T A \c tuple type of interest.
- *
- *  \see pair
- *  \see tuple
- */
-template <class T>
-using tuple_size = _CUDA_VSTD::tuple_size<T>;
+using _CUDA_VSTD::tuple_element;
+using _CUDA_VSTD::tuple_size;
 
 template <class>
 struct __is_tuple_of_iterator_references : _CUDA_VSTD::false_type
@@ -202,8 +182,7 @@ struct tuple : public _CUDA_VSTD::tuple<Ts...>
 template <class... Ts>
 _CCCL_HOST_DEVICE tuple(Ts...) -> tuple<Ts...>;
 
-template <class T1, class T2>
-struct pair;
+using ::cuda::std::pair;
 
 template <class T1, class T2>
 _CCCL_HOST_DEVICE tuple(pair<T1, T2>) -> tuple<T1, T2>;
