@@ -42,6 +42,11 @@
 
 THRUST_NAMESPACE_BEGIN
 
+struct default_init_t
+{};
+
+constexpr default_init_t default_init;
+
 namespace detail
 {
 
@@ -82,6 +87,8 @@ public:
    *  \param n The number of elements to create.
    */
   explicit vector_base(size_type n);
+
+  explicit vector_base(size_type n, default_init_t);
 
   /*! This constructor creates a vector_base with default-constructed
    *  elements.

@@ -96,6 +96,10 @@ public:
       : Parent(n)
   {}
 
+  device_vector(size_type n, default_init_t)
+      : Parent(n, default_init_t{})
+  {}
+
   /*! This constructor creates a \p device_vector with the given
    *  size.
    *  \param n The number of elements to initially create.

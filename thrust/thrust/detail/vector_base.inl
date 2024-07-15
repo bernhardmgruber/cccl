@@ -68,6 +68,23 @@ vector_base<T, Alloc>::vector_base(size_type n)
 } // end vector_base::vector_base()
 
 template <typename T, typename Alloc>
+vector_base<T, Alloc>::vector_base(size_type n, default_init_t)
+    : m_storage()
+    , m_size(0)
+{
+  if (n > 0)
+  {
+    m_storage.allocate(n);
+    m_size = n;
+
+    _CCCL_IF_CONSTEXPR (!::cuda::std::is_trivially_constructible<T>::value)
+    {
+      m_storage.default_construct_n(begin(), size());
+    }
+  }
+}
+
+template <typename T, typename Alloc>
 vector_base<T, Alloc>::vector_base(size_type n, const Alloc& alloc)
     : m_storage(alloc)
     , m_size(0)
