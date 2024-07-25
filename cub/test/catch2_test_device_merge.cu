@@ -461,3 +461,80 @@ CUB_TEST("DeviceMerge::MergePairs iterators", "[merge][device]")
     }
   }
 }
+
+// Ideally, cub::DeviceMerge could support a mix of value_types in the input, as long as they are convertible to the
+// output. `std::merge` can do it.
+struct mixed_less_t
+{
+  template <typename T, typename U>
+  _CCCL_HOST_DEVICE bool operator()(const T& t, const U& u) const
+  {
+    return static_cast<int>(t) < static_cast<int>(u);
+  }
+};
+
+CUB_TEST("DeviceMerge::MergePairs mixed types", "[merge][device]")
+{
+  using key1_t         = signed int;
+  using key2_t         = unsigned int;
+  using key_out_t      = long;
+  using value1_t       = char;
+  using value2_t       = long;
+  using value_out_t    = short;
+  using offset_t       = int;
+  using compare_op_t   = mixed_less_t;
+  const offset_t size1 = 36;
+  const offset_t size2 = 63;
+
+  // we start with random but sorted keys
+  c2h::device_vector<key1_t> keys1_d(size1);
+  c2h::device_vector<key2_t> keys2_d(size2);
+  c2h::gen(CUB_SEED(1), keys1_d);
+  c2h::gen(CUB_SEED(1), keys2_d);
+  thrust::sort(c2h::device_policy, keys1_d.begin(), keys1_d.end(), compare_op_t{});
+  thrust::sort(c2h::device_policy, keys2_d.begin(), keys2_d.end(), compare_op_t{});
+  CAPTURE(keys1_d, keys2_d);
+
+  // the values must be functionally dependent on the keys (equal key => equal value), since merge is unstable
+  c2h::device_vector<value1_t> values1_d(size1);
+  c2h::device_vector<value2_t> values2_d(size2);
+  thrust::transform(c2h::device_policy, keys1_d.begin(), keys1_d.end(), values1_d.begin(), key_to_value<value1_t>{});
+  thrust::transform(c2h::device_policy, keys2_d.begin(), keys2_d.end(), values2_d.begin(), key_to_value<value2_t>{});
+
+  // compute CUB result
+  c2h::device_vector<key_out_t> result_keys_d(size1 + size2);
+  c2h::device_vector<value_out_t> result_values_d(size1 + size2);
+  merge_pairs(
+    thrust::raw_pointer_cast(keys1_d.data()),
+    thrust::raw_pointer_cast(values1_d.data()),
+    static_cast<offset_t>(keys1_d.size()),
+    thrust::raw_pointer_cast(keys2_d.data()),
+    thrust::raw_pointer_cast(values2_d.data()),
+    static_cast<offset_t>(keys2_d.size()),
+    thrust::raw_pointer_cast(result_keys_d.data()),
+    thrust::raw_pointer_cast(result_values_d.data()),
+    compare_op_t{});
+
+  // compute reference result
+  c2h::host_vector<key_out_t> reference_keys_h(size1 + size2);
+  c2h::host_vector<value_out_t> reference_values_h(size1 + size2);
+  {
+    c2h::host_vector<key1_t> keys1_h     = keys1_d;
+    c2h::host_vector<value1_t> values1_h = values1_d;
+    c2h::host_vector<key2_t> keys2_h     = keys2_d;
+    c2h::host_vector<value2_t> values2_h = values2_d;
+    using value_t                        = typename decltype(zip(keys1_h.begin(), values1_h.begin()))::value_type;
+    std::merge(zip(keys1_h.begin(), values1_h.begin()),
+               zip(keys1_h.end(), values1_h.end()),
+               zip(keys2_h.begin(), values2_h.begin()),
+               zip(keys2_h.end(), values2_h.end()),
+               zip(reference_keys_h.begin(), reference_values_h.begin()),
+               [&](const value_t& a, const value_t& b) {
+                 return compare_op_t{}(thrust::get<0>(a), thrust::get<0>(b));
+               });
+  }
+
+  // FIXME(bgruber): comparing std::vectors (slower than thrust vectors) but compiles a lot faster
+  CHECK(detail::to_vec(reference_keys_h) == detail::to_vec(c2h::host_vector<key_out_t>(result_keys_d)));
+  CHECK(detail::to_vec(reference_values_h) == detail::to_vec(c2h::host_vector<value_out_t>(result_values_d)));
+}
