@@ -19,6 +19,7 @@
 #include <thrust/detail/modern_gcc_required.h>
 #if !defined(THRUST_LEGACY_GCC)
 
+#  include <thrust/address_stability.h>
 #  include <thrust/detail/type_deduction.h>
 #  include <thrust/tuple.h>
 #  include <thrust/type_traits/integer_sequence.h>
@@ -178,6 +179,10 @@ public:
 private:
   mutable Function func;
 };
+
+template <typename F, typename... Args>
+struct detail::is_input_address_oblivious_impl<zip_function<F>, void, Args...> : is_input_address_oblivious<F, Args...>
+{};
 
 /*! \p make_zip_function creates a \p zip_function from a function object.
  *
