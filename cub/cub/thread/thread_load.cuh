@@ -158,9 +158,9 @@ UnrolledThreadLoadImpl(T const* src, T* dst, ::cuda::std::integer_sequence<int, 
   (void) dummy;
 }
 
-template <typename RandomAccessIterator, typename T, int... Is>
+template <typename RandomAccessIteratorSrc, typename RandomAccessIteratorDst, int... Is>
 _CCCL_DEVICE _CCCL_FORCEINLINE void
-UnrolledCopyImpl(RandomAccessIterator src, T* dst, ::cuda::std::integer_sequence<int, Is...>)
+UnrolledCopyImpl(RandomAccessIteratorSrc src, RandomAccessIteratorDst dst, ::cuda::std::integer_sequence<int, Is...>)
 {
   // TODO(bgruber): replace by fold over comma in C++17
   int dummy[] = {(dst[Is] = src[Is], 0)...};
@@ -174,8 +174,8 @@ _CCCL_DEVICE _CCCL_FORCEINLINE void UnrolledThreadLoad(T const* src, T* dst)
   detail::UnrolledThreadLoadImpl<MODIFIER>(src, dst, ::cuda::std::make_integer_sequence<int, Count>{});
 }
 
-template <int Count, typename RandomAccessIterator, typename T>
-_CCCL_DEVICE _CCCL_FORCEINLINE void UnrolledCopy(RandomAccessIterator src, T* dst)
+template <int Count, typename RandomAccessIteratorSrc, typename RandomAccessIteratorDst>
+_CCCL_DEVICE _CCCL_FORCEINLINE void UnrolledCopy(RandomAccessIteratorSrc src, RandomAccessIteratorDst dst)
 {
   detail::UnrolledCopyImpl(src, dst, ::cuda::std::make_integer_sequence<int, Count>{});
 }

@@ -43,6 +43,7 @@
 #  pragma system_header
 #endif // no system header
 
+#include <cub/thread/thread_load.cuh>
 #include <cub/util_ptx.cuh>
 #include <cub/util_type.cuh>
 
@@ -103,32 +104,35 @@ enum CacheStoreModifier
  * @tparam MODIFIER
  *   <b>[inferred]</b> CacheStoreModifier enumeration
  *
- * @tparam InputIteratorT
+ * @tparam RandomAccessIterator
  *   <b>[inferred]</b> Output iterator type \iterator
  *
  * @tparam T
  *   <b>[inferred]</b> Data type of output value
  */
-template <CacheStoreModifier MODIFIER, typename OutputIteratorT, typename T>
-_CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStore(OutputIteratorT itr, T val);
+template <CacheStoreModifier MODIFIER, typename RandomAccessIterator, typename T>
+_CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStore(RandomAccessIterator itr, T val);
 
 //@}  end member group
 
 #ifndef DOXYGEN_SHOULD_SKIP_THIS // Do not document
 
 /// Helper structure for templated store iteration (inductive case)
+/// \deprecated [Since 2.7.0] Use UnrolledThreadStore() or UnrolledCopy() instead.
 template <int COUNT, int MAX>
 struct IterateThreadStore
 {
   template <CacheStoreModifier MODIFIER, typename T>
+  CUB_DEPRECATED_BECAUSE("Use UnrolledThreadStore() instead")
   static _CCCL_DEVICE _CCCL_FORCEINLINE void Store(T* ptr, T* vals)
   {
     ThreadStore<MODIFIER>(ptr + COUNT, vals[COUNT]);
     IterateThreadStore<COUNT + 1, MAX>::template Store<MODIFIER>(ptr, vals);
   }
 
-  template <typename OutputIteratorT, typename T>
-  static _CCCL_DEVICE _CCCL_FORCEINLINE void Dereference(OutputIteratorT ptr, T* vals)
+  template <typename RandomAccessIterator, typename T>
+  CUB_DEPRECATED_BECAUSE("Use UnrolledCopy() instead")
+  static _CCCL_DEVICE _CCCL_FORCEINLINE void Dereference(RandomAccessIterator ptr, T* vals)
   {
     ptr[COUNT] = vals[COUNT];
     IterateThreadStore<COUNT + 1, MAX>::Dereference(ptr, vals);
@@ -143,10 +147,28 @@ struct IterateThreadStore<MAX, MAX>
   static _CCCL_DEVICE _CCCL_FORCEINLINE void Store(T* /*ptr*/, T* /*vals*/)
   {}
 
-  template <typename OutputIteratorT, typename T>
-  static _CCCL_DEVICE _CCCL_FORCEINLINE void Dereference(OutputIteratorT /*ptr*/, T* /*vals*/)
+  template <typename RandomAccessIterator, typename T>
+  static _CCCL_DEVICE _CCCL_FORCEINLINE void Dereference(RandomAccessIterator /*ptr*/, T* /*vals*/)
   {}
 };
+
+namespace detail
+{
+template <CacheLoadModifier MODIFIER, typename T, int... Is>
+_CCCL_DEVICE _CCCL_FORCEINLINE void
+UnrolledThreadStoreImpl(T const* src, T* dst, ::cuda::std::integer_sequence<int, Is...>)
+{
+  // TODO(bgruber): replace by fold over comma in C++17
+  int dummy[] = {(ThreadStore<MODIFIER>(dst + Is, src[Is]), 0)...};
+  (void) dummy;
+}
+} // namespace detail
+
+template <int Count, CacheLoadModifier MODIFIER, typename T>
+_CCCL_DEVICE _CCCL_FORCEINLINE void UnrolledThreadStore(T const* src, T* dst)
+{
+  detail::UnrolledThreadStoreImpl<MODIFIER>(src, dst, ::cuda::std::make_integer_sequence<int, Count>{});
+}
 
 /**
  * Define a uint4 (16B) ThreadStore specialization for the given Cache load modifier
@@ -258,11 +280,11 @@ _CUB_STORE_ALL(STORE_WT, wt)
 /**
  * ThreadStore definition for STORE_DEFAULT modifier on iterator types
  */
-template <typename OutputIteratorT, typename T>
+template <typename RandomAccessIterator, typename T>
 _CCCL_DEVICE _CCCL_FORCEINLINE void
-ThreadStore(OutputIteratorT itr, T val, Int2Type<STORE_DEFAULT> /*modifier*/, Int2Type<false> /*is_pointer*/)
+ThreadStore(RandomAccessIterator dst_itr, T val, Int2Type<STORE_DEFAULT> /*modifier*/, Int2Type<false> /*is_pointer*/)
 {
-  *itr = val;
+  *dst_itr = val;
 }
 
 /**
@@ -270,25 +292,25 @@ ThreadStore(OutputIteratorT itr, T val, Int2Type<STORE_DEFAULT> /*modifier*/, In
  */
 template <typename T>
 _CCCL_DEVICE _CCCL_FORCEINLINE void
-ThreadStore(T* ptr, T val, Int2Type<STORE_DEFAULT> /*modifier*/, Int2Type<true> /*is_pointer*/)
+ThreadStore(T* dst_ptr, T val, Int2Type<STORE_DEFAULT> /*modifier*/, Int2Type<true> /*is_pointer*/)
 {
-  *ptr = val;
+  *dst_ptr = val;
 }
 
 /**
  * ThreadStore definition for STORE_VOLATILE modifier on primitive pointer types
  */
 template <typename T>
-_CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStoreVolatilePtr(T* ptr, T val, Int2Type<true> /*is_primitive*/)
+_CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStoreVolatilePtr(T* dst_ptr, T val, Int2Type<true> /*is_primitive*/)
 {
-  *reinterpret_cast<volatile T*>(ptr) = val;
+  *reinterpret_cast<volatile T*>(dst_ptr) = val;
 }
 
 /**
  * ThreadStore definition for STORE_VOLATILE modifier on non-primitive pointer types
  */
 template <typename T>
-_CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStoreVolatilePtr(T* ptr, T val, Int2Type<false> /*is_primitive*/)
+_CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStoreVolatilePtr(T* dst_ptr, T val, Int2Type<false> /*is_primitive*/)
 {
   // Create a temporary using shuffle-words, then store using volatile-words
   using VolatileWord = typename UnitWord<T>::VolatileWord;
@@ -305,7 +327,7 @@ _CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStoreVolatilePtr(T* ptr, T val, Int2Ty
     reinterpret_cast<ShuffleWord*>(words)[i] = reinterpret_cast<ShuffleWord*>(&val)[i];
   }
 
-  IterateThreadStore<0, VOLATILE_MULTIPLE>::template Dereference(reinterpret_cast<volatile VolatileWord*>(ptr), words);
+  UnrolledCopy<VOLATILE_MULTIPLE>(words, reinterpret_cast<volatile VolatileWord*>(dst_ptr));
 }
 
 /**
@@ -313,9 +335,9 @@ _CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStoreVolatilePtr(T* ptr, T val, Int2Ty
  */
 template <typename T>
 _CCCL_DEVICE _CCCL_FORCEINLINE void
-ThreadStore(T* ptr, T val, Int2Type<STORE_VOLATILE> /*modifier*/, Int2Type<true> /*is_pointer*/)
+ThreadStore(T* dst_ptr, T val, Int2Type<STORE_VOLATILE> /*modifier*/, Int2Type<true> /*is_pointer*/)
 {
-  ThreadStoreVolatilePtr(ptr, val, Int2Type<Traits<T>::PRIMITIVE>());
+  ThreadStoreVolatilePtr(dst_ptr, val, Int2Type<Traits<T>::PRIMITIVE>());
 }
 
 /**
@@ -323,7 +345,7 @@ ThreadStore(T* ptr, T val, Int2Type<STORE_VOLATILE> /*modifier*/, Int2Type<true>
  */
 template <typename T, int MODIFIER>
 _CCCL_DEVICE _CCCL_FORCEINLINE void
-ThreadStore(T* ptr, T val, Int2Type<MODIFIER> /*modifier*/, Int2Type<true> /*is_pointer*/)
+ThreadStore(T* dst_ptr, T val, Int2Type<MODIFIER> /*modifier*/, Int2Type<true> /*is_pointer*/)
 {
   // Create a temporary using shuffle-words, then store using device-words
   using DeviceWord  = typename UnitWord<T>::DeviceWord;
@@ -340,17 +362,16 @@ ThreadStore(T* ptr, T val, Int2Type<MODIFIER> /*modifier*/, Int2Type<true> /*is_
     reinterpret_cast<ShuffleWord*>(words)[i] = reinterpret_cast<ShuffleWord*>(&val)[i];
   }
 
-  IterateThreadStore<0, DEVICE_MULTIPLE>::template Store<CacheStoreModifier(MODIFIER)>(
-    reinterpret_cast<DeviceWord*>(ptr), words);
+  UnrolledThreadStore<DEVICE_MULTIPLE, MODIFIER>(words, reinterpret_cast<DeviceWord*>(dst_ptr));
 }
 
 /**
  * ThreadStore definition for generic modifiers
  */
-template <CacheStoreModifier MODIFIER, typename OutputIteratorT, typename T>
-_CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStore(OutputIteratorT itr, T val)
+template <CacheStoreModifier MODIFIER, typename RandomAccessIterator, typename T>
+_CCCL_DEVICE _CCCL_FORCEINLINE void ThreadStore(RandomAccessIterator dst_itr, T val)
 {
-  ThreadStore(itr, val, Int2Type<MODIFIER>(), Int2Type<std::is_pointer<OutputIteratorT>::value>());
+  ThreadStore(dst_itr, val, Int2Type<MODIFIER>(), Int2Type<std::is_pointer<RandomAccessIterator>::value>());
 }
 
 #endif // DOXYGEN_SHOULD_SKIP_THIS
