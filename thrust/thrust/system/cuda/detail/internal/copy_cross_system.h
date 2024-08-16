@@ -50,19 +50,18 @@
 #include <thrust/system/cuda/detail/util.h>
 #include <thrust/type_traits/is_trivially_relocatable.h>
 
+#include <cuda/std/__memory/uninitialized_algorithms.h>
+
 THRUST_NAMESPACE_BEGIN
 namespace cuda_cub
 {
-
 namespace __copy
 {
-
 template <class H, class D, class T, class Size>
 THRUST_HOST_FUNCTION void trivial_device_copy(
   thrust::cpp::execution_policy<H>&, thrust::cuda_cub::execution_policy<D>& device_s, T* dst, T const* src, Size count)
 {
-  cudaError status;
-  status = cuda_cub::trivial_copy_to_device(dst, src, count, cuda_cub::stream(device_s));
+  const cudaError status = cuda_cub::trivial_copy_to_device(dst, src, count, cuda_cub::stream(device_s));
   cuda_cub::throw_on_error(status, "__copy::trivial_device_copy H->D: failed");
 }
 
@@ -70,8 +69,7 @@ template <class D, class H, class T, class Size>
 THRUST_HOST_FUNCTION void trivial_device_copy(
   thrust::cuda_cub::execution_policy<D>& device_s, thrust::cpp::execution_policy<H>&, T* dst, T const* src, Size count)
 {
-  cudaError status;
-  status = cuda_cub::trivial_copy_from_device(dst, src, count, cuda_cub::stream(device_s));
+  const cudaError status = cuda_cub::trivial_copy_from_device(dst, src, count, cuda_cub::stream(device_s));
   cuda_cub::throw_on_error(status, "trivial_device_copy D->H failed");
 }
 
@@ -83,16 +81,14 @@ OutputIt _CCCL_HOST cross_system_copy_n(
   Size n,
   OutputIt result,
   thrust::detail::true_type) // trivial copy
-
 {
-  using InputTy = typename iterator_traits<InputIt>::value_type;
   if (n > 0)
   {
     trivial_device_copy(
       derived_cast(sys1),
       derived_cast(sys2),
-      reinterpret_cast<InputTy*>(thrust::raw_pointer_cast(&*result)),
-      reinterpret_cast<InputTy const*>(thrust::raw_pointer_cast(&*begin)),
+      thrust::unwrap_contiguous_iterator(result),
+      thrust::unwrap_contiguous_iterator(begin),
       n);
   }
 
@@ -109,32 +105,19 @@ OutputIt _CCCL_HOST cross_system_copy_n(
   OutputIt result,
   thrust::detail::false_type) // non-trivial copy
 {
-  // get type of the input data
+  // copy from input iterator to temporary host storage
   using InputTy = typename thrust::iterator_value<InputIt>::type;
+  thrust::detail::temporary_array<InputTy, H> h_temp(host_s, num_items);
+  ::cuda::std::uninitialized_copy_n(first, num_items, h_temp.data().get());
 
-  // copy input data into host temp storage
-  InputIt last = first;
-  thrust::advance(last, num_items);
-  thrust::detail::temporary_array<InputTy, H> temp(host_s, num_items);
-
-  for (Size idx = 0; idx != num_items; idx++)
-  {
-    ::new (static_cast<void*>(temp.data().get() + idx)) InputTy(*first);
-    ++first;
-  }
-
-  // allocate device temporary storage
-  thrust::detail::temporary_array<InputTy, D> d_in_ptr(device_s, num_items);
-
-  // trivial copy data from host to device
-  cudaError status =
-    cuda_cub::trivial_copy_to_device(d_in_ptr.data().get(), temp.data().get(), num_items, cuda_cub::stream(device_s));
+  // copy to temporary device storage
+  thrust::detail::temporary_array<InputTy, D> d_temp(device_s, num_items);
+  const cudaError status =
+    cuda_cub::trivial_copy_to_device(d_temp.data().get(), h_temp.data().get(), num_items, cuda_cub::stream(device_s));
   cuda_cub::throw_on_error(status, "__copy:: H->D: failed");
 
-  // device->device copy
-  OutputIt ret = cuda_cub::copy_n(device_s, d_in_ptr.data(), num_items, result);
-
-  return ret;
+  // copy to output iterator
+  return cuda_cub::copy_n(device_s, d_temp.data(), num_items, result);
 }
 
 #ifdef _CCCL_CUDA_COMPILER
@@ -151,28 +134,19 @@ OutputIt _CCCL_HOST cross_system_copy_n(
   thrust::detail::false_type) // non-trivial copy
 
 {
-  // get type of the input data
+  // copy from input iterator to temporary device storage
   using InputTy = typename thrust::iterator_value<InputIt>::type;
+  thrust::detail::temporary_array<InputTy, D> d_temp(device_s, num_items);
+  cuda_cub::uninitialized_copy_n(device_s, first, num_items, d_temp.data());
 
-  // allocate device temp storage
-  thrust::detail::temporary_array<InputTy, D> d_in_ptr(device_s, num_items);
-
-  // uninitialize copy into temp device storage
-  cuda_cub::uninitialized_copy_n(device_s, first, num_items, d_in_ptr.data());
-
-  // allocate host temp storage
-  thrust::detail::temporary_array<InputTy, H> temp(host_s, num_items);
-
-  // trivial copy from device to host
-  cudaError status;
-  status =
-    cuda_cub::trivial_copy_from_device(temp.data().get(), d_in_ptr.data().get(), num_items, cuda_cub::stream(device_s));
+  // copy to temporary host storage
+  thrust::detail::temporary_array<InputTy, H> h_temp(host_s, num_items);
+  const cudaError status =
+    cuda_cub::trivial_copy_from_device(h_temp.data().get(), d_temp.data().get(), num_items, cuda_cub::stream(device_s));
   cuda_cub::throw_on_error(status, "__copy:: D->H: failed");
 
-  // host->host copy
-  OutputIt ret = thrust::copy_n(host_s, temp.data(), num_items, result);
-
-  return ret;
+  // copy to output iterator
+  return thrust::copy_n(host_s, h_temp.data(), num_items, result);
 }
 #endif
 

@@ -228,6 +228,7 @@ template <typename ContiguousIterator>
 using unwrap_contiguous_iterator_t = typename detail::contiguous_iterator_traits<ContiguousIterator>::raw_pointer;
 
 //! Converts a contiguous iterator to its underlying raw pointer.
+_CCCL_EXEC_CHECK_DISABLE
 template <typename ContiguousIterator>
 _CCCL_HOST_DEVICE auto
 unwrap_contiguous_iterator(ContiguousIterator it) -> unwrap_contiguous_iterator_t<ContiguousIterator>

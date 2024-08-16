@@ -105,6 +105,7 @@ uninitialized_copy(_InputIterator __ifirst, _InputIterator __ilast, _ForwardIter
 
 // uninitialized_copy_n
 
+_CCCL_EXEC_CHECK_DISABLE
 template <class _ValueType, class _InputIterator, class _Size, class _ForwardIterator, class _EndPredicate>
 _LIBCUDACXX_HIDE_FROM_ABI pair<_InputIterator, _ForwardIterator>
 __uninitialized_copy_n(_InputIterator __ifirst, _Size __n, _ForwardIterator __ofirst, _EndPredicate __stop_copying)
