@@ -230,7 +230,7 @@ _CCCL_DEVICE void transform_kernel_impl(
       {
         // TODO(bgruber): replace by fold over comma in C++17
         int dummy[] = {(arrays[j] = ins[idx], 0)..., 0}; // extra zero to handle empty packs
-        (void) &dummy[0]; // MSVC needs extra strong unused warning supression
+        (void) &dummy[0]; // MSVC needs extra strong unused warning suppression
       }
     }
     // process items_per_thread elements
@@ -450,7 +450,7 @@ _CCCL_DEVICE void transform_kernel_impl(
                   : copy_and_return_smem_dst_fallback(group, tile_size, smem, smem_offset, offset, aligned_ptrs))...};
   cooperative_groups::wait(group);
   (void) smem_ptrs; // suppress unused warning for MSVC
-  (void) &smem_offset; // MSVC needs extra strong unused warning supression
+  (void) &smem_offset; // MSVC needs extra strong unused warning suppression
 
   // move the whole index and iterator to the block/thread index, to reduce arithmetic in the loops below
   out += offset;
@@ -495,7 +495,7 @@ _CCCL_DEVICE _CCCL_FORCEINLINE bool select_one()
 #ifdef _CUB_HAS_TRANSFORM_UBLKCP
 // TODO(bgruber): inline this as lambda in C++14
 template <typename Offset, typename T>
-_CCCL_DEVICE void bulk_copy_tile(
+_CCCL_DEVICE const T* bulk_copy_tile(
   ::cuda::std::uint64_t& bar,
   int tile_stride,
   char* smem,
@@ -511,8 +511,8 @@ _CCCL_DEVICE void bulk_copy_tile(
       smem_offset += int{alignof(T)};
     }
   }
-  const char* src = aligned_ptr.ptr + global_offset * sizeof(T);
-  char* dst       = smem + smem_offset;
+  const char* const src = aligned_ptr.ptr + global_offset * sizeof(T);
+  char* const dst       = smem + smem_offset;
   assert(reinterpret_cast<uintptr_t>(src) % bulk_copy_alignment == 0);
   assert(reinterpret_cast<uintptr_t>(dst) % bulk_copy_alignment == 0);
 
@@ -530,10 +530,12 @@ _CCCL_DEVICE void bulk_copy_tile(
     smem_offset += bulk_copy_alignment; // Don't merge into the other alignment check at the beginning for better
                                         // codegen. bgruber measured it!
   }
+
+  return reinterpret_cast<const T*>(dst + aligned_ptr.head_padding);
 }
 
 template <typename Offset, typename T>
-_CCCL_DEVICE void bulk_copy_tile_fallback(
+_CCCL_DEVICE const T* bulk_copy_tile_fallback(
   int tile_size,
   int tile_stride,
   char* smem,
@@ -548,8 +550,8 @@ _CCCL_DEVICE void bulk_copy_tile_fallback(
       smem_offset += int{alignof(T)};
     }
   }
-  const T* src = aligned_ptr.ptr_to_elements() + global_offset;
-  T* dst       = reinterpret_cast<T*>(smem + smem_offset + aligned_ptr.head_padding);
+  const T* const src = aligned_ptr.ptr_to_elements() + global_offset;
+  T* const dst       = reinterpret_cast<T*>(smem + smem_offset + aligned_ptr.head_padding);
   assert(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0);
   assert(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0);
 
@@ -562,29 +564,31 @@ _CCCL_DEVICE void bulk_copy_tile_fallback(
     smem_offset += bulk_copy_alignment; // Don't merge into the other alignment check at the beginning for better
                                         // codegen. bgruber measured it!
   }
+  return dst;
 }
 
-// TODO(bgruber): inline this as lambda in C++14
-template <typename T>
-_CCCL_DEVICE _CCCL_FORCEINLINE const T&
-fetch_operand(int tile_stride, const char* smem, int& smem_offset, int smem_idx, const aligned_base_ptr<T>& aligned_ptr)
-{
-  _CCCL_IF_CONSTEXPR (alignof(T) > bulk_copy_alignment)
-  {
-    if (smem_offset > 0)
-    {
-      smem_offset += int{alignof(T)};
-    }
-  }
-  const T* smem_operand_tile_base = reinterpret_cast<const T*>(smem + smem_offset + aligned_ptr.head_padding);
-  smem_offset += int{sizeof(T)} * tile_stride;
-  _CCCL_IF_CONSTEXPR (alignof(T) <= bulk_copy_alignment)
-  {
-    smem_offset += bulk_copy_alignment; // Don't merge into the other alignment check at the beginning for better
-                                        // codegen. bgruber measured it!
-  }
-  return smem_operand_tile_base[smem_idx];
-}
+// // TODO(bgruber): inline this as lambda in C++14
+// template <typename T>
+// _CCCL_DEVICE _CCCL_FORCEINLINE const T&
+// fetch_operand(int tile_stride, const char* smem, int& smem_offset, int smem_idx, const aligned_base_ptr<T>&
+// aligned_ptr)
+// {
+//   _CCCL_IF_CONSTEXPR (alignof(T) > bulk_copy_alignment)
+//   {
+//     if (smem_offset > 0)
+//     {
+//       smem_offset += int{alignof(T)};
+//     }
+//   }
+//   const T* smem_operand_tile_base = reinterpret_cast<const T*>(smem + smem_offset + aligned_ptr.head_padding);
+//   smem_offset += int{sizeof(T)} * tile_stride;
+//   _CCCL_IF_CONSTEXPR (alignof(T) <= bulk_copy_alignment)
+//   {
+//     smem_offset += bulk_copy_alignment; // Don't merge into the other alignment check at the beginning for better
+//                                         // codegen. bgruber measured it!
+//   }
+//   return smem_operand_tile_base[smem_idx];
+// }
 
 template <typename BulkCopyPolicy, typename Offset, typename F, typename RandomAccessIteratorOut, typename... InTs>
 _CCCL_DEVICE void transform_kernel_impl(
@@ -598,6 +602,7 @@ _CCCL_DEVICE void transform_kernel_impl(
 #  if CUB_PTX_ARCH >= 900
   __shared__ uint64_t bar;
 #  endif // CUB_PTX_ARCH >= 900
+  __shared__ ::cuda::std::tuple<const InTs*...> smem_ptrs;
   extern __shared__ char __attribute((aligned(bulk_copy_alignment))) smem[];
 
   namespace ptx = ::cuda::ptx;
@@ -618,16 +623,8 @@ _CCCL_DEVICE void transform_kernel_impl(
 
       int smem_offset                    = 0;
       ::cuda::std::uint32_t total_copied = 0;
-
-#    if _CCCL_STD_VER >= 2017
-      // Order of evaluation is always left-to-right here. So smem_offset is updated in the right order.
-      (..., bulk_copy_tile(bar, tile_stride, smem, smem_offset, total_copied, offset, aligned_ptrs));
-#    else // _CCCL_STD_VER >= 2017
-      // Order of evaluation is also left-to-right
-      int dummy[] = {(bulk_copy_tile(bar, tile_stride, smem, smem_offset, total_copied, offset, aligned_ptrs), 0)...,
-                     0};
-      (void) dummy;
-#    endif // _CCCL_STD_VER >= 2017
+      smem_ptrs                          = ::cuda::std::tuple<const InTs*...>{
+        bulk_copy_tile(bar, tile_stride, smem, smem_offset, total_copied, offset, aligned_ptrs)...};
 
       ptx::mbarrier_arrive_expect_tx(ptx::sem_release, ptx::scope_cta, ptx::space_shared, &bar, total_copied);
     }
@@ -643,16 +640,8 @@ _CCCL_DEVICE void transform_kernel_impl(
     // use all threads to schedule an async_memcpy
     const int tile_size = ::cuda::std::min(num_items - offset, Offset{tile_stride});
     int smem_offset     = 0;
-
-#  if _CCCL_STD_VER >= 2017
-    // Order of evaluation is always left-to-right here. So smem_offset is updated in the right order.
-    (..., bulk_copy_tile_fallback(tile_size, tile_stride, smem, smem_offset, offset, aligned_ptrs));
-#  else // _CCCL_STD_VER >= 2017
-    // Order of evaluation is also left-to-right
-    int dummy[] = {(bulk_copy_tile_fallback(tile_size, tile_stride, smem, smem_offset, offset, aligned_ptrs), 0)..., 0};
-    (void) dummy;
-#  endif // _CCCL_STD_VER >= 2017
-
+    smem_ptrs           = ::cuda::std::tuple<const InTs*...>{
+      bulk_copy_tile_fallback(tile_size, tile_stride, smem, smem_offset, offset, aligned_ptrs)...};
     cooperative_groups::wait(cooperative_groups::this_thread_block());
   }
 
@@ -662,6 +651,8 @@ _CCCL_DEVICE void transform_kernel_impl(
     out += offset;
   }
 
+  ::cuda::std::tuple<const InTs*...> local_smem_ptrs = smem_ptrs;
+
   // Unroll 1 tends to improve performance, especially for smaller data types (confirmed by benchmark)
 #  pragma unroll 1
   for (int j = 0; j < num_elem_per_thread; ++j)
@@ -669,13 +660,18 @@ _CCCL_DEVICE void transform_kernel_impl(
     const int idx = j * block_dim + threadIdx.x;
     if (idx < num_items)
     {
-      int smem_offset = 0;
-      // need to expand into a tuple for guaranteed order of evaluation
       out[idx] = poor_apply(
-        [&](const InTs&... values) {
-          return f(values...);
+        [&](const InTs* __restrict__... smem_base_ptrs) {
+          return f(smem_base_ptrs[idx]...);
         },
-        ::cuda::std::tuple{fetch_operand(tile_stride, smem, smem_offset, idx, aligned_ptrs)...});
+        local_smem_ptrs);
+      // int smem_offset = 0;
+      // // need to expand into a tuple for guaranteed order of evaluation
+      // out[idx] = poor_apply(
+      //   [&](const InTs&... values) {
+      //     return f(values...);
+      //   },
+      //   ::cuda::std::tuple{fetch_operand(tile_stride, smem, smem_offset, idx, aligned_ptrs)...});
     }
   }
 }
