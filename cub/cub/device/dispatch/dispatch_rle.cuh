@@ -54,6 +54,8 @@
 
 #include <thrust/system/cuda/detail/core/triple_chevron_launch.h>
 
+#include <cuda/cmath>
+
 #include <cstdio>
 #include <iterator>
 
@@ -312,7 +314,7 @@ struct DeviceRleDispatch
 
       // Number of input tiles
       int tile_size = block_threads * items_per_thread;
-      int num_tiles = static_cast<int>(cub::DivideAndRoundUp(num_items, tile_size));
+      int num_tiles = static_cast<int>(::cuda::ceil_div(num_items, static_cast<OffsetT>(tile_size)));
 
       // Specify temporary storage allocation requirements
       size_t allocation_sizes[1];

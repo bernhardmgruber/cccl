@@ -49,6 +49,8 @@
 #include <cub/util_math.cuh>
 #include <cub/util_type.cuh>
 
+#include <cuda/cmath>
+
 CUB_NAMESPACE_BEGIN
 
 /**
@@ -130,7 +132,7 @@ public:
     this->block_offset      = num_items_; // Initialize past-the-end
     this->block_end         = num_items_; // Initialize past-the-end
     this->num_items         = num_items_;
-    this->total_tiles       = static_cast<int>(cub::DivideAndRoundUp(num_items_, tile_items));
+    this->total_tiles       = static_cast<int>(::cuda::ceil_div(num_items_, static_cast<OffsetT>(tile_items)));
     this->grid_size         = CUB_MIN(total_tiles, max_grid_size);
     int avg_tiles_per_block = total_tiles / grid_size;
     // leftover grains go to big blocks:

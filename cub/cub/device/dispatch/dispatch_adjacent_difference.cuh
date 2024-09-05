@@ -47,6 +47,8 @@
 
 #include <thrust/system/cuda/detail/core/triple_chevron_launch.h>
 
+#include <cuda/cmath>
+
 #include <iterator>
 
 CUB_NAMESPACE_BEGIN
@@ -205,7 +207,7 @@ struct DispatchAdjacentDifference : public SelectedPolicy
     do
     {
       constexpr int tile_size = AdjacentDifferencePolicyT::ITEMS_PER_TILE;
-      const int num_tiles     = static_cast<int>(DivideAndRoundUp(num_items, tile_size));
+      const int num_tiles     = static_cast<int>(::cuda::ceil_div(num_items, static_cast<OffsetT>(tile_size)));
 
       std::size_t first_tile_previous_size = MayAlias * num_tiles * sizeof(InputT);
 

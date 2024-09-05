@@ -50,6 +50,8 @@
 #include <cub/util_math.cuh>
 #include <cub/util_type.cuh>
 
+#include <cuda/cmath>
+
 CUB_NAMESPACE_BEGIN
 
 template <int _BLOCK_THREADS, int _ITEMS_PER_THREAD, int NOMINAL_4B_NUM_PARTS, typename ComputeT, int _RADIX_BITS>
@@ -242,7 +244,7 @@ struct AgentRadixSortHistogram
     // Within a portion, avoid overflowing (u)int32 counters.
     // Between portions, accumulate results in global memory.
     constexpr OffsetT MAX_PORTION_SIZE = 1 << 30;
-    OffsetT num_portions               = cub::DivideAndRoundUp(num_items, MAX_PORTION_SIZE);
+    OffsetT num_portions               = ::cuda::ceil_div(num_items, MAX_PORTION_SIZE);
     for (OffsetT portion = 0; portion < num_portions; ++portion)
     {
       // Reset the counters.
