@@ -126,11 +126,11 @@ public:
   using reference = T;
 
   /// The iterator category
-  using iterator_category = typename THRUST_NS_QUALIFIER::detail::iterator_facade_category<
+  using iterator_category = THRUST_NS_QUALIFIER::detail::iterator_facade_category_t<
     THRUST_NS_QUALIFIER::device_system_tag,
     THRUST_NS_QUALIFIER::random_access_traversal_tag,
     value_type,
-    reference>::type;
+    reference>;
 
 private:
   // Largest texture word we can use in device

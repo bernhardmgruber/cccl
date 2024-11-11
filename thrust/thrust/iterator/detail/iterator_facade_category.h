@@ -193,5 +193,8 @@ struct iterator_facade_category
     iterator_facade_category_impl<CategoryOrSystem, CategoryOrTraversal, ValueParam, Reference>>::type;
 }; // end iterator_facade_category
 
+template <typename CategoryOrSystem, typename CategoryOrTraversal, typename ValueParam, typename Reference>
+using iterator_facade_category_t =
+  typename iterator_facade_category<CategoryOrSystem, CategoryOrTraversal, ValueParam, Reference>::type;
 } // namespace detail
 THRUST_NAMESPACE_END
