@@ -45,7 +45,10 @@ def parse_arguments():
                         help="Regex for benchmarks selection.")
     parser.add_argument('-a', '--args', action='append',
                         type=str, help="Parameter in the format `Param=Value`.")
-    parser.add_argument('-l', '--list-benches', action='store_true', help="Show available benchmarks.")
+    parser.add_argument('-l', '--list-benches', action='store_true',
+                        help="List registered benchmarks with variations (from cccl_meta_bench.csv).")
+    parser.add_argument('-L', action='store_true',
+                        help="List available benchmarks with variations (requires compiling benchmarks).")
     parser.add_argument('--num-shards', type=int, default=1,
                         help='Split benchmarks into NUM_SHARDS pieces and only run one')
     parser.add_argument('--run-shard', type=int, default=0, help='Run benchmark shard RUN_SHARD from NUM_SHARDS pieces')
@@ -53,12 +56,19 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def run_benches(algnames, sub_space, seeker):
+def run_benches(algnames, sub_space, seeker, args):
+    if args.L:
+        print("### Benchmarks")
     for algname in algnames:
         try:
             bench = BaseBench(algname)
             ct_space = bench.ct_workload_space(sub_space)
             rt_values = bench.rt_axes_values(sub_space)
+            if args.L:
+                print("  * `{}`: {} variants: ".format(algname, len(ct_space) * len(rt_values["base"])))
+                for p in ct_space:
+                    print("    * CT {} RT {}".format(p, rt_values))
+                continue
             seeker(algname, ct_space, rt_values)
         except Exception as e:
             print("#### ERROR exception occured while running {}: '{}'".format(algname, e))
@@ -80,7 +90,6 @@ def filter_benchmarks(benchmarks, args):
 
     if args.num_shards > 1:
         algnames = np.array_split(algnames, args.num_shards)[args.run_shard].tolist()
-        return algnames
 
     return algnames
 
@@ -105,7 +114,7 @@ def search(seeker):
         list_benches(algnames)
         return
 
-    run_benches(algnames, workload_sub_space, seeker)
+    run_benches(algnames, workload_sub_space, seeker, args)
 
 
 class MedianCenterEstimator:
