@@ -46,6 +46,13 @@
 #include <cub/util_ptx.cuh>
 #include <cub/util_type.cuh>
 
+#include <cuda/barrier>
+#include <cuda/std/__algorithm/clamp.h>
+#include <cuda/std/span>
+
+#include <cooperative_groups.h>
+#include <cooperative_groups/memcpy_async.h>
+
 CUB_NAMESPACE_BEGIN
 
 //! @name Blocked arrangement I/O (direct)
@@ -711,6 +718,8 @@ enum BlockLoadAlgorithm
   //!
   //! @endrst
   BLOCK_LOAD_WARP_TRANSPOSE_TIMESLICED,
+
+  BLOCK_LOAD_BULK_DIRECT
 };
 
 //! @rst
@@ -1254,6 +1263,79 @@ template <class Policy, class It, class T = cub::detail::it_value_t<It>>
 struct BlockLoadType
 {
   using type = cub::BlockLoad<T, Policy::BLOCK_THREADS, Policy::ITEMS_PER_THREAD, Policy::LOAD_ALGORITHM>;
+};
+
+template <typename T, int BLOCK_SIZE, int ITEMS_PER_THREAD, BlockLoadAlgorithm ALGORITHM = BLOCK_LOAD_DIRECT>
+class BlockLoad2 : BlockLoad<T, BLOCK_SIZE, ITEMS_PER_THREAD, ALGORITHM>
+{
+  using BL = BlockLoad<T, BLOCK_SIZE, ITEMS_PER_THREAD, ALGORITHM>;
+  BL bl;
+  T storage[ITEMS_PER_THREAD];
+
+public:
+  using TempStorage = typename BL::TempStorage;
+
+  BlockLoad2() = default;
+
+  _CCCL_DEVICE _CCCL_FORCEINLINE BlockLoad2(TempStorage& temp_storage)
+      : bl(temp_storage)
+  {}
+
+  template <typename RandomAccessIterator>
+  _CCCL_DEVICE _CCCL_FORCEINLINE T (&Load(RandomAccessIterator src_it))[ITEMS_PER_THREAD]
+  {
+    bl.Load(src_it, storage);
+    return storage;
+  }
+
+  template <typename RandomAccessIterator>
+  _CCCL_DEVICE _CCCL_FORCEINLINE T (&Load(RandomAccessIterator src_it, int count))[ITEMS_PER_THREAD]
+  {
+    bl.Load(src_it, storage, count);
+    return storage;
+  }
+};
+
+template <typename T, int BLOCK_SIZE, int ITEMS_PER_THREAD>
+class BlockLoad2<T, BLOCK_SIZE, ITEMS_PER_THREAD, BlockLoadAlgorithm::BLOCK_LOAD_BULK_DIRECT>
+{
+  struct Shared
+  {
+    T tile[BLOCK_SIZE * ITEMS_PER_THREAD];
+  };
+  Shared& shared;
+
+public:
+  using TempStorage = Uninitialized<Shared>;
+
+  BlockLoad2() = default;
+
+  _CCCL_DEVICE _CCCL_FORCEINLINE BlockLoad2(TempStorage& temp_storage)
+      : shared(temp_storage.Alias())
+  {}
+
+  static constexpr auto tile_stride = BLOCK_SIZE * ITEMS_PER_THREAD;
+
+  _CCCL_DEVICE _CCCL_FORCEINLINE auto Load(const T* src) -> ::cuda::std::span<T, ITEMS_PER_THREAD>
+  {
+    cooperative_groups::memcpy_async(
+      cooperative_groups::this_thread_block(), &shared.tile[0], src + tile_stride * blockIdx.x, sizeof(T) * tile_stride);
+    cooperative_groups::wait(cooperative_groups::this_thread_block());
+    return {shared.tile + threadIdx.x * ITEMS_PER_THREAD, ITEMS_PER_THREAD};
+  }
+
+  _CCCL_DEVICE _CCCL_FORCEINLINE auto Load(const T* src, int block_items_end) -> ::cuda::std::span<T>
+  {
+    const int block_start = blockIdx.x * BLOCK_SIZE;
+    const int remaining   = block_items_end - block_start;
+    const int tile_size   = ::cuda::std::min(+tile_stride, remaining);
+    cooperative_groups::memcpy_async(
+      cooperative_groups::this_thread_block(), &shared.tile[0], src + tile_stride * blockIdx.x, sizeof(T) * tile_size);
+    cooperative_groups::wait(cooperative_groups::this_thread_block());
+    const int thread_offset     = threadIdx.x * ITEMS_PER_THREAD;
+    const int items_this_thread = ::cuda::std::clamp(remaining - thread_offset, 0, ITEMS_PER_THREAD);
+    return {shared.tile + thread_offset, static_cast<size_t>(items_this_thread)};
+  }
 };
 
 CUB_NAMESPACE_END
