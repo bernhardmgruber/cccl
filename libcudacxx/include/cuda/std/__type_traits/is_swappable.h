@@ -111,7 +111,7 @@ _LIBCUDACXX_HIDE_FROM_ABI constexpr __swap_result_t<_Tp> swap(_Tp& __x, type_ide
 template <class _Tp, size_t _Np>
 _LIBCUDACXX_HIDE_FROM_ABI constexpr enable_if_t<__detect_adl_swap::__has_no_adl_swap_array<_Tp, _Np>::value
                                                 && __is_swappable<_Tp>::value>
-  swap(_Tp (&__a)[_Np], _Tp (&__b)[_Np]) noexcept(__is_nothrow_swappable<_Tp>::value);
+  swap(_Tp (&__a)[_Np], _CUDA_VSTD::type_identity_t<_Tp> (&__b)[_Np]) noexcept(__is_nothrow_swappable<_Tp>::value);
 
 namespace __detail
 {

@@ -23,6 +23,7 @@
 #include "test_macros.h"
 
 #if !defined(TEST_COMPILER_NVRTC)
+#  include <memory>
 #  include <utility>
 #endif // !TEST_COMPILER_NVRTC
 
@@ -79,14 +80,58 @@ __host__ __device__ constexpr bool test_swap_constexpr()
   return i[0] == 4 && i[1] == 5 && i[2] == 6 && j[0] == 1 && j[1] == 2 && j[2] == 3;
 }
 
+template <typename T>
 __host__ __device__ void test_ambiguous_std()
 {
 #if !defined(TEST_COMPILER_NVRTC)
   // clang-format off
   NV_IF_TARGET(NV_IS_HOST, (
-    cuda::std::pair<::std::pair<int, int>, int> i[3] = {};
-    cuda::std::pair<::std::pair<int, int>, int> j[3] = {};
+  // fully qualified calls
+  {
+    T i[3] = {};
+    T j[3] = {};
+    cuda::std::swap(i,j);
+  }
+  ))
+  NV_IF_TARGET(NV_IS_HOST, (
+  {
+    T i[3] = {};
+    T j[3] = {};
+    std::swap(i,j);
+  }
+  ))
+  NV_IF_TARGET(NV_IS_HOST, (
+  // ADL calls
+  {
+    T i[3] = {};
+    T j[3] = {};
     swap(i,j);
+  }
+  ))
+  NV_IF_TARGET(NV_IS_HOST, (
+  {
+    T i[3] = {};
+    T j[3] = {};
+    using cuda::std::swap;
+    swap(i,j);
+  }
+  ))
+  NV_IF_TARGET(NV_IS_HOST, (
+  {
+    T i[3] = {};
+    T j[3] = {};
+    using std::swap;
+    swap(i,j);
+  }
+  ))
+  NV_IF_TARGET(NV_IS_HOST, (
+  {
+    T i[3] = {};
+    T j[3] = {};
+    using std::swap;
+    using cuda::std::swap;
+    swap(i,j);
+  }
   ))
   // clang-format on
 #endif // !TEST_COMPILER_NVRTC
@@ -140,7 +185,10 @@ int main(int, char**)
 
   static_assert(test_swap_constexpr(), "");
 
-  test_ambiguous_std();
+  test_ambiguous_std<::std::pair<int, int>>(); // has std::swap overload
+  test_ambiguous_std<cuda::std::pair<int, int>>(); // has cuda::std::swap overload
+  test_ambiguous_std<cuda::std::pair<::std::pair<int, int>, int>>(); // has std:: and cuda::std as associated namespaces
+  test_ambiguous_std<::std::allocator<char>>(); // no std::swap overload
 
   return 0;
 }
