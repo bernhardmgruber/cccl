@@ -38,7 +38,7 @@ struct policy_hub_t
     using algo_policy =
       ::cuda::std::_If<algorithm == cub::detail::transform::Algorithm::prefetch,
                        cub::detail::transform::prefetch_policy_t<TUNE_THREADS>,
-                       cub::detail::transform::async_copy_policy_t<TUNE_THREADS>>;
+                       cub::detail::transform::async_copy_policy_t<TUNE_THREADS, 128>>;
   };
 };
 #endif

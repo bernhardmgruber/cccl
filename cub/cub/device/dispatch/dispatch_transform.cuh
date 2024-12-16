@@ -259,7 +259,7 @@ _CCCL_DEVICE _CCCL_FORCEINLINE static bool elect_one()
 }
 
 // TODO(bgruber): inline this as lambda in C++14
-template <typename Offset, typename T>
+template <int BulkCopyAlignment, typename Offset, typename T>
 _CCCL_DEVICE void bulk_copy_tile(
   ::cuda::std::uint64_t& bar,
   int tile_stride,
@@ -269,12 +269,12 @@ _CCCL_DEVICE void bulk_copy_tile(
   Offset global_offset,
   const aligned_base_ptr<T>& aligned_ptr)
 {
-  static_assert(alignof(T) <= bulk_copy_alignment, "");
+  static_assert(alignof(T) <= BulkCopyAlignment, "");
 
   const char* src = aligned_ptr.ptr + global_offset * sizeof(T);
   char* dst       = smem + smem_offset;
-  _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % bulk_copy_alignment == 0, "");
-  _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % bulk_copy_alignment == 0, "");
+  _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % BulkCopyAlignment == 0, "");
+  _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % BulkCopyAlignment == 0, "");
 
   // TODO(bgruber): we could precompute bytes_to_copy on the host
   const int bytes_to_copy = round_up_to_po2_multiple(
@@ -283,11 +283,11 @@ _CCCL_DEVICE void bulk_copy_tile(
   ::cuda::ptx::cp_async_bulk(::cuda::ptx::space_cluster, ::cuda::ptx::space_global, dst, src, bytes_to_copy, &bar);
   total_bytes_bulk_copied += bytes_to_copy;
 
-  // add bulk_copy_alignment to make space for the next tile's head padding
-  smem_offset += static_cast<int>(sizeof(T)) * tile_stride + bulk_copy_alignment;
+  // add BulkCopyAlignment to make space for the next tile's head padding
+  smem_offset += static_cast<int>(sizeof(T)) * tile_stride + BulkCopyAlignment;
 }
 
-template <typename Offset, typename T>
+template <int BulkCopyAlignment, typename Offset, typename T>
 _CCCL_DEVICE void bulk_copy_tile_fallback(
   int tile_size,
   int tile_stride,
@@ -304,17 +304,17 @@ _CCCL_DEVICE void bulk_copy_tile_fallback(
   const int bytes_to_copy = static_cast<int>(sizeof(T)) * tile_size;
   cooperative_groups::memcpy_async(cooperative_groups::this_thread_block(), dst, src, bytes_to_copy);
 
-  // add bulk_copy_alignment to make space for the next tile's head padding
-  smem_offset += static_cast<int>(sizeof(T)) * tile_stride + bulk_copy_alignment;
+  // add BulkCopyAlignment to make space for the next tile's head padding
+  smem_offset += static_cast<int>(sizeof(T)) * tile_stride + BulkCopyAlignment;
 }
 
 // TODO(bgruber): inline this as lambda in C++14
-template <typename T>
+template <int BulkCopyAlignment, typename T>
 _CCCL_DEVICE _CCCL_FORCEINLINE const T&
 fetch_operand(int tile_stride, const char* smem, int& smem_offset, int smem_idx, const aligned_base_ptr<T>& aligned_ptr)
 {
   const T* smem_operand_tile_base = reinterpret_cast<const T*>(smem + smem_offset + aligned_ptr.head_padding);
-  smem_offset += int{sizeof(T)} * tile_stride + bulk_copy_alignment;
+  smem_offset += int{sizeof(T)} * tile_stride + BulkCopyAlignment;
   return smem_operand_tile_base[smem_idx];
 }
 
@@ -322,6 +322,8 @@ template <typename BulkCopyPolicy, typename Offset, typename F, typename RandomA
 _CCCL_DEVICE void transform_kernel_ublkcp(
   Offset num_items, int num_elem_per_thread, F f, RandomAccessIteratorOut out, aligned_base_ptr<InTs>... aligned_ptrs)
 {
+  static constexpr int bulk_copy_alignment = BulkCopyPolicy::bulk_copy_alignment;
+
   __shared__ uint64_t bar;
   extern __shared__ char __align__(bulk_copy_alignment) smem[];
 
@@ -346,8 +348,10 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
       // TODO(bgruber): use a fold over comma in C++17
       // Order of evaluation is left-to-right
-      int dummy[] = {(bulk_copy_tile(bar, tile_stride, smem, smem_offset, total_copied, offset, aligned_ptrs), 0)...,
-                     0};
+      int dummy[] = {
+        (bulk_copy_tile<bulk_copy_alignment>(bar, tile_stride, smem, smem_offset, total_copied, offset, aligned_ptrs),
+         0)...,
+        0};
       (void) dummy;
 
       // TODO(ahendriksen): this could only have ptx::sem_relaxed, but this is not available yet
@@ -366,7 +370,10 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
     // TODO(bgruber): use a fold over comma in C++17
     // Order of evaluation is left-to-right
-    int dummy[] = {(bulk_copy_tile_fallback(tile_size, tile_stride, smem, smem_offset, offset, aligned_ptrs), 0)..., 0};
+    int dummy[] = {
+      (bulk_copy_tile_fallback<bulk_copy_alignment>(tile_size, tile_stride, smem, smem_offset, offset, aligned_ptrs),
+       0)...,
+      0};
     (void) dummy;
 
     cooperative_groups::wait(cooperative_groups::this_thread_block());
@@ -390,7 +397,8 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
           [&](const InTs&... values) {
             return f(values...);
           },
-          ::cuda::std::tuple<InTs...>{fetch_operand(tile_stride, smem, smem_offset, idx, aligned_ptrs)...});
+          ::cuda::std::tuple<InTs...>{
+            fetch_operand<bulk_copy_alignment>(tile_stride, smem, smem_offset, idx, aligned_ptrs)...});
       }
     }
   };
@@ -665,11 +673,10 @@ struct dispatch_t<RequiresStableAddress,
       ::cuda::std::
         tuple<THRUST_NS_QUALIFIER::cuda_cub::launcher::triple_chevron, decltype(CUB_DETAIL_TRANSFORM_KERNEL_PTR), int>>
   {
-    using policy_t          = typename ActivePolicy::algo_policy;
-    constexpr int block_dim = policy_t::block_threads;
-    static_assert(block_dim % bulk_copy_alignment == 0,
-                  "block_threads needs to be a multiple of bulk_copy_alignment (128)"); // then tile_size is a multiple
-                                                                                        // of 128-byte
+    using policy_t                    = typename ActivePolicy::algo_policy;
+    constexpr int block_dim           = policy_t::block_threads;
+    constexpr int bulk_copy_alignment = policy_t::bulk_copy_alignment;
+    static_assert(block_dim % bulk_copy_alignment == 0, "block_threads needs to be a multiple of bulk_copy_alignment");
 
     auto determine_element_counts = [&]() -> PoorExpected<elem_counts> {
       const auto max_smem = get_max_shared_memory();
@@ -686,7 +693,7 @@ struct dispatch_t<RequiresStableAddress,
            ++elem_per_thread)
       {
         const int tile_size = block_dim * elem_per_thread;
-        const int smem_size = bulk_copy_smem_for_tile_size<RandomAccessIteratorsIn...>(tile_size);
+        const int smem_size = bulk_copy_smem_for_tile_size<bulk_copy_alignment, RandomAccessIteratorsIn...>(tile_size);
         if (smem_size > *max_smem)
         {
 #  ifdef CUB_DETAIL_DEBUG_ENABLE_HOST_ASSERTIONS
@@ -762,8 +769,8 @@ struct dispatch_t<RequiresStableAddress,
       ::cuda::std::get<2>(*ret),
       op,
       out,
-      make_aligned_base_ptr_kernel_arg(
-        THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(::cuda::std::get<Is>(in)), bulk_copy_alignment)...);
+      make_aligned_base_ptr_kernel_arg(THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(::cuda::std::get<Is>(in)),
+                                       ActivePolicy::algo_policy::bulk_copy_alignment)...);
   }
 #endif // _CUB_HAS_TRANSFORM_UBLKCP
 

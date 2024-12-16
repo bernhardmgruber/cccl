@@ -76,10 +76,11 @@ struct prefetch_policy_t
   static constexpr int max_items_per_thread      = 32;
 };
 
-template <int BlockThreads>
+template <int BlockThreads, int Alignment>
 struct async_copy_policy_t
 {
-  static constexpr int block_threads = BlockThreads;
+  static constexpr int block_threads       = BlockThreads;
+  static constexpr int bulk_copy_alignment = Alignment;
   // items per tile are determined at runtime. these (inclusive) bounds allow overriding that value via a tuning policy
   static constexpr int min_items_per_thread = 1;
   static constexpr int max_items_per_thread = 32;
@@ -121,16 +122,15 @@ _CCCL_HOST_DEVICE constexpr auto loaded_bytes_per_iteration() -> int
 }
 #endif // _CCCL_STD_VER >= 2017
 
-constexpr int bulk_copy_alignment     = 128;
 constexpr int bulk_copy_size_multiple = 16;
 
-template <typename... RandomAccessIteratorsIn>
+template <int BulkCopyAlignment, typename... RandomAccessIteratorsIn>
 _CCCL_HOST_DEVICE constexpr auto bulk_copy_smem_for_tile_size(int tile_size) -> int
 {
-  return round_up_to_po2_multiple(int{sizeof(int64_t)}, bulk_copy_alignment) /* bar */
+  return round_up_to_po2_multiple(int{sizeof(int64_t)}, BulkCopyAlignment) /* bar */
        // 128 bytes of padding for each input tile (handles before + after)
        + tile_size * loaded_bytes_per_iteration<RandomAccessIteratorsIn...>()
-       + sizeof...(RandomAccessIteratorsIn) * bulk_copy_alignment;
+       + sizeof...(RandomAccessIteratorsIn) * BulkCopyAlignment;
 }
 
 constexpr int arch_to_min_bytes_in_flight(int sm_arch)
@@ -172,10 +172,11 @@ struct policy_hub<RequiresStableAddress, ::cuda::std::tuple<RandomAccessIterator
   // H100 and H200
   struct policy900 : ChainedPolicy<900, policy900, policy300>
   {
-    static constexpr int min_bif = arch_to_min_bytes_in_flight(900);
-    using async_policy           = async_copy_policy_t<256>;
+    static constexpr int min_bif             = arch_to_min_bytes_in_flight(900);
+    static constexpr int bulk_copy_alignment = 128;
+    using async_policy                       = async_copy_policy_t<256, bulk_copy_alignment>;
     static constexpr bool exhaust_smem =
-      bulk_copy_smem_for_tile_size<RandomAccessIteratorsIn...>(
+      bulk_copy_smem_for_tile_size<bulk_copy_alignment, RandomAccessIteratorsIn...>(
         async_policy::block_threads * async_policy::min_items_per_thread)
       > int{max_smem_per_block};
     static constexpr bool any_type_is_overalinged =
