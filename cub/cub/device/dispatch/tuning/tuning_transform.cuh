@@ -56,15 +56,16 @@ namespace detail
 {
 namespace transform
 {
-enum class Algorithm
-{
-  // We previously had a fallback algorithm that would use cub::DeviceFor. Benchmarks showed that the prefetch algorithm
-  // is always superior to that fallback, so it was removed.
-  prefetch,
-#ifdef _CUB_HAS_TRANSFORM_UBLKCP
-  ublkcp,
-#endif // _CUB_HAS_TRANSFORM_UBLKCP
-};
+// enum class Algorithm
+// {
+//   // We previously had a fallback algorithm that would use cub::DeviceFor. Benchmarks showed that the prefetch
+//   algorithm
+//   // is always superior to that fallback, so it was removed.
+//   prefetch,
+// #ifdef _CUB_HAS_TRANSFORM_UBLKCP
+//   ublkcp,
+// #endif // _CUB_HAS_TRANSFORM_UBLKCP
+// };
 
 template <int BlockThreads>
 struct prefetch_policy_t
@@ -164,8 +165,8 @@ struct policy_hub<RequiresStableAddress, ::cuda::std::tuple<RandomAccessIterator
   {
     static constexpr int min_bif = arch_to_min_bytes_in_flight(300);
     // TODO(bgruber): we don't need algo, because we can just detect the type of algo_policy
-    static constexpr auto algorithm = Algorithm::prefetch;
-    using algo_policy               = prefetch_policy_t<256>;
+    // static constexpr auto algorithm = Algorithm::prefetch;
+    using algo_policy = prefetch_policy_t<256>;
   };
 
 #ifdef _CUB_HAS_TRANSFORM_UBLKCP
@@ -187,8 +188,8 @@ struct policy_hub<RequiresStableAddress, ::cuda::std::tuple<RandomAccessIterator
 
     static constexpr bool use_fallback =
       RequiresStableAddress || !can_memcpy || no_input_streams || exhaust_smem || any_type_is_overalinged;
-    static constexpr auto algorithm = use_fallback ? Algorithm::prefetch : Algorithm::ublkcp;
-    using algo_policy               = ::cuda::std::_If<use_fallback, prefetch_policy_t<256>, async_policy>;
+    // static constexpr auto algorithm = use_fallback ? Algorithm::prefetch : Algorithm::ublkcp;
+    using algo_policy = ::cuda::std::_If<use_fallback, prefetch_policy_t<256>, async_policy>;
   };
 
   using max_policy = policy900;

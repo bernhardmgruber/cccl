@@ -102,23 +102,18 @@ _CCCL_DEVICE _CCCL_FORCEINLINE void prefetch_tile(It, int)
 // This kernel guarantees that objects passed as arguments to the user-provided transformation function f reside in
 // global memory. No intermediate copies are taken. If the parameter type of f is a reference, taking the address of the
 // parameter yields a global memory address.
-template <typename PrefetchPolicy,
-          typename Offset,
-          typename F,
-          typename RandomAccessIteratorOut,
-          typename... RandomAccessIteratorIn>
+template <int BlockThreads, typename Offset, typename F, typename RandomAccessIteratorOut, typename... RandomAccessIteratorIn>
 _CCCL_DEVICE void transform_kernel_impl(
-  ::cuda::std::integral_constant<Algorithm, Algorithm::prefetch>,
+  prefetch_policy_t<BlockThreads>,
   Offset num_items,
   int num_elem_per_thread,
   F f,
   RandomAccessIteratorOut out,
   RandomAccessIteratorIn... ins)
 {
-  constexpr int block_dim = PrefetchPolicy::block_threads;
-  const int tile_stride   = block_dim * num_elem_per_thread;
-  const Offset offset     = static_cast<Offset>(blockIdx.x) * tile_stride;
-  const int tile_size     = static_cast<int>(::cuda::std::min(num_items - offset, Offset{tile_stride}));
+  const int tile_stride = BlockThreads * num_elem_per_thread;
+  const Offset offset   = static_cast<Offset>(blockIdx.x) * tile_stride;
+  const int tile_size   = static_cast<int>(::cuda::std::min(num_items - offset, Offset{tile_stride}));
 
   // move index and iterator domain to the block/thread index, to reduce arithmetic in the loops below
   {
@@ -130,7 +125,7 @@ _CCCL_DEVICE void transform_kernel_impl(
   {
     // TODO(bgruber): replace by fold over comma in C++17
     // extra zero at the end handles empty packs
-    int dummy[] = {(prefetch_tile<block_dim>(THRUST_NS_QUALIFIER::raw_reference_cast(ins), tile_size), 0)..., 0};
+    int dummy[] = {(prefetch_tile<BlockThreads>(THRUST_NS_QUALIFIER::raw_reference_cast(ins), tile_size), 0)..., 0};
     (void) &dummy; // nvcc 11.1 needs extra strong unused warning suppression
   }
 
@@ -141,7 +136,7 @@ _CCCL_DEVICE void transform_kernel_impl(
     //_Pragma("unroll 1")
     for (int j = 0; j < num_elem_per_thread; ++j)
     {
-      const int idx = j * block_dim + threadIdx.x;
+      const int idx = j * BlockThreads + threadIdx.x;
       if (full_tile || idx < tile_size)
       {
         // we have to unwrap Thrust's proxy references here for backward compatibility (try zip_iterator.cu test)
@@ -405,9 +400,9 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
   }
 }
 
-template <typename BulkCopyPolicy, typename Offset, typename F, typename RandomAccessIteratorOut, typename... InTs>
+template <int BlockThreads, typename Offset, typename F, typename RandomAccessIteratorOut, typename... InTs>
 _CCCL_DEVICE void transform_kernel_impl(
-  ::cuda::std::integral_constant<Algorithm, Algorithm::ublkcp>,
+  async_copy_policy_t<BlockThreads>,
   Offset num_items,
   int num_elem_per_thread,
   F f,
@@ -416,7 +411,8 @@ _CCCL_DEVICE void transform_kernel_impl(
 {
   // only call the real kernel for sm90 and later
   NV_IF_TARGET(NV_PROVIDES_SM_90,
-               (transform_kernel_ublkcp<BulkCopyPolicy>(num_items, num_elem_per_thread, f, out, aligned_ptrs...);));
+               (transform_kernel_ublkcp<async_copy_policy_t<BlockThreads>>(
+                  num_items, num_elem_per_thread, f, out, aligned_ptrs...);));
 }
 #endif // _CUB_HAS_TRANSFORM_UBLKCP
 
@@ -462,27 +458,26 @@ _CCCL_HOST_DEVICE auto make_aligned_base_ptr_kernel_arg(It ptr, int alignment) -
   return arg;
 }
 
-// TODO(bgruber): make a variable template in C++14
-template <Algorithm Alg>
-using needs_aligned_ptr_t =
-  ::cuda::std::bool_constant<false
-#ifdef _CUB_HAS_TRANSFORM_UBLKCP
-                             || Alg == Algorithm::ublkcp
-#endif // _CUB_HAS_TRANSFORM_UBLKCP
-                             >;
+// // TODO(bgruber): make a variable template in C++14
+// template <Algorithm Alg>
+// using needs_aligned_ptr_t =
+//   ::cuda::std::bool_constant<false
+// #ifdef _CUB_HAS_TRANSFORM_UBLKCP
+//                              || Alg == Algorithm::ublkcp
+// #endif // _CUB_HAS_TRANSFORM_UBLKCP
+//                              >;
 
 #ifdef _CUB_HAS_TRANSFORM_UBLKCP
-template <Algorithm Alg, typename It, ::cuda::std::enable_if_t<needs_aligned_ptr_t<Alg>::value, int> = 0>
-_CCCL_DEVICE _CCCL_FORCEINLINE auto select_kernel_arg(
-  ::cuda::std::integral_constant<Algorithm, Alg>, kernel_arg<It>&& arg) -> aligned_base_ptr<value_t<It>>&&
+template <int BlockThreads, typename It /*, ::cuda::std::enable_if_t<needs_aligned_ptr_t<Alg>::value, int> = 0*/>
+_CCCL_DEVICE _CCCL_FORCEINLINE auto
+select_kernel_arg(async_copy_policy_t<BlockThreads>, kernel_arg<It>&& arg) -> aligned_base_ptr<value_t<It>>&&
 {
   return ::cuda::std::move(arg.aligned_ptr);
 }
 #endif // _CUB_HAS_TRANSFORM_UBLKCP
 
-template <Algorithm Alg, typename It, ::cuda::std::enable_if_t<!needs_aligned_ptr_t<Alg>::value, int> = 0>
-_CCCL_DEVICE _CCCL_FORCEINLINE auto
-select_kernel_arg(::cuda::std::integral_constant<Algorithm, Alg>, kernel_arg<It>&& arg) -> It&&
+template <int BlockThreads, typename It /*, ::cuda::std::enable_if_t<!needs_aligned_ptr_t<Alg>::value, int> = 0*/>
+_CCCL_DEVICE _CCCL_FORCEINLINE auto select_kernel_arg(prefetch_policy_t<BlockThreads>, kernel_arg<It>&& arg) -> It&&
 {
   return ::cuda::std::move(arg.iterator);
 }
@@ -503,14 +498,14 @@ __launch_bounds__(MaxPolicy::ActivePolicy::algo_policy::block_threads)
     RandomAccessIteratorOut out,
     kernel_arg<RandomAccessIteartorsIn>... ins)
 {
-  constexpr auto alg = ::cuda::std::integral_constant<Algorithm, MaxPolicy::ActivePolicy::algorithm>{};
+  using algo_policy = typename MaxPolicy::ActivePolicy::algo_policy;
   transform_kernel_impl<typename MaxPolicy::ActivePolicy::algo_policy>(
-    alg,
+    algo_policy{},
     num_items,
     num_elem_per_thread,
     ::cuda::std::move(f),
     ::cuda::std::move(out),
-    select_kernel_arg(alg, ::cuda::std::move(ins))...);
+    select_kernel_arg(algo_policy{}, ::cuda::std::move(ins))...);
 }
 
 // TODO(bgruber): replace by ::cuda::std::expected in C++14
@@ -744,11 +739,11 @@ struct dispatch_t<RequiresStableAddress,
       config->elem_per_thread);
   }
 
-  template <typename ActivePolicy, std::size_t... Is>
+  template <std::size_t... Is, int BlockThreads>
   CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE cudaError_t
-  invoke_algorithm(cuda::std::index_sequence<Is...>, ::cuda::std::integral_constant<Algorithm, Algorithm::ublkcp>)
+  invoke_algorithm(cuda::std::index_sequence<Is...>, async_copy_policy_t<BlockThreads>)
   {
-    auto ret = configure_ublkcp_kernel<ActivePolicy>();
+    auto ret = configure_ublkcp_kernel<async_copy_policy_t<BlockThreads>>();
     if (!ret)
     {
       return ret.error;
@@ -767,11 +762,11 @@ struct dispatch_t<RequiresStableAddress,
   }
 #endif // _CUB_HAS_TRANSFORM_UBLKCP
 
-  template <typename ActivePolicy, std::size_t... Is>
+  template <std::size_t... Is, int BlockThreads>
   CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE cudaError_t
-  invoke_algorithm(cuda::std::index_sequence<Is...>, ::cuda::std::integral_constant<Algorithm, Algorithm::prefetch>)
+  invoke_algorithm(cuda::std::index_sequence<Is...>, prefetch_policy_t<BlockThreads>)
   {
-    using policy_t          = typename ActivePolicy::algo_policy;
+    using policy_t          = prefetch_policy_t<BlockThreads>;
     constexpr int block_dim = policy_t::block_threads;
 
     auto determine_config = [&]() -> PoorExpected<prefetch_config> {
@@ -809,7 +804,7 @@ struct dispatch_t<RequiresStableAddress,
     const int items_per_thread =
       loaded_bytes_per_iter == 0
         ? +policy_t::items_per_thread_no_input
-        : ::cuda::ceil_div(ActivePolicy::min_bif, config->max_occupancy * block_dim * loaded_bytes_per_iter);
+        : ::cuda::ceil_div(policy_t::min_bif, config->max_occupancy * block_dim * loaded_bytes_per_iter);
 
     // but also generate enough blocks for full occupancy to optimize small problem sizes, e.g., 2^16 or 2^20 elements
     const int items_per_thread_evenly_spread = static_cast<int>(
@@ -834,8 +829,7 @@ struct dispatch_t<RequiresStableAddress,
   CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE cudaError_t Invoke()
   {
     // // TODO(bgruber): replace the overload set by if constexpr in C++17
-    return invoke_algorithm<ActivePolicy>(::cuda::std::index_sequence_for<RandomAccessIteratorsIn...>{},
-                                          ::cuda::std::integral_constant<Algorithm, ActivePolicy::algorithm>{});
+    return invoke_algorithm(::cuda::std::index_sequence_for<RandomAccessIteratorsIn...>{}, ActivePolicy::algo_policy{});
   }
 
   CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE static cudaError_t dispatch(
