@@ -2,7 +2,8 @@
 
 #include <thrust/complex.h>
 #include <thrust/detail/alignment.h>
-#include <thrust/detail/preprocessor.h>
+
+#include <cuda/std/__cccl/preprocessor.h>
 
 #include <unittest/unittest.h>
 
@@ -15,10 +16,10 @@ void TestComplexAlignment()
   THRUST_STATIC_ASSERT(sizeof(thrust::complex<T const>) == sizeof(VectorT));
   THRUST_STATIC_ASSERT(alignof(thrust::complex<T const>) == alignof(VectorT));
 }
-DECLARE_UNITTEST_WITH_NAME(THRUST_PP_EXPAND_ARGS(TestComplexAlignment<char, char2>), TestComplexCharAlignment);
-DECLARE_UNITTEST_WITH_NAME(THRUST_PP_EXPAND_ARGS(TestComplexAlignment<short, short2>), TestComplexShortAlignment);
-DECLARE_UNITTEST_WITH_NAME(THRUST_PP_EXPAND_ARGS(TestComplexAlignment<int, int2>), TestComplexIntAlignment);
-DECLARE_UNITTEST_WITH_NAME(THRUST_PP_EXPAND_ARGS(TestComplexAlignment<long, long2>), TestComplexLongAlignment);
-DECLARE_UNITTEST_WITH_NAME(THRUST_PP_EXPAND_ARGS(TestComplexAlignment<__half, __half2>), TestComplexHalfAlignment);
-DECLARE_UNITTEST_WITH_NAME(THRUST_PP_EXPAND_ARGS(TestComplexAlignment<float, float2>), TestComplexFloatAlignment);
-DECLARE_UNITTEST_WITH_NAME(THRUST_PP_EXPAND_ARGS(TestComplexAlignment<double, double2>), TestComplexDoubleAlignment);
+DECLARE_UNITTEST_WITH_NAME(_CCCL_PP_EXPAND(TestComplexAlignment<char, char2>), TestComplexCharAlignment);
+DECLARE_UNITTEST_WITH_NAME(_CCCL_PP_EXPAND(TestComplexAlignment<short, short2>), TestComplexShortAlignment);
+DECLARE_UNITTEST_WITH_NAME(_CCCL_PP_EXPAND(TestComplexAlignment<int, int2>), TestComplexIntAlignment);
+DECLARE_UNITTEST_WITH_NAME(_CCCL_PP_EXPAND(TestComplexAlignment<long, long2>), TestComplexLongAlignment);
+DECLARE_UNITTEST_WITH_NAME(_CCCL_PP_EXPAND(TestComplexAlignment<__half, __half2>), TestComplexHalfAlignment);
+DECLARE_UNITTEST_WITH_NAME(_CCCL_PP_EXPAND(TestComplexAlignment<float, float2>), TestComplexFloatAlignment);
+DECLARE_UNITTEST_WITH_NAME(_CCCL_PP_EXPAND(TestComplexAlignment<double, double2>), TestComplexDoubleAlignment);

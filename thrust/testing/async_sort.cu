@@ -13,6 +13,8 @@
 #  include <thrust/device_vector.h>
 #  include <thrust/host_vector.h>
 
+#  include <cuda/std/__cccl/preprocessor.h>
+
 #  include <unittest/unittest.h>
 
 enum wait_policy
@@ -42,27 +44,27 @@ struct custom_greater
                                                                                                              \
       template <typename ForwardIt, typename Sentinel>                                                       \
       _CCCL_HOST static auto async(ForwardIt&& first, Sentinel&& last) THRUST_RETURNS(::thrust::async::sort( \
-        __VA_ARGS__ THRUST_PP_COMMA_IF(THRUST_PP_ARITY(__VA_ARGS__)) THRUST_FWD(first), THRUST_FWD(last)))   \
+        __VA_ARGS__ THRUST_PP_COMMA_IF(_CCCL_PP_COUNT(__VA_ARGS__)) THRUST_FWD(first), THRUST_FWD(last)))    \
     };                                                                                                       \
     /**/
 
 DEFINE_SORT_INVOKER(sort_invoker);
 DEFINE_SORT_INVOKER(sort_invoker_device, thrust::device);
 
-#  define DEFINE_SORT_OP_INVOKER(name, op, ...)                                                                     \
-    template <typename T>                                                                                           \
-    struct name                                                                                                     \
-    {                                                                                                               \
-      template <typename ForwardIt, typename Sentinel>                                                              \
-      _CCCL_HOST static void sync(ForwardIt&& first, Sentinel&& last)                                               \
-      {                                                                                                             \
-        ::thrust::sort(THRUST_FWD(first), THRUST_FWD(last), op<T>{});                                               \
-      }                                                                                                             \
-                                                                                                                    \
-      template <typename ForwardIt, typename Sentinel>                                                              \
-      _CCCL_HOST static auto async(ForwardIt&& first, Sentinel&& last) THRUST_RETURNS(::thrust::async::sort(        \
-        __VA_ARGS__ THRUST_PP_COMMA_IF(THRUST_PP_ARITY(__VA_ARGS__)) THRUST_FWD(first), THRUST_FWD(last), op<T>{})) \
-    };                                                                                                              \
+#  define DEFINE_SORT_OP_INVOKER(name, op, ...)                                                                    \
+    template <typename T>                                                                                          \
+    struct name                                                                                                    \
+    {                                                                                                              \
+      template <typename ForwardIt, typename Sentinel>                                                             \
+      _CCCL_HOST static void sync(ForwardIt&& first, Sentinel&& last)                                              \
+      {                                                                                                            \
+        ::thrust::sort(THRUST_FWD(first), THRUST_FWD(last), op<T>{});                                              \
+      }                                                                                                            \
+                                                                                                                   \
+      template <typename ForwardIt, typename Sentinel>                                                             \
+      _CCCL_HOST static auto async(ForwardIt&& first, Sentinel&& last) THRUST_RETURNS(::thrust::async::sort(       \
+        __VA_ARGS__ THRUST_PP_COMMA_IF(_CCCL_PP_COUNT(__VA_ARGS__)) THRUST_FWD(first), THRUST_FWD(last), op<T>{})) \
+    };                                                                                                             \
     /**/
 
 DEFINE_SORT_OP_INVOKER(sort_invoker_less, thrust::less);

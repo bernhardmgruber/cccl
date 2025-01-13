@@ -30,6 +30,7 @@
 #include <thrust/detail/integer_traits.h>
 #include <thrust/detail/preprocessor.h>
 
+#include <cuda/std/__cccl/preprocessor.h>
 #include <cuda/std/detail/libcxx/include/stdexcept>
 #include <cuda/std/type_traits>
 
@@ -42,15 +43,15 @@
 
 #define _THRUST_INDEX_TYPE_DISPATCH(index_type, status, call, count, arguments) \
   {                                                                             \
-    auto THRUST_PP_CAT2(count, _fixed) = static_cast<index_type>(count);        \
-    status                             = call arguments;                        \
+    auto _CCCL_PP_CAT2(count, _fixed) = static_cast<index_type>(count);         \
+    status                            = call arguments;                         \
   }
 
 #define _THRUST_INDEX_TYPE_DISPATCH2(index_type, status, call, count1, count2, arguments) \
   {                                                                                       \
-    auto THRUST_PP_CAT2(count1, _fixed) = static_cast<index_type>(count1);                \
-    auto THRUST_PP_CAT2(count2, _fixed) = static_cast<index_type>(count2);                \
-    status                              = call arguments;                                 \
+    auto _CCCL_PP_CAT2(count1, _fixed) = static_cast<index_type>(count1);                 \
+    auto _CCCL_PP_CAT2(count2, _fixed) = static_cast<index_type>(count2);                 \
+    status                             = call arguments;                                  \
   }
 
 #define _THRUST_INDEX_TYPE_DISPATCH_GUARD_UNDERFLOW(count)                           \

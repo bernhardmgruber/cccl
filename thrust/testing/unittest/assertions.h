@@ -7,6 +7,7 @@
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/universal_vector.h>
 
+#include <cuda/std/__cccl/preprocessor.h>
 #include <cuda/std/utility>
 
 #include <unittest/exceptions.h>
@@ -25,45 +26,45 @@
 #define ASSERT_EQUAL_RANGES_WITH_FILE_AND_LINE(X, Y, Z, FILE_, LINE_) \
   unittest::assert_equal((X), (Y), (Z), FILE_, LINE_)
 
-#define ASSERT_THROWS_WITH_FILE_AND_LINE(EXPR, EXCEPTION_TYPE, FILE_, LINE_)                                      \
-  {                                                                                                               \
-    unittest::threw_status THRUST_PP_CAT2(__s, LINE_) = unittest::did_not_throw;                                  \
-    try                                                                                                           \
-    {                                                                                                             \
-      EXPR;                                                                                                       \
-    }                                                                                                             \
-    catch (EXCEPTION_TYPE const&)                                                                                 \
-    {                                                                                                             \
-      THRUST_PP_CAT2(__s, LINE_) = unittest::threw_right_type;                                                    \
-    }                                                                                                             \
-    catch (...)                                                                                                   \
-    {                                                                                                             \
-      THRUST_PP_CAT2(__s, LINE_) = unittest::threw_wrong_type;                                                    \
-    }                                                                                                             \
-    unittest::check_assert_throws(THRUST_PP_CAT2(__s, LINE_), THRUST_PP_STRINGIZE(EXCEPTION_TYPE), FILE_, LINE_); \
-  }                                                                                                               \
+#define ASSERT_THROWS_WITH_FILE_AND_LINE(EXPR, EXCEPTION_TYPE, FILE_, LINE_)                                     \
+  {                                                                                                              \
+    unittest::threw_status _CCCL_PP_CAT2(__s, LINE_) = unittest::did_not_throw;                                  \
+    try                                                                                                          \
+    {                                                                                                            \
+      EXPR;                                                                                                      \
+    }                                                                                                            \
+    catch (EXCEPTION_TYPE const&)                                                                                \
+    {                                                                                                            \
+      _CCCL_PP_CAT2(__s, LINE_) = unittest::threw_right_type;                                                    \
+    }                                                                                                            \
+    catch (...)                                                                                                  \
+    {                                                                                                            \
+      _CCCL_PP_CAT2(__s, LINE_) = unittest::threw_wrong_type;                                                    \
+    }                                                                                                            \
+    unittest::check_assert_throws(_CCCL_PP_CAT2(__s, LINE_), THRUST_PP_STRINGIZE(EXCEPTION_TYPE), FILE_, LINE_); \
+  }                                                                                                              \
   /**/
 
-#define ASSERT_THROWS_EQUAL_WITH_FILE_AND_LINE(EXPR, EXCEPTION_TYPE, VALUE, FILE_, LINE_)                         \
-  {                                                                                                               \
-    unittest::threw_status THRUST_PP_CAT2(__s, LINE_) = unittest::did_not_throw;                                  \
-    try                                                                                                           \
-    {                                                                                                             \
-      EXPR;                                                                                                       \
-    }                                                                                                             \
-    catch (EXCEPTION_TYPE const& THRUST_PP_CAT2(__e, LINE_))                                                      \
-    {                                                                                                             \
-      if (VALUE == THRUST_PP_CAT2(__e, LINE_))                                                                    \
-        THRUST_PP_CAT2(__s, LINE_) = unittest::threw_right_type;                                                  \
-      else                                                                                                        \
-        THRUST_PP_CAT2(__s, LINE_) = unittest::threw_right_type_but_wrong_value;                                  \
-    }                                                                                                             \
-    catch (...)                                                                                                   \
-    {                                                                                                             \
-      THRUST_PP_CAT2(__s, LINE_) = unittest::threw_wrong_type;                                                    \
-    }                                                                                                             \
-    unittest::check_assert_throws(THRUST_PP_CAT2(__s, LINE_), THRUST_PP_STRINGIZE(EXCEPTION_TYPE), FILE_, LINE_); \
-  }                                                                                                               \
+#define ASSERT_THROWS_EQUAL_WITH_FILE_AND_LINE(EXPR, EXCEPTION_TYPE, VALUE, FILE_, LINE_)                        \
+  {                                                                                                              \
+    unittest::threw_status _CCCL_PP_CAT2(__s, LINE_) = unittest::did_not_throw;                                  \
+    try                                                                                                          \
+    {                                                                                                            \
+      EXPR;                                                                                                      \
+    }                                                                                                            \
+    catch (EXCEPTION_TYPE const& _CCCL_PP_CAT2(__e, LINE_))                                                      \
+    {                                                                                                            \
+      if (VALUE == _CCCL_PP_CAT2(__e, LINE_))                                                                    \
+        _CCCL_PP_CAT2(__s, LINE_) = unittest::threw_right_type;                                                  \
+      else                                                                                                       \
+        _CCCL_PP_CAT2(__s, LINE_) = unittest::threw_right_type_but_wrong_value;                                  \
+    }                                                                                                            \
+    catch (...)                                                                                                  \
+    {                                                                                                            \
+      _CCCL_PP_CAT2(__s, LINE_) = unittest::threw_wrong_type;                                                    \
+    }                                                                                                            \
+    unittest::check_assert_throws(_CCCL_PP_CAT2(__s, LINE_), THRUST_PP_STRINGIZE(EXCEPTION_TYPE), FILE_, LINE_); \
+  }                                                                                                              \
   /**/
 
 #define KNOWN_FAILURE_WITH_FILE_AND_LINE(FILE_, LINE_) \

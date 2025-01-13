@@ -23,6 +23,7 @@
 #include <thrust/iterator/iterator_traits.h>
 
 #include <cuda/std/__memory/addressof.h>
+#include <cuda/std/__memory/construct_at.h>
 
 #include <new>
 #include <utility>
@@ -31,13 +32,9 @@
 
 THRUST_NAMESPACE_BEGIN
 
-///////////////////////////////////////////////////////////////////////////////
-
-template <typename T>
-_CCCL_HOST_DEVICE void destroy_at(T* location) noexcept
-{
-  location->~T();
-}
+using ::cuda::std::destroy;
+using ::cuda::std::destroy_at;
+using ::cuda::std::destroy_n;
 
 template <typename Allocator, typename T>
 _CCCL_HOST_DEVICE void destroy_at(Allocator const& alloc, T* location) noexcept
@@ -48,17 +45,6 @@ _CCCL_HOST_DEVICE void destroy_at(Allocator const& alloc, T* location) noexcept
   typename traits::allocator_type alloc_T(alloc);
 
   traits::destroy(alloc_T, location);
-}
-
-template <typename ForwardIt>
-_CCCL_HOST_DEVICE ForwardIt destroy(ForwardIt first, ForwardIt last) noexcept
-{
-  for (; first != last; ++first)
-  {
-    destroy_at(::cuda::std::addressof(*first));
-  }
-
-  return first;
 }
 
 template <typename Allocator, typename ForwardIt>
@@ -73,17 +59,6 @@ _CCCL_HOST_DEVICE ForwardIt destroy(Allocator const& alloc, ForwardIt first, For
   for (; first != last; ++first)
   {
     destroy_at(alloc_T, ::cuda::std::addressof(*first));
-  }
-
-  return first;
-}
-
-template <typename ForwardIt, typename Size>
-_CCCL_HOST_DEVICE ForwardIt destroy_n(ForwardIt first, Size n) noexcept
-{
-  for (; n > 0; (void) ++first, --n)
-  {
-    destroy_at(::cuda::std::addressof(*first));
   }
 
   return first;
@@ -205,7 +180,5 @@ void uninitialized_construct_n_with_allocator(Allocator const& alloc, ForwardIt 
       }),
     (for (; n > 0; (void) ++current, --n) { traits::construct(alloc_T, ::cuda::std::addressof(*current), args...); }));
 }
-
-///////////////////////////////////////////////////////////////////////////////
 
 THRUST_NAMESPACE_END

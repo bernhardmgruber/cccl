@@ -6,15 +6,17 @@
 #  include <thrust/device_vector.h>
 #  include <thrust/host_vector.h>
 
+#  include <cuda/std/__cccl/preprocessor.h>
+
 #  include <unittest/unittest.h>
 
 #  define DEFINE_ASYNC_FOR_EACH_CALLABLE(name, ...)                                           \
-    struct THRUST_PP_CAT2(name, _fn)                                                          \
+    struct _CCCL_PP_CAT2(name, _fn)                                                           \
     {                                                                                         \
       template <typename ForwardIt, typename Sentinel, typename UnaryFunction>                \
       _CCCL_HOST auto operator()(ForwardIt&& first, Sentinel&& last, UnaryFunction&& f) const \
         THRUST_RETURNS(::thrust::async::for_each(                                             \
-          __VA_ARGS__ THRUST_PP_COMMA_IF(THRUST_PP_ARITY(__VA_ARGS__)) THRUST_FWD(first),     \
+          __VA_ARGS__ THRUST_PP_COMMA_IF(_CCCL_PP_COUNT(__VA_ARGS__)) THRUST_FWD(first),      \
           THRUST_FWD(last),                                                                   \
           THRUST_FWD(f)))                                                                     \
     };                                                                                        \
