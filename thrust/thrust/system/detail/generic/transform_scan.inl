@@ -55,7 +55,7 @@ _CCCL_HOST_DEVICE OutputIterator transform_inclusive_scan(
   BinaryFunction binary_op)
 {
   // Use the input iterator's value type per https://wg21.link/P0571
-  using InputType  = typename thrust::iterator_value<InputIterator>::type;
+  using InputType  = thrust::detail::iter_value_t<InputIterator>;
   using ResultType = thrust::detail::invoke_result_t<UnaryFunction, InputType>;
   using ValueType  = ::cuda::std::remove_cvref_t<ResultType>;
 
@@ -80,7 +80,7 @@ _CCCL_HOST_DEVICE OutputIterator transform_inclusive_scan(
   InitialValueType init,
   BinaryFunction binary_op)
 {
-  using InputType  = typename thrust::iterator_value<InputIterator>::type;
+  using InputType  = thrust::detail::iter_value_t<InputIterator>;
   using ResultType = thrust::detail::invoke_result_t<UnaryFunction, InputType>;
   using ValueType  = ::cuda::std::remove_cvref_t<ResultType>;
 

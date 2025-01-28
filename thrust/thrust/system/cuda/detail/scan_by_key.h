@@ -89,7 +89,7 @@ _CCCL_HOST_DEVICE ValuesOutIt inclusive_scan_by_key_n(
   using KeysInUnwrapIt    = thrust::try_unwrap_contiguous_iterator_t<KeysInIt>;
   using ValuesInUnwrapIt  = thrust::try_unwrap_contiguous_iterator_t<ValuesInIt>;
   using ValuesOutUnwrapIt = thrust::try_unwrap_contiguous_iterator_t<ValuesOutIt>;
-  using AccumT            = typename thrust::iterator_traits<ValuesInUnwrapIt>::value_type;
+  using AccumT            = typename ::cuda::std::iterator_traits<ValuesInUnwrapIt>::value_type;
 
   auto keys_unwrap   = thrust::try_unwrap_contiguous_iterator(keys);
   auto values_unwrap = thrust::try_unwrap_contiguous_iterator(values);
@@ -395,7 +395,7 @@ ValOutputIt _CCCL_HOST_DEVICE exclusive_scan_by_key(
   ValInputIt value_first,
   ValOutputIt value_result)
 {
-  using value_type = typename thrust::iterator_traits<ValInputIt>::value_type;
+  using value_type = typename ::cuda::std::iterator_traits<ValInputIt>::value_type;
   return cuda_cub::exclusive_scan_by_key(policy, key_first, key_last, value_first, value_result, value_type{});
 }
 

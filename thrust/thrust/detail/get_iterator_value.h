@@ -39,7 +39,7 @@ namespace detail
 // --------------------------------------------------
 // it is okay to dereference iterator in the usual way
 template <typename DerivedPolicy, typename Iterator>
-_CCCL_HOST_DEVICE typename thrust::iterator_traits<Iterator>::value_type
+_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<Iterator>::value_type
 get_iterator_value(thrust::execution_policy<DerivedPolicy>&, Iterator it)
 {
   return *it;

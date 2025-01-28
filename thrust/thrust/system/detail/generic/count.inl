@@ -61,7 +61,7 @@ struct count_if_transform
 }; // end count_if_transform
 
 template <typename DerivedPolicy, typename InputIterator, typename EqualityComparable>
-_CCCL_HOST_DEVICE typename thrust::iterator_traits<InputIterator>::difference_type
+_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<InputIterator>::difference_type
 count(thrust::execution_policy<DerivedPolicy>& exec,
       InputIterator first,
       InputIterator last,
@@ -73,11 +73,11 @@ count(thrust::execution_policy<DerivedPolicy>& exec,
 } // end count()
 
 template <typename DerivedPolicy, typename InputIterator, typename Predicate>
-_CCCL_HOST_DEVICE typename thrust::iterator_traits<InputIterator>::difference_type
+_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<InputIterator>::difference_type
 count_if(thrust::execution_policy<DerivedPolicy>& exec, InputIterator first, InputIterator last, Predicate pred)
 {
-  using InputType = typename thrust::iterator_traits<InputIterator>::value_type;
-  using CountType = typename thrust::iterator_traits<InputIterator>::difference_type;
+  using InputType = typename ::cuda::std::iterator_traits<InputIterator>::value_type;
+  using CountType = typename ::cuda::std::iterator_traits<InputIterator>::difference_type;
 
   thrust::system::detail::generic::count_if_transform<InputType, Predicate, CountType> unary_op(pred);
   thrust::plus<CountType> binary_op;

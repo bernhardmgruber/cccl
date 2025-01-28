@@ -55,6 +55,9 @@ DECLARE_UNITTEST(TestTransformUnaryDispatchExplicit);
 template <typename InputIterator, typename OutputIterator, typename UnaryFunction>
 OutputIterator transform(my_tag, InputIterator, InputIterator, OutputIterator result, UnaryFunction)
 {
+  OutputIterator::value_type::G();
+  OutputIterator::reference::G();
+  decltype(*result)::F();
   *result = 13;
   return result;
 }

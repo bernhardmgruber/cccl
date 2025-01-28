@@ -43,7 +43,7 @@ _CCCL_HOST_DEVICE void advance(InputIterator& i, Distance n)
 }
 
 template <typename InputIterator>
-_CCCL_HOST_DEVICE InputIterator next(InputIterator i, typename iterator_traits<InputIterator>::difference_type n = 1)
+_CCCL_HOST_DEVICE InputIterator next(InputIterator i, ::cuda::std::iter_difference_t<InputIterator> n = 1)
 {
   thrust::system::detail::generic::advance(i, n);
   return i;
@@ -51,7 +51,7 @@ _CCCL_HOST_DEVICE InputIterator next(InputIterator i, typename iterator_traits<I
 
 template <typename BidirectionalIterator>
 _CCCL_HOST_DEVICE BidirectionalIterator
-prev(BidirectionalIterator i, typename iterator_traits<BidirectionalIterator>::difference_type n = 1)
+prev(BidirectionalIterator i, ::cuda::std::iter_difference_t<BidirectionalIterator> n = 1)
 {
   thrust::system::detail::generic::advance(i, -n);
   return i;
@@ -59,9 +59,9 @@ prev(BidirectionalIterator i, typename iterator_traits<BidirectionalIterator>::d
 
 template <typename BidirectionalIterator>
 _CCCL_HOST_DEVICE
-typename detail::disable_if<has_difference_type<iterator_traits<BidirectionalIterator>>::value,
+typename detail::disable_if<has_difference_type<::cuda::std::iterator_traits<BidirectionalIterator>>::value, // WHAT?
                             BidirectionalIterator>::type
-prev(BidirectionalIterator i, typename detail::pointer_traits<BidirectionalIterator>::difference_type n = 1)
+prev(BidirectionalIterator i, ::cuda::std::iter_difference_t<BidirectionalIterator> n = 1)
 {
   thrust::system::detail::generic::advance(i, -n);
   return i;

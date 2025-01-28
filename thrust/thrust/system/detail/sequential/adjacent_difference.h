@@ -49,7 +49,7 @@ _CCCL_HOST_DEVICE OutputIterator adjacent_difference(
   OutputIterator result,
   BinaryFunction binary_op)
 {
-  using InputType = typename thrust::iterator_traits<InputIterator>::value_type;
+  using InputType = typename ::cuda::std::iterator_traits<InputIterator>::value_type;
 
   if (first == last)
   {

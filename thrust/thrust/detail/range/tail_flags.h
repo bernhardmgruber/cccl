@@ -36,9 +36,9 @@ namespace detail
 {
 
 template <typename RandomAccessIterator,
-          typename BinaryPredicate = thrust::equal_to<typename thrust::iterator_value<RandomAccessIterator>::type>,
+          typename BinaryPredicate = equal_to<detail::iter_value_t<RandomAccessIterator>>,
           typename ValueType       = bool,
-          typename IndexType       = typename thrust::iterator_difference<RandomAccessIterator>::type>
+          typename IndexType       = detail::iter_difference_t<RandomAccessIterator>>
 class tail_flags
 {
   // XXX WAR cudafe bug

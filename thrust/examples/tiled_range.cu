@@ -21,7 +21,7 @@ template <typename Iterator>
 class tiled_range
 {
 public:
-  using difference_type = typename thrust::iterator_difference<Iterator>::type;
+  using difference_type = ::cuda::std::iter_difference_t<Iterator>;
 
   struct tile_functor
   {

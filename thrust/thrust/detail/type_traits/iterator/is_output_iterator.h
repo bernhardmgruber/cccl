@@ -34,15 +34,9 @@ THRUST_NAMESPACE_BEGIN
 
 namespace detail
 {
-
 template <typename T>
-struct is_void_like
-    : ::cuda::std::disjunction<::cuda::std::is_void<T>, ::cuda::std::is_same<T, thrust::detail::any_assign>>
-{}; // end is_void_like
-
-template <typename T>
-struct lazy_is_void_like : is_void_like<typename T::type>
-{}; // end lazy_is_void_like
+using lazy_is_void_like =
+  ::cuda::std::disjunction<::cuda::std::is_void<typename T::type>, ::cuda::std::is_same<typename T::type, any_assign>>;
 
 // XXX this meta function should first check that T is actually an iterator
 //
@@ -50,13 +44,12 @@ struct lazy_is_void_like : is_void_like<typename T::type>
 //       return false
 //     else
 //       return true
+// TODO(bgruber): what does this logic achieve?
 template <typename T>
-struct is_output_iterator
-    : eval_if<is_metafunction_defined<thrust::iterator_value<T>>::value,
-              lazy_is_void_like<thrust::iterator_value<T>>,
-              thrust::detail::true_type>::type
-{}; // end is_output_iterator
-
+using is_output_iterator =
+  typename eval_if<is_metafunction_defined<lazy_trait<iter_value_t, T>>::value,
+                   lazy_is_void_like<lazy_trait<iter_value_t, T>>,
+                   true_type>::type;
 } // namespace detail
 
 THRUST_NAMESPACE_END

@@ -50,7 +50,7 @@ _CCCL_HOST_DEVICE OutputIterator unique_copy(
   OutputIterator output,
   BinaryPredicate binary_pred)
 {
-  using T = typename thrust::iterator_traits<InputIterator>::value_type;
+  using T = typename ::cuda::std::iterator_traits<InputIterator>::value_type;
 
   if (first != last)
   {
@@ -89,11 +89,11 @@ _CCCL_HOST_DEVICE ForwardIterator unique(
 } // end unique()
 
 template <typename DerivedPolicy, typename ForwardIterator, typename BinaryPredicate>
-_CCCL_HOST_DEVICE typename thrust::iterator_traits<ForwardIterator>::difference_type unique_count(
+_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<ForwardIterator>::difference_type unique_count(
   sequential::execution_policy<DerivedPolicy>&, ForwardIterator first, ForwardIterator last, BinaryPredicate binary_pred)
 {
-  using T = typename thrust::iterator_traits<ForwardIterator>::value_type;
-  typename thrust::iterator_traits<ForwardIterator>::difference_type count{};
+  using T = typename ::cuda::std::iterator_traits<ForwardIterator>::value_type;
+  typename ::cuda::std::iterator_traits<ForwardIterator>::difference_type count{};
 
   if (first != last)
   {

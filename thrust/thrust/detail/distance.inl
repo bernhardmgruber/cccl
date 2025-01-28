@@ -34,7 +34,7 @@ THRUST_NAMESPACE_BEGIN
 
 _CCCL_EXEC_CHECK_DISABLE
 template <typename InputIterator>
-inline _CCCL_HOST_DEVICE typename thrust::iterator_traits<InputIterator>::difference_type
+inline _CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<InputIterator>::difference_type
 distance(InputIterator first, InputIterator last)
 {
   return thrust::system::detail::generic::distance(first, last);

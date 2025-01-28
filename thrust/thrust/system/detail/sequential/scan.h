@@ -57,7 +57,7 @@ _CCCL_HOST_DEVICE OutputIterator inclusive_scan(
   using namespace thrust::detail;
 
   // Use the input iterator's value type per https://wg21.link/P0571
-  using ValueType = typename thrust::iterator_value<InputIterator>::type;
+  using ValueType = thrust::detail::iter_value_t<InputIterator>;
 
   // wrap binary_op
   thrust::detail::wrapped_function<BinaryFunction, ValueType> wrapped_binary_op{binary_op};
