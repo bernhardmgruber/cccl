@@ -421,11 +421,13 @@ template <typename InputIteratorT,
           typename OffsetT,
           bool KeepRejects,
           bool MayAlias      = false,
-          typename PolicyHub = detail::select::policy_hub<cub::detail::value_t<InputIteratorT>,
-                                                          cub::detail::value_t<FlagsInputIteratorT>,
-                                                          detail::select::per_partition_offset_t,
-                                                          MayAlias,
-                                                          KeepRejects>>
+          typename PolicyHub = detail::select::policy_hub<
+            cub::detail::value_t<InputIteratorT>,
+            cub::detail::value_t<FlagsInputIteratorT>,
+            detail::select::per_partition_offset_t,
+            MayAlias,
+            KeepRejects,
+            /* IsUnique */ ::cuda::std::is_same<EqualityOpT, ::cuda::std::equal_to<>>::value>>
 struct DispatchSelectIf
 {
   /******************************************************************************
