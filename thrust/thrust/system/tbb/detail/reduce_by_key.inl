@@ -77,7 +77,7 @@ reduce_last_segment_backward(
   BinaryPredicate binary_pred,
   BinaryFunction binary_op)
 {
-  ::cuda::std::it_difference_t<InputIterator1> n = keys_last - keys_first;
+  thrust::detail::it_difference_t<InputIterator1> n = keys_last - keys_first;
 
   // reverse the ranges and consume from the end
   thrust::reverse_iterator<InputIterator1> keys_first_r(keys_last);
@@ -150,7 +150,7 @@ template <typename Iterator1,
           typename BinaryFunction>
 struct serial_reduce_by_key_body
 {
-  using size_type = ::cuda::std::it_difference_t<Iterator1>;
+  using size_type = thrust::detail::it_difference_t<Iterator1>;
 
   Iterator1 keys_first;
   Iterator2 values_first;
@@ -255,7 +255,7 @@ make_serial_reduce_by_key_body(
   Iterator4 keys_result,
   Iterator5 values_result,
   Iterator6 carry_result,
-  ::cuda::std::it_difference_t<Iterator1> n,
+  thrust::detail::it_difference_t<Iterator1> n,
   size_t interval_size,
   size_t num_intervals,
   BinaryPredicate binary_pred,
@@ -302,7 +302,7 @@ thrust::pair<Iterator3, Iterator4> reduce_by_key(
   BinaryPredicate binary_pred,
   BinaryFunction binary_op)
 {
-  using difference_type = ::cuda::std::it_difference_t<Iterator1>;
+  using difference_type = thrust::detail::it_difference_t<Iterator1>;
   difference_type n     = keys_last - keys_first;
   if (n == 0)
   {

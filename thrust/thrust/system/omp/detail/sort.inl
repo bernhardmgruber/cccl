@@ -109,7 +109,7 @@ void stable_sort(
 
   // Avoid issues on compilers that don't provide `omp_get_num_threads()`.
 #if (THRUST_DEVICE_COMPILER_IS_OMP_CAPABLE == THRUST_TRUE)
-  using IndexType = ::cuda::std::it_difference_t<RandomAccessIterator>;
+  using IndexType = thrust::detail::it_difference_t<RandomAccessIterator>;
 
   if (first == last)
   {
@@ -188,7 +188,7 @@ void stable_sort_by_key(
 
   // Avoid issues on compilers that don't provide `omp_get_num_threads()`.
 #if (THRUST_DEVICE_COMPILER_IS_OMP_CAPABLE == THRUST_TRUE)
-  using IndexType = ::cuda::std::it_difference_t<RandomAccessIterator1>;
+  using IndexType = thrust::detail::it_difference_t<RandomAccessIterator1>;
 
   if (keys_first == keys_last)
   {

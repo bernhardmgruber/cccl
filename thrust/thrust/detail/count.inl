@@ -35,7 +35,7 @@ THRUST_NAMESPACE_BEGIN
 
 _CCCL_EXEC_CHECK_DISABLE
 template <typename DerivedPolicy, typename InputIterator, typename EqualityComparable>
-_CCCL_HOST_DEVICE ::cuda::std::it_difference_t<InputIterator>
+_CCCL_HOST_DEVICE thrust::detail::it_difference_t<InputIterator>
 count(const thrust::detail::execution_policy_base<DerivedPolicy>& exec,
       InputIterator first,
       InputIterator last,
@@ -47,7 +47,7 @@ count(const thrust::detail::execution_policy_base<DerivedPolicy>& exec,
 
 _CCCL_EXEC_CHECK_DISABLE
 template <typename DerivedPolicy, typename InputIterator, typename Predicate>
-_CCCL_HOST_DEVICE ::cuda::std::it_difference_t<InputIterator>
+_CCCL_HOST_DEVICE thrust::detail::it_difference_t<InputIterator>
 count_if(const thrust::detail::execution_policy_base<DerivedPolicy>& exec,
          InputIterator first,
          InputIterator last,
@@ -58,7 +58,7 @@ count_if(const thrust::detail::execution_policy_base<DerivedPolicy>& exec,
 } // end count_if()
 
 template <typename InputIterator, typename EqualityComparable>
-::cuda::std::it_difference_t<InputIterator>
+thrust::detail::it_difference_t<InputIterator>
 count(InputIterator first, InputIterator last, const EqualityComparable& value)
 {
   using thrust::system::detail::generic::select_system;
@@ -71,7 +71,7 @@ count(InputIterator first, InputIterator last, const EqualityComparable& value)
 } // end count()
 
 template <typename InputIterator, typename Predicate>
-::cuda::std::it_difference_t<InputIterator> count_if(InputIterator first, InputIterator last, Predicate pred)
+thrust::detail::it_difference_t<InputIterator> count_if(InputIterator first, InputIterator last, Predicate pred)
 {
   using thrust::system::detail::generic::select_system;
 

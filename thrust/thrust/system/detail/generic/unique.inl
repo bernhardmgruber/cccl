@@ -92,7 +92,7 @@ _CCCL_HOST_DEVICE OutputIterator unique_copy(
 } // end unique_copy()
 
 template <typename DerivedPolicy, typename ForwardIterator, typename BinaryPredicate>
-_CCCL_HOST_DEVICE ::cuda::std::it_difference_t<ForwardIterator> unique_count(
+_CCCL_HOST_DEVICE thrust::detail::it_difference_t<ForwardIterator> unique_count(
   thrust::execution_policy<DerivedPolicy>& exec,
   ForwardIterator first,
   ForwardIterator last,
@@ -106,7 +106,7 @@ _CCCL_HOST_DEVICE ::cuda::std::it_difference_t<ForwardIterator> unique_count(
 } // end unique_copy()
 
 template <typename DerivedPolicy, typename ForwardIterator>
-_CCCL_HOST_DEVICE ::cuda::std::it_difference_t<ForwardIterator>
+_CCCL_HOST_DEVICE thrust::detail::it_difference_t<ForwardIterator>
 unique_count(thrust::execution_policy<DerivedPolicy>& exec, ForwardIterator first, ForwardIterator last)
 {
   using value_type = thrust::detail::it_value_t<ForwardIterator>;

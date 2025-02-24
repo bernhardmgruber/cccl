@@ -94,7 +94,7 @@ void merge_sort(execution_policy<DerivedPolicy>& exec,
                 StrictWeakOrdering comp,
                 bool inplace)
 {
-  using difference_type = ::cuda::std::it_difference_t<Iterator1>;
+  using difference_type = thrust::detail::it_difference_t<Iterator1>;
 
   difference_type n = thrust::distance(first1, last1);
 
@@ -212,7 +212,7 @@ void merge_sort_by_key(
   StrictWeakOrdering comp,
   bool inplace)
 {
-  using difference_type = ::cuda::std::it_difference_t<Iterator1>;
+  using difference_type = thrust::detail::it_difference_t<Iterator1>;
 
   difference_type n = thrust::distance(first1, last1);
 

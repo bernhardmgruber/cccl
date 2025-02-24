@@ -72,7 +72,7 @@ _CCCL_HOST_DEVICE ForwardIterator uninitialized_copy(
   ZipIterator end   = begin;
 
   // get a zip_iterator pointing to the end
-  const ::cuda::std::it_difference_t<InputIterator> n = thrust::distance(first, last);
+  const thrust::detail::it_difference_t<InputIterator> n = thrust::distance(first, last);
   thrust::advance(end, n);
 
   // create a functor

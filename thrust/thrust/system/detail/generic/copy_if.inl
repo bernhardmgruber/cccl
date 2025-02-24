@@ -122,7 +122,7 @@ _CCCL_HOST_DEVICE OutputIterator copy_if(
   OutputIterator result,
   Predicate pred)
 {
-  using difference_type = ::cuda::std::it_difference_t<InputIterator1>;
+  using difference_type = thrust::detail::it_difference_t<InputIterator1>;
 
   // empty sequence
   if (first == last)

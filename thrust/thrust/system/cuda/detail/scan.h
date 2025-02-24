@@ -262,7 +262,7 @@ template <typename Derived, typename InputIt, typename OutputIt, typename ScanOp
 _CCCL_HOST_DEVICE OutputIt inclusive_scan(
   thrust::cuda_cub::execution_policy<Derived>& policy, InputIt first, InputIt last, OutputIt result, ScanOp scan_op)
 {
-  using diff_t           = ::cuda::std::it_difference_t<InputIt>;
+  using diff_t           = thrust::detail::it_difference_t<InputIt>;
   diff_t const num_items = thrust::distance(first, last);
   return thrust::cuda_cub::inclusive_scan_n(policy, first, num_items, result, scan_op);
 }
@@ -276,7 +276,7 @@ _CCCL_HOST_DEVICE OutputIt inclusive_scan(
   T init,
   ScanOp scan_op)
 {
-  using diff_t           = ::cuda::std::it_difference_t<InputIt>;
+  using diff_t           = thrust::detail::it_difference_t<InputIt>;
   diff_t const num_items = thrust::distance(first, last);
   return thrust::cuda_cub::inclusive_scan_n(policy, first, num_items, result, init, scan_op);
 }
@@ -314,7 +314,7 @@ _CCCL_HOST_DEVICE OutputIt exclusive_scan(
   T init,
   ScanOp scan_op)
 {
-  using diff_t           = ::cuda::std::it_difference_t<InputIt>;
+  using diff_t           = thrust::detail::it_difference_t<InputIt>;
   diff_t const num_items = thrust::distance(first, last);
   return thrust::cuda_cub::exclusive_scan_n(policy, first, num_items, result, init, scan_op);
 }

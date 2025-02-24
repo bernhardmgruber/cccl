@@ -21,7 +21,7 @@ template <typename Iterator>
 class strided_range
 {
 public:
-  using difference_type = ::cuda::std::it_difference_t<Iterator>;
+  using difference_type = thrust::detail::it_difference_t<Iterator>;
 
   struct stride_functor
   {

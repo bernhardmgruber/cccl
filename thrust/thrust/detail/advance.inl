@@ -43,7 +43,7 @@ _CCCL_HOST_DEVICE void advance(InputIterator& i, Distance n)
 }
 
 template <typename InputIterator>
-_CCCL_HOST_DEVICE InputIterator next(InputIterator i, ::cuda::std::it_difference_t<InputIterator> n = 1)
+_CCCL_HOST_DEVICE InputIterator next(InputIterator i, thrust::detail::it_difference_t<InputIterator> n = 1)
 {
   thrust::system::detail::generic::advance(i, n);
   return i;
@@ -51,7 +51,7 @@ _CCCL_HOST_DEVICE InputIterator next(InputIterator i, ::cuda::std::it_difference
 
 template <typename BidirectionalIterator>
 _CCCL_HOST_DEVICE BidirectionalIterator
-prev(BidirectionalIterator i, ::cuda::std::it_difference_t<BidirectionalIterator> n = 1)
+prev(BidirectionalIterator i, thrust::detail::it_difference_t<BidirectionalIterator> n = 1)
 {
   thrust::system::detail::generic::advance(i, -n);
   return i;

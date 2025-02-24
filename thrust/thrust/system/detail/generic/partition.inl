@@ -55,7 +55,7 @@ _CCCL_HOST_DEVICE ForwardIterator stable_partition(
   thrust::detail::temporary_array<InputType, DerivedPolicy> temp(exec, first, last);
 
   // count the size of the true partition
-  ::cuda::std::it_difference_t<ForwardIterator> num_true = thrust::count_if(exec, first, last, pred);
+  thrust::detail::it_difference_t<ForwardIterator> num_true = thrust::count_if(exec, first, last, pred);
 
   // point to the beginning of the false partition
   ForwardIterator out_false = first;
@@ -80,7 +80,7 @@ _CCCL_HOST_DEVICE ForwardIterator stable_partition(
   // count the size of the true partition
   InputIterator stencil_last = stencil;
   thrust::advance(stencil_last, temp.size());
-  ::cuda::std::it_difference_t<InputIterator> num_true = thrust::count_if(exec, stencil, stencil_last, pred);
+  thrust::detail::it_difference_t<InputIterator> num_true = thrust::count_if(exec, stencil, stencil_last, pred);
 
   // point to the beginning of the false partition
   ForwardIterator out_false = first;

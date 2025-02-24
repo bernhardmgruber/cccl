@@ -107,7 +107,7 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> unique_by_key_c
   OutputIterator2 values_output,
   BinaryPredicate binary_pred)
 {
-  using difference_type = ::cuda::std::it_difference_t<InputIterator1>;
+  using difference_type = thrust::detail::it_difference_t<InputIterator1>;
 
   difference_type n = thrust::distance(keys_first, keys_last);
 
