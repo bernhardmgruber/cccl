@@ -1096,6 +1096,14 @@ struct is_primitive : is_primitive_impl::is_primitive<T>
 
 template <typename T>
 _CCCL_INLINE_VAR constexpr bool is_primitive_v = is_primitive<T>::value;
+
+template <typename T>
+_CCCL_INLINE_VAR constexpr bool is_tuning_primitive =
+  is_primitive_v<T>
+#  if _CCCL_HAS_INT128()
+  || ::cuda::std::is_same_v<T, __int128_t> || ::cuda::std::is_same_v<T, __uint128_t>
+#  endif // _CCCL_HAS_INT128()
+  ;
 } // namespace detail
 
 #endif // _CCCL_DOXYGEN_INVOKED

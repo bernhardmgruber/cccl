@@ -68,11 +68,6 @@ enum class keep_rejects
   no,
   yes
 };
-enum class primitive
-{
-  no,
-  yes
-};
 enum class offset_size
 {
   _4,
@@ -94,12 +89,12 @@ enum class distinct_partitions
   yes
 };
 
-template <class InputT, flagged, keep_rejects, offset_size OffsetSize, primitive, input_size InputSize>
+template <class InputT, flagged, keep_rejects, offset_size OffsetSize, input_size InputSize>
 struct sm80_tuning;
 
 // select::if
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_1>
+struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_1>
 {
   static constexpr int threads                       = 992;
   static constexpr int items                         = 20;
@@ -108,7 +103,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_2>
+struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_2>
 {
   static constexpr int threads                       = 576;
   static constexpr int items                         = 14;
@@ -117,7 +112,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_4>
+struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_4>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 18;
@@ -126,7 +121,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_8>
+struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_8>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 10;
@@ -135,24 +130,19 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 #if _CCCL_HAS_INT128()
-template <>
-struct sm80_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+template <class Input>
+struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_16>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 4;
   static constexpr BlockLoadAlgorithm load_algorithm = BLOCK_LOAD_DIRECT;
   using delay_constructor                            = detail::no_delay_constructor_t<1140>;
 };
-
-template <>
-struct sm80_tuning<__uint128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-    : sm80_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-{};
 #endif
 
 // select::flagged
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_1>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_1>
 {
   static constexpr int threads                       = 224;
   static constexpr int items                         = 20;
@@ -161,7 +151,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_2>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_2>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 20;
@@ -170,7 +160,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_4>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_4>
 {
   static constexpr int threads                       = 320;
   static constexpr int items                         = 10;
@@ -179,7 +169,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_8>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_8>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 6;
@@ -188,24 +178,19 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 #if _CCCL_HAS_INT128()
-template <>
-struct sm80_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+template <class Input>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_16>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 5;
   static constexpr BlockLoadAlgorithm load_algorithm = BLOCK_LOAD_DIRECT;
   using delay_constructor                            = detail::fixed_delay_constructor_t<464, 1025>;
 };
-
-template <>
-struct sm80_tuning<__uint128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-    : sm80_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-{};
 #endif
 
 // partition::if
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_1>
+struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_1>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 20;
@@ -214,7 +199,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_2>
+struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_2>
 {
   static constexpr int threads                       = 224;
   static constexpr int items                         = 18;
@@ -223,7 +208,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_4>
+struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_4>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 15;
@@ -232,7 +217,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_8>
+struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_8>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 10;
@@ -241,24 +226,19 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 #if _CCCL_HAS_INT128()
-template <>
-struct sm80_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+template <class Input>
+struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_16>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 5;
   static constexpr BlockLoadAlgorithm load_algorithm = BLOCK_LOAD_WARP_TRANSPOSE;
   using delay_constructor                            = detail::fixed_delay_constructor_t<400, 1090>;
 };
-
-template <>
-struct sm80_tuning<__uint128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-    : sm80_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-{};
 #endif
 
 // partition::flagged
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_1>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_1>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 20;
@@ -267,7 +247,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_2>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_2>
 {
   static constexpr int threads                       = 224;
   static constexpr int items                         = 18;
@@ -276,7 +256,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_4>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_4>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 12;
@@ -285,7 +265,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_8>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_8>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 12;
@@ -294,27 +274,22 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 #if _CCCL_HAS_INT128()
-template <>
-struct sm80_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+template <class Input>
+struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_16>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 5;
   static constexpr BlockLoadAlgorithm load_algorithm = BLOCK_LOAD_WARP_TRANSPOSE;
   using delay_constructor                            = detail::fixed_delay_constructor_t<400, 1090>;
 };
-
-template <>
-struct sm80_tuning<__uint128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-    : sm80_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-{};
 #endif
 
-template <class InputT, flagged, keep_rejects, offset_size OffsetSize, primitive, input_size InputSize>
+template <class InputT, flagged, keep_rejects, offset_size OffsetSize, input_size InputSize>
 struct sm90_tuning;
 
 // select::if
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_1>
+struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_1>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 22;
@@ -323,7 +298,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_2>
+struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_2>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 22;
@@ -332,7 +307,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_4>
+struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_4>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 17;
@@ -341,7 +316,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_8>
+struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_8>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 11;
@@ -350,24 +325,19 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 #if _CCCL_HAS_INT128()
-template <>
-struct sm90_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+template <class Input>
+struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_16>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 5;
   static constexpr BlockLoadAlgorithm load_algorithm = BLOCK_LOAD_DIRECT;
   using delay_constructor                            = detail::fixed_delay_constructor_t<460, 1145>;
 };
-
-template <>
-struct sm90_tuning<__uint128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-    : sm90_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-{};
 #endif
 
 // select::flagged
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_1>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_1>
 {
   static constexpr int threads                       = 448;
   static constexpr int items                         = 20;
@@ -376,7 +346,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_2>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_2>
 {
   static constexpr int threads                       = 448;
   static constexpr int items                         = 20;
@@ -385,7 +355,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_4>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_4>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 15;
@@ -394,7 +364,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_8>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_8>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 11;
@@ -403,24 +373,19 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 #if _CCCL_HAS_INT128()
-template <>
-struct sm90_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+template <class Input>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_16>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 3;
   static constexpr BlockLoadAlgorithm load_algorithm = BLOCK_LOAD_DIRECT;
   using delay_constructor                            = detail::fixed_delay_constructor_t<284, 1130>;
 };
-
-template <>
-struct sm90_tuning<__uint128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-    : sm90_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-{};
 #endif
 
 // partition::if
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_1>
+struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_1>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 20;
@@ -429,7 +394,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_2>
+struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_2>
 {
   static constexpr int threads                       = 320;
   static constexpr int items                         = 14;
@@ -438,7 +403,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_4>
+struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_4>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 14;
@@ -447,7 +412,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_8>
+struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_8>
 {
   static constexpr int threads                       = 128;
   static constexpr int items                         = 12;
@@ -456,24 +421,19 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 #if _CCCL_HAS_INT128()
-template <>
-struct sm90_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+template <class Input>
+struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, input_size::_16>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 5;
   static constexpr BlockLoadAlgorithm load_algorithm = BLOCK_LOAD_WARP_TRANSPOSE;
   using delay_constructor                            = detail::fixed_delay_constructor_t<1616, 1115>;
 };
-
-template <>
-struct sm90_tuning<__uint128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-    : sm90_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-{};
 #endif
 
 // partition::flagged
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_1>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_1>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 20;
@@ -482,7 +442,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_2>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_2>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 20;
@@ -491,7 +451,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_4>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_4>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 20;
@@ -500,7 +460,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_8>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_8>
 {
   static constexpr int threads                       = 224;
   static constexpr int items                         = 6;
@@ -509,26 +469,20 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 #if _CCCL_HAS_INT128()
-template <>
-struct sm90_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+template <class Input>
+struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, input_size::_16>
 {
   static constexpr int threads                       = 160;
   static constexpr int items                         = 5;
   static constexpr BlockLoadAlgorithm load_algorithm = BLOCK_LOAD_DIRECT;
   using delay_constructor                            = detail::fixed_delay_constructor_t<720, 1105>;
 };
-
-template <>
-struct sm90_tuning<__uint128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-    : sm90_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-{};
 #endif
 
 template <class InputT,
           flagged,
           keep_rejects,
           offset_size OffsetSize,
-          primitive,
           input_size InputSize,
           may_alias,
           distinct_partitions DistinctPartitions>
@@ -536,14 +490,7 @@ struct sm100_tuning;
 
 // select::if
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::no,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_1,
-                    may_alias::no,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_1, may_alias::no, DistinctPartitions>
 {
   // trp_0.ld_0.ipt_22.tpb_384.ns_0.dcid_2.l2w_915 1.099232  0.980183  1.096778  1.545455
   static constexpr int threads                       = 384;
@@ -554,14 +501,7 @@ struct sm100_tuning<Input,
 };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::no,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_1,
-                    may_alias::yes,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_1, may_alias::yes, DistinctPartitions>
 {
   // trp_1.ld_0.ipt_20.tpb_448.ns_596.dcid_6.l2w_295  1.214635  1.001421  1.207023  1.307692
   static constexpr int threads                       = 448;
@@ -578,7 +518,6 @@ struct sm100_tuning<Input,
 //                     flagged::no,
 //                     keep_rejects::no,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_2,
 //                     may_alias::no,
 //                     DistinctPartitions>
@@ -596,7 +535,6 @@ struct sm100_tuning<Input,
 //                     flagged::no,
 //                     keep_rejects::no,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_2,
 //                     may_alias::no,
 //                     DistinctPartitions>
@@ -610,14 +548,7 @@ struct sm100_tuning<Input,
 // };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::no,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_4,
-                    may_alias::no,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, input_size::_4, may_alias::no, DistinctPartitions>
 {
   // trp_1.ld_0.ipt_15.tpb_384.ns_1508.dcid_5.l2w_585 1.201993  0.920103  1.185134  1.441805
   static constexpr int threads                       = 384;
@@ -634,7 +565,6 @@ struct sm100_tuning<Input,
 //                     flagged::no,
 //                     keep_rejects::no,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_4,
 //                     may_alias::yes,
 //                     DistinctPartitions>
@@ -652,7 +582,6 @@ struct sm100_tuning<Input,
 //                     flagged::no,
 //                     keep_rejects::no,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_8,
 //                     may_alias::yes,
 //                     MayAlias,
@@ -669,7 +598,7 @@ struct sm100_tuning<Input,
 // TODO(gonidelis): Tune for I128.
 #if _CCCL_HAS_INT128()
 // template <>
-// struct sm100_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+// struct sm100_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, input_size::_16>
 // {
 // // static constexpr int threads = 512;
 // // static constexpr int nominal_4b_items   = 5;
@@ -680,7 +609,7 @@ struct sm100_tuning<Input,
 // };
 
 // template <>
-// struct sm100_tuning<__uint128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+// struct sm100_tuning<__uint128_t, flagged::no, keep_rejects::no, offset_size::_4, input_size::_16>
 // {
 // // static constexpr int threads = 512;
 // // static constexpr int nominal_4b_items   = 5;
@@ -693,14 +622,7 @@ struct sm100_tuning<Input,
 
 // select::flagged
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::yes,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_1,
-                    may_alias::no,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_1, may_alias::no, DistinctPartitions>
 {
   // trp_0.ld_0.ipt_20.tpb_896.ns_84.dcid_7.l2w_480 1.254262  0.846154  1.222437  1.462665
   static constexpr int threads                       = 896;
@@ -711,14 +633,7 @@ struct sm100_tuning<Input,
 };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::yes,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_1,
-                    may_alias::yes,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_1, may_alias::yes, DistinctPartitions>
 {
   // trp_0.ld_0.ipt_20.tpb_1024.ns_360.dcid_6.l2w_380 1.274174  0.748441  1.227123  1.610039
   static constexpr int threads                       = 1024;
@@ -729,14 +644,7 @@ struct sm100_tuning<Input,
 };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::yes,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_2,
-                    may_alias::no,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_2, may_alias::no, DistinctPartitions>
 {
   // trp_0.ld_0.ipt_22.tpb_256.ns_1292.dcid_5.l2w_750 1.283400  1.002841  1.267822  1.445913
   static constexpr int threads                       = 256;
@@ -747,14 +655,7 @@ struct sm100_tuning<Input,
 };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::yes,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_2,
-                    may_alias::yes,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_2, may_alias::yes, DistinctPartitions>
 {
   // trp_1.ld_0.ipt_20.tpb_448.ns_136.dcid_2.l2w_760 1.318819  0.994090  1.289173  1.551415
   static constexpr int threads                       = 448;
@@ -765,14 +666,7 @@ struct sm100_tuning<Input,
 };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::yes,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_4,
-                    may_alias::no,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_4, may_alias::no, DistinctPartitions>
 {
   // trp_0.ld_0.ipt_14.tpb_512.ns_844.dcid_6.l2w_675 1.207911  1.068001  1.208890  1.455636
   static constexpr int threads                       = 512;
@@ -783,14 +677,7 @@ struct sm100_tuning<Input,
 };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::yes,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_4,
-                    may_alias::yes,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_4, may_alias::yes, DistinctPartitions>
 {
   // trp_1.ld_0.ipt_14.tpb_384.ns_524.dcid_7.l2w_635 1.256212  1.004808  1.241086  1.373337
   static constexpr int threads                       = 384;
@@ -801,14 +688,7 @@ struct sm100_tuning<Input,
 };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::yes,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_8,
-                    may_alias::no,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_8, may_alias::no, DistinctPartitions>
 {
   // trp_0.ld_1.ipt_22.tpb_320.ns_660.dcid_7.l2w_1030 1.162087  0.997167  1.154955  1.395010
   static constexpr int threads                       = 320;
@@ -819,14 +699,7 @@ struct sm100_tuning<Input,
 };
 
 template <class Input, distinct_partitions DistinctPartitions>
-struct sm100_tuning<Input,
-                    flagged::yes,
-                    keep_rejects::no,
-                    offset_size::_4,
-                    primitive::yes,
-                    input_size::_8,
-                    may_alias::yes,
-                    DistinctPartitions>
+struct sm100_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_8, may_alias::yes, DistinctPartitions>
 {
   // trp_1.ld_1.ipt_21.tpb_384.ns_1316.dcid_5.l2w_990 1.221365  1.019231  1.213141  1.372951
   static constexpr int threads                       = 384;
@@ -839,7 +712,7 @@ struct sm100_tuning<Input,
 // TODO(gonidelis): Tune for I128.
 #if _CCCL_HAS_INT128()
 // template <>
-// struct sm100_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+// struct sm100_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_16>
 // {
 // static constexpr int threads = 512;
 // static constexpr int nominal_4b_items   = 3;
@@ -850,7 +723,7 @@ struct sm100_tuning<Input,
 // };
 
 // template <>
-// struct sm100_tuning<__uint128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+// struct sm100_tuning<__uint128_t, flagged::yes, keep_rejects::no, offset_size::_4, input_size::_16>
 // {
 // static constexpr int threads = 512;
 // static constexpr int nominal_4b_items   = 3;
@@ -867,7 +740,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_1,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -885,7 +757,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_2,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -903,7 +774,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_4,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -922,7 +792,6 @@ struct sm100_tuning<Input,
 //                     flagged::no,
 //                     keep_rejects::yes,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_8,
 //                     may_alias::no,
 //                     distinct_partitions::yes>
@@ -940,7 +809,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_1,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -958,7 +826,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_2,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -976,7 +843,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_4,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -995,7 +861,6 @@ struct sm100_tuning<Input,
 //                     flagged::no,
 //                     keep_rejects::yes,
 //                     offset_size::_8,
-//                     primitive::yes,
 //                     input_size::_8,
 //                     may_alias::no,
 //                     distinct_partitions::yes>
@@ -1013,7 +878,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_1,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1031,7 +895,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_2,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1049,7 +912,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_4,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1067,7 +929,6 @@ struct sm100_tuning<Input,
 //                     flagged::no,
 //                     keep_rejects::yes,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_8,
 //                     may_alias::no,
 //                     distinct_partitions::no>
@@ -1085,7 +946,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_1,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1103,7 +963,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_2,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1121,7 +980,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_4,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1139,7 +997,6 @@ struct sm100_tuning<Input,
                     flagged::no,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_8,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1158,7 +1015,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_1,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -1177,7 +1033,6 @@ struct sm100_tuning<Input,
 //                     flagged::yes,
 //                     keep_rejects::yes,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_2,
 //                     may_alias::no,
 //                     distinct_partitions::yes>
@@ -1195,7 +1050,6 @@ struct sm100_tuning<Input,
 //                     flagged::yes,
 //                     keep_rejects::yes,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_4,
 //                     may_alias::no,
 //                     distinct_partitions::yes>
@@ -1213,7 +1067,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_8,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -1231,7 +1084,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_1,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -1249,7 +1101,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_2,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -1267,7 +1118,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_4,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -1285,7 +1135,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_8,
                     may_alias::no,
                     distinct_partitions::yes>
@@ -1303,7 +1152,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_1,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1322,7 +1170,6 @@ struct sm100_tuning<Input,
 //                     flagged::yes,
 //                     keep_rejects::yes,
 //                     offset_size::_4,
-//                     primitive::yes,
 //                     input_size::_2,
 //                     may_alias::no,
 //                     distinct_partitions::no>
@@ -1340,7 +1187,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_4,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1358,7 +1204,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_4,
-                    primitive::yes,
                     input_size::_8,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1376,7 +1221,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_1,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1394,7 +1238,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_2,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1412,7 +1255,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_4,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1430,7 +1272,6 @@ struct sm100_tuning<Input,
                     flagged::yes,
                     keep_rejects::yes,
                     offset_size::_8,
-                    primitive::yes,
                     input_size::_8,
                     may_alias::no,
                     distinct_partitions::no>
@@ -1442,12 +1283,6 @@ struct sm100_tuning<Input,
   static constexpr CacheLoadModifier load_modifier   = LOAD_DEFAULT;
   using delay_constructor                            = exponential_backoff_constructor_t<536, 845>;
 };
-
-template <class InputT>
-constexpr primitive is_primitive()
-{
-  return detail::is_primitive_v<InputT> ? primitive::yes : primitive::no;
-}
 
 template <class FlagT>
 constexpr flagged is_flagged()
@@ -1516,7 +1351,7 @@ struct policy_hub
   {};
 
   // Use values from tuning if a specialization exists, otherwise pick the default
-  template <typename Tuning>
+  template <typename InputT, typename Tuning, ::cuda::std::enable_if_t<is_tune_primitive<InputT>, int> = 0>
   static auto select_agent_policy(int)
     -> AgentSelectIfPolicy<Tuning::threads,
                            Tuning::items,
@@ -1524,17 +1359,17 @@ struct policy_hub
                            LOAD_DEFAULT,
                            BLOCK_SCAN_WARP_SCANS,
                            typename Tuning::delay_constructor>;
-  template <typename Tuning>
+  template <typename InputT, typename Tuning>
   static auto select_agent_policy(long) -> typename DefaultPolicy<LOAD_DEFAULT>::SelectIfPolicyT;
 
   struct Policy800 : ChainedPolicy<800, Policy800, Policy500>
   {
     using SelectIfPolicyT =
-      decltype(select_agent_policy<sm80_tuning<InputT,
+      decltype(select_agent_policy<InputT,
+                                   sm80_tuning<InputT,
                                                is_flagged<FlagT>(),
                                                are_rejects_kept<KeepRejects>(),
                                                offset_size::_4, // before SM100, we only tuned for int32
-                                               is_primitive<InputT>(),
                                                classify_input_size<InputT>()>>(0));
   };
 
@@ -1546,18 +1381,18 @@ struct policy_hub
   struct Policy900 : ChainedPolicy<900, Policy900, Policy860>
   {
     using SelectIfPolicyT =
-      decltype(select_agent_policy<sm90_tuning<InputT,
+      decltype(select_agent_policy<InputT,
+                                   sm90_tuning<InputT,
                                                is_flagged<FlagT>(),
                                                are_rejects_kept<KeepRejects>(),
                                                offset_size::_4, // before SM100, we only tuned for int32
-                                               is_primitive<InputT>(),
                                                classify_input_size<InputT>()>>(0));
   };
 
   struct Policy1000 : ChainedPolicy<1000, Policy1000, Policy900>
   {
     // Use values from tuning if a specialization exists, otherwise pick Policy900
-    template <typename Tuning>
+    template <typename InputT, typename Tuning, ::cuda::std::enable_if_t<is_tune_primitive<InputT>, int> = 0>
     static auto select_agent_policy100(int)
       -> AgentSelectIfPolicy<Tuning::threads,
                              Nominal4BItemsToItems<InputT>(Tuning::nominal_4b_items),
@@ -1565,7 +1400,7 @@ struct policy_hub
                              Tuning::load_modifier,
                              BLOCK_SCAN_WARP_SCANS,
                              typename Tuning::delay_constructor>;
-    template <typename Tuning>
+    template <typename InputT, typename Tuning>
     static auto select_agent_policy100(long) -> typename Policy900::SelectIfPolicyT;
 
     using SelectIfPolicyT =
@@ -1573,7 +1408,6 @@ struct policy_hub
                                                    is_flagged<FlagT>(),
                                                    are_rejects_kept<KeepRejects>(),
                                                    classify_offset_size<OffsetT>(),
-                                                   is_primitive<InputT>(),
                                                    classify_input_size<InputT>(),
                                                    should_alias<MayAlias>(),
                                                    is_distinct_partitions<DistinctPartitions>()>>(0));
