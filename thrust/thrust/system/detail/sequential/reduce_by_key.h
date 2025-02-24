@@ -55,11 +55,11 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> reduce_by_key(
   BinaryPredicate binary_pred,
   BinaryFunction binary_op)
 {
-  using InputKeyType   = thrust::detail::iter_value_t<InputIterator1>;
-  using InputValueType = thrust::detail::iter_value_t<InputIterator2>;
+  using InputKeyType   = thrust::detail::it_value_t<InputIterator1>;
+  using InputValueType = thrust::detail::it_value_t<InputIterator2>;
 
   // Use the input iterator's value type per https://wg21.link/P0571
-  using TemporaryType = thrust::detail::iter_value_t<InputIterator2>;
+  using TemporaryType = thrust::detail::it_value_t<InputIterator2>;
 
   if (keys_first != keys_last)
   {

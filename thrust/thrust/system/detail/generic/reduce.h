@@ -37,7 +37,7 @@ namespace generic
 {
 
 template <typename DerivedPolicy, typename InputIterator>
-_CCCL_HOST_DEVICE thrust::detail::iter_value_t<InputIterator>
+_CCCL_HOST_DEVICE thrust::detail::it_value_t<InputIterator>
 reduce(thrust::execution_policy<DerivedPolicy>& exec, InputIterator first, InputIterator last);
 
 template <typename DerivedPolicy, typename InputIterator, typename T>

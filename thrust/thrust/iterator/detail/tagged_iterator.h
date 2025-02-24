@@ -40,11 +40,11 @@ template <typename Iterator, typename Tag>
 using make_tagged_iterator_base =
   iterator_adaptor<tagged_iterator<Iterator, Tag>,
                    Iterator,
-                   iter_value_t<Iterator>,
+                   it_value_t<Iterator>,
                    Tag,
                    typename iterator_traversal<Iterator>::type,
-                   iter_reference_t<Iterator>,
-                   iter_difference_t<Iterator>>;
+                   it_reference_t<Iterator>,
+                   it_difference_t<Iterator>>;
 
 template <typename Iterator, typename Tag>
 class tagged_iterator : public make_tagged_iterator_base<Iterator, Tag>

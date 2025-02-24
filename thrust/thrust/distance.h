@@ -70,7 +70,7 @@ THRUST_NAMESPACE_BEGIN
  *  \see https://en.cppreference.com/w/cpp/iterator/distance
  */
 template <typename InputIterator>
-inline _CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator> distance(InputIterator first, InputIterator last);
+inline _CCCL_HOST_DEVICE ::cuda::std::it_difference_t<InputIterator> distance(InputIterator first, InputIterator last);
 
 /*! \} // end iterators
  */

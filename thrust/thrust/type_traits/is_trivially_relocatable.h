@@ -147,7 +147,7 @@ template <typename FromIterator, typename ToIterator>
 using is_indirectly_trivially_relocatable_to = integral_constant<
   bool,
   is_contiguous_iterator<FromIterator>::value && is_contiguous_iterator<ToIterator>::value
-    && is_trivially_relocatable_to<detail::iter_value_t<FromIterator>, detail::iter_value_t<ToIterator>>::value>;
+    && is_trivially_relocatable_to<detail::it_value_t<FromIterator>, detail::it_value_t<ToIterator>>::value>;
 
 /*! \brief <tt>constexpr bool</tt> that is \c true if the element type of
  *  \c FromIterator is

@@ -62,10 +62,10 @@ struct make_permutation_iterator_base
   using type =
     iterator_adaptor<permutation_iterator<ElementIterator, IndexIterator>,
                      IndexIterator,
-                     iter_value_t<ElementIterator>,
+                     it_value_t<ElementIterator>,
                      typename minimum_system<System1, System2>::type,
                      use_default,
-                     iter_reference_t<ElementIterator>>;
+                     it_reference_t<ElementIterator>>;
 };
 } // namespace detail
 

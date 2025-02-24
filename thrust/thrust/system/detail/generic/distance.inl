@@ -40,10 +40,10 @@ namespace detail
 
 _CCCL_EXEC_CHECK_DISABLE
 template <typename InputIterator>
-inline _CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator>
+inline _CCCL_HOST_DEVICE ::cuda::std::it_difference_t<InputIterator>
 distance(InputIterator first, InputIterator last, thrust::incrementable_traversal_tag)
 {
-  ::cuda::std::iter_difference_t<InputIterator> result(0);
+  ::cuda::std::it_difference_t<InputIterator> result(0);
 
   while (first != last)
   {
@@ -56,7 +56,7 @@ distance(InputIterator first, InputIterator last, thrust::incrementable_traversa
 
 _CCCL_EXEC_CHECK_DISABLE
 template <typename InputIterator>
-inline _CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator>
+inline _CCCL_HOST_DEVICE ::cuda::std::it_difference_t<InputIterator>
 distance(InputIterator first, InputIterator last, thrust::random_access_traversal_tag)
 {
   return last - first;
@@ -66,7 +66,7 @@ distance(InputIterator first, InputIterator last, thrust::random_access_traversa
 
 _CCCL_EXEC_CHECK_DISABLE
 template <typename InputIterator>
-inline _CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator> distance(InputIterator first, InputIterator last)
+inline _CCCL_HOST_DEVICE ::cuda::std::it_difference_t<InputIterator> distance(InputIterator first, InputIterator last)
 {
   // dispatch on iterator traversal
   return thrust::system::detail::generic::detail::distance(

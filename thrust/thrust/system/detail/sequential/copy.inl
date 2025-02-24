@@ -58,7 +58,7 @@ copy(InputIterator first,
      OutputIterator result,
      thrust::detail::true_type) // is_indirectly_trivially_relocatable_to
 {
-  using Size = thrust::detail::iter_difference_t<InputIterator>;
+  using Size = thrust::detail::it_difference_t<InputIterator>;
 
   const Size n = last - first;
   thrust::system::detail::sequential::trivial_copy_n(get(&*first), n, get(&*result));

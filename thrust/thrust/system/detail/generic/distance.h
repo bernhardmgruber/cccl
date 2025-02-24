@@ -36,7 +36,7 @@ namespace generic
 {
 
 template <typename InputIterator>
-inline _CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator> distance(InputIterator first, InputIterator last);
+inline _CCCL_HOST_DEVICE ::cuda::std::it_difference_t<InputIterator> distance(InputIterator first, InputIterator last);
 
 } // end namespace generic
 } // end namespace detail

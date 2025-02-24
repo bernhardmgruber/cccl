@@ -50,14 +50,14 @@ struct reference_is_assignable
   template <typename OI>
   static constexpr bool h()
   {
-    if constexpr (::cuda::std::is_same_v<thrust::detail::iter_reference_t<OI>, void>)
+    if constexpr (::cuda::std::is_same_v<thrust::detail::it_reference_t<OI>, void>)
     {
       return true;
     }
     else
     {
-      return ::cuda::std::is_assignable_v<thrust::detail::iter_reference_t<OI>,
-                                          thrust::detail::iter_reference_t<InputIterator>>;
+      return ::cuda::std::is_assignable_v<thrust::detail::it_reference_t<OI>,
+                                          thrust::detail::it_reference_t<InputIterator>>;
     }
   }
 
@@ -81,7 +81,7 @@ inline _CCCL_HOST_DEVICE
 typename thrust::detail::disable_if<reference_is_assignable<InputIterator, OutputIterator>::value>::type
 iter_assign(OutputIterator dst, InputIterator src)
 {
-  using value_type = thrust::detail::iter_value_t<InputIterator>;
+  using value_type = thrust::detail::it_value_t<InputIterator>;
 
   // insert a temporary and hope for the best
   *dst = static_cast<value_type>(*src);

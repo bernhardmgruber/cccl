@@ -39,8 +39,8 @@ template <typename T, typename SFINAE = void>
 _CCCL_INLINE_VAR constexpr bool is_output_iterator = true;
 
 template <typename T>
-_CCCL_INLINE_VAR constexpr bool is_output_iterator<T, ::cuda::std::void_t<iter_value_t<T>>> =
-  ::cuda::std::is_void_v<iter_value_t<T>> || ::cuda::std::is_same_v<iter_value_t<T>, any_assign>;
+_CCCL_INLINE_VAR constexpr bool is_output_iterator<T, ::cuda::std::void_t<it_value_t<T>>> =
+  ::cuda::std::is_void_v<it_value_t<T>> || ::cuda::std::is_same_v<it_value_t<T>, any_assign>;
 } // namespace detail
 
 THRUST_NAMESPACE_END

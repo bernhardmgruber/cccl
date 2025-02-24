@@ -115,7 +115,7 @@ template <typename InputIterator1, typename InputIterator2, typename OutputItera
 OutputIterator
 copy_if(tag, InputIterator1 first, InputIterator1 last, InputIterator2 stencil, OutputIterator result, Predicate pred)
 {
-  using Size = ::cuda::std::iter_difference_t<InputIterator1>;
+  using Size = ::cuda::std::it_difference_t<InputIterator1>;
   using Body = typename copy_if_detail::body<InputIterator1, InputIterator2, OutputIterator, Predicate, Size>;
 
   Size n = thrust::distance(first, last);

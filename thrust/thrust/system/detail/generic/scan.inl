@@ -53,7 +53,7 @@ _CCCL_HOST_DEVICE OutputIterator exclusive_scan(
   thrust::execution_policy<ExecutionPolicy>& exec, InputIterator first, InputIterator last, OutputIterator result)
 {
   // Use the input iterator's value type per https://wg21.link/P0571
-  using ValueType = thrust::detail::iter_value_t<InputIterator>;
+  using ValueType = thrust::detail::it_value_t<InputIterator>;
   return thrust::exclusive_scan(exec, first, last, result, ValueType{});
 } // end exclusive_scan()
 

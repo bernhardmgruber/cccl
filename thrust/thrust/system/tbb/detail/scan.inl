@@ -240,9 +240,9 @@ inclusive_scan(tag, InputIterator first, InputIterator last, OutputIterator resu
   using namespace thrust::detail;
 
   // Use the input iterator's value type per https://wg21.link/P0571
-  using ValueType = thrust::detail::iter_value_t<InputIterator>;
+  using ValueType = thrust::detail::it_value_t<InputIterator>;
 
-  using Size = ::cuda::std::iter_difference_t<InputIterator>;
+  using Size = ::cuda::std::it_difference_t<InputIterator>;
   Size n     = thrust::distance(first, last);
 
   if (n != 0)
@@ -265,9 +265,9 @@ OutputIterator inclusive_scan(
 
   // Use the input iterator's value type and the initial value type per wg21.link/p2322
   using ValueType =
-    typename ::cuda::std::__accumulator_t<BinaryFunction, thrust::detail::iter_value_t<InputIterator>, InitialValueType>;
+    typename ::cuda::std::__accumulator_t<BinaryFunction, thrust::detail::it_value_t<InputIterator>, InitialValueType>;
 
-  using Size = ::cuda::std::iter_difference_t<InputIterator>;
+  using Size = ::cuda::std::it_difference_t<InputIterator>;
   Size n     = thrust::distance(first, last);
 
   if (n != 0)
@@ -291,7 +291,7 @@ OutputIterator exclusive_scan(
   // Use the initial value type per https://wg21.link/P0571
   using ValueType = InitialValueType;
 
-  using Size = ::cuda::std::iter_difference_t<InputIterator>;
+  using Size = ::cuda::std::it_difference_t<InputIterator>;
   Size n     = thrust::distance(first, last);
 
   if (n != 0)

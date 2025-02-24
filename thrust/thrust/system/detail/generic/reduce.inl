@@ -41,10 +41,10 @@ namespace generic
 {
 
 template <typename ExecutionPolicy, typename InputIterator>
-_CCCL_HOST_DEVICE thrust::detail::iter_value_t<InputIterator>
+_CCCL_HOST_DEVICE thrust::detail::it_value_t<InputIterator>
 reduce(thrust::execution_policy<ExecutionPolicy>& exec, InputIterator first, InputIterator last)
 {
-  using InputType = thrust::detail::iter_value_t<InputIterator>;
+  using InputType = thrust::detail::it_value_t<InputIterator>;
 
   // use InputType(0) as init by default
   return thrust::reduce(exec, first, last, InputType(0));

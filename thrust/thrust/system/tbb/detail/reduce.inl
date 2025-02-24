@@ -114,7 +114,7 @@ template <typename DerivedPolicy, typename InputIterator, typename OutputType, t
 OutputType reduce(
   execution_policy<DerivedPolicy>&, InputIterator begin, InputIterator end, OutputType init, BinaryFunction binary_op)
 {
-  using Size = ::cuda::std::iter_difference_t<InputIterator>;
+  using Size = ::cuda::std::it_difference_t<InputIterator>;
 
   Size n = thrust::distance(begin, end);
 

@@ -88,12 +88,12 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> reduce_by_key(
   BinaryPredicate binary_pred,
   BinaryFunction binary_op)
 {
-  using difference_type = ::cuda::std::iter_difference_t<InputIterator1>;
+  using difference_type = ::cuda::std::it_difference_t<InputIterator1>;
 
   using FlagType = unsigned int; // TODO use difference_type
 
   // Use the input iterator's value type per https://wg21.link/P0571
-  using ValueType = thrust::detail::iter_value_t<InputIterator2>;
+  using ValueType = thrust::detail::it_value_t<InputIterator2>;
 
   if (keys_first == keys_last)
   {
@@ -154,7 +154,7 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> reduce_by_key(
   OutputIterator1 keys_output,
   OutputIterator2 values_output)
 {
-  using KeyType = thrust::detail::iter_value_t<InputIterator1>;
+  using KeyType = thrust::detail::it_value_t<InputIterator1>;
 
   // use equal_to<KeyType> as default BinaryPredicate
   return thrust::reduce_by_key(
@@ -179,8 +179,8 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> reduce_by_key(
   using T = ::cuda::std::
 
     _If<thrust::detail::is_output_iterator<OutputIterator2>,
-        thrust::detail::iter_value_t<InputIterator2>,
-        thrust::detail::iter_value_t<OutputIterator2>>;
+        thrust::detail::it_value_t<InputIterator2>,
+        thrust::detail::it_value_t<OutputIterator2>>;
 
   // use plus<T> as default BinaryFunction
   return thrust::reduce_by_key(

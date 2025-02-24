@@ -47,7 +47,7 @@ OutputType reduce(execution_policy<DerivedPolicy>& exec,
                   OutputType init,
                   BinaryFunction binary_op)
 {
-  using difference_type = ::cuda::std::iter_difference_t<InputIterator>;
+  using difference_type = ::cuda::std::it_difference_t<InputIterator>;
 
   const difference_type n = thrust::distance(first, last);
 

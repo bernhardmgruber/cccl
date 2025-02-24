@@ -73,7 +73,7 @@ ResultIt _CCCL_HOST_DEVICE reverse_copy(execution_policy<Derived>& policy, Items
 template <class Derived, class ItemsIt>
 void _CCCL_HOST_DEVICE reverse(execution_policy<Derived>& policy, ItemsIt first, ItemsIt last)
 {
-  using difference_type = ::cuda::std::iter_difference_t<ItemsIt>;
+  using difference_type = ::cuda::std::it_difference_t<ItemsIt>;
 
   // find the midpoint of [first,last)
   difference_type N = thrust::distance(first, last);

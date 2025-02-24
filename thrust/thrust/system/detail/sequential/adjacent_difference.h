@@ -49,7 +49,7 @@ _CCCL_HOST_DEVICE OutputIterator adjacent_difference(
   OutputIterator result,
   BinaryFunction binary_op)
 {
-  using InputType = thrust::detail::iter_value_t<InputIterator>;
+  using InputType = thrust::detail::it_value_t<InputIterator>;
 
   if (first == last)
   {

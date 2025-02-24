@@ -44,8 +44,8 @@ namespace cuda_cub::core::detail
 template <class PtxPlan, class It>
 struct LoadIterator
 {
-  using value_type = thrust::detail::iter_value_t<It>;
-  using size_type  = ::cuda::std::iter_difference_t<It>;
+  using value_type = thrust::detail::it_value_t<It>;
+  using size_type  = ::cuda::std::it_difference_t<It>;
 
   using type =
     ::cuda::std::conditional_t<is_contiguous_iterator_v<It>,

@@ -100,7 +100,7 @@ _CCCL_HOST_DEVICE enable_if_convertible_t<FromSystem, ToSystem, Pointer> uniniti
   ZipIterator end   = begin;
 
   // get a zip_iterator pointing to the end
-  const ::cuda::std::iter_difference_t<InputIterator> n = thrust::distance(first, last);
+  const ::cuda::std::it_difference_t<InputIterator> n = thrust::distance(first, last);
   thrust::advance(end, n);
 
   // create a functor
