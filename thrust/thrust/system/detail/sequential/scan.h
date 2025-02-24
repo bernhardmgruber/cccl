@@ -92,8 +92,8 @@ _CCCL_HOST_DEVICE OutputIterator inclusive_scan(
 {
   using namespace thrust::detail;
 
-  using ValueType = typename ::cuda::std::
-    __accumulator_t<BinaryFunction, typename ::cuda::std::iterator_traits<InputIterator>::value_type, InitialValueType>;
+  using ValueType =
+    typename ::cuda::std::__accumulator_t<BinaryFunction, ::cuda::std::iter_value_t<InputIterator>, InitialValueType>;
 
   // wrap binary_op
   thrust::detail::wrapped_function<BinaryFunction, ValueType> wrapped_binary_op{binary_op};

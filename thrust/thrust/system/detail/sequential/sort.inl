@@ -63,7 +63,7 @@ _CCCL_HOST_DEVICE void stable_sort(
   thrust::system::detail::sequential::stable_primitive_sort(exec, first, last);
 
   // if comp is greater<T> then reverse the keys
-  using KeyType = typename ::cuda::std::iterator_traits<RandomAccessIterator>::value_type;
+  using KeyType = ::cuda::std::iter_value_t<RandomAccessIterator>;
 
   if (needs_reverse<KeyType, StrictWeakOrdering>::value)
   {
@@ -84,7 +84,7 @@ _CCCL_HOST_DEVICE void stable_sort_by_key(
   thrust::detail::true_type)
 {
   // if comp is greater<T> then reverse the keys and values
-  using KeyType = typename ::cuda::std::iterator_traits<RandomAccessIterator1>::value_type;
+  using KeyType = ::cuda::std::iter_value_t<RandomAccessIterator1>;
 
   // note, we also have to reverse the (unordered) input to preserve stability
   if (needs_reverse<KeyType, StrictWeakOrdering>::value)

@@ -41,7 +41,7 @@ namespace generic
 {
 
 template <typename ExecutionPolicy, typename InputIterator>
-_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<InputIterator>::value_type
+_CCCL_HOST_DEVICE ::cuda::std::iter_value_t<InputIterator>
 reduce(thrust::execution_policy<ExecutionPolicy>& exec, InputIterator first, InputIterator last)
 {
   using InputType = thrust::detail::iter_value_t<InputIterator>;

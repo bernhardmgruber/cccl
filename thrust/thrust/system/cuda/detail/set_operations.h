@@ -128,7 +128,7 @@ THRUST_DEVICE_FUNCTION Size biased_binary_search(It data, Size count, T key, Int
 template <bool UpperBound, class Size, class It1, class It2, class Comp>
 THRUST_DEVICE_FUNCTION Size merge_path(It1 a, Size aCount, It2 b, Size bCount, Size diag, Comp comp)
 {
-  using T = typename ::cuda::std::iterator_traits<It1>::value_type;
+  using T = ::cuda::std::iter_value_t<It1>;
 
   Size begin = ::cuda::std::max<Size>(0, diag - bCount);
   Size end   = ::cuda::std::min<Size>(diag, aCount);

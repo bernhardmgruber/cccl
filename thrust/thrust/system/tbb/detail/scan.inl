@@ -264,8 +264,8 @@ OutputIterator inclusive_scan(
   using namespace thrust::detail;
 
   // Use the input iterator's value type and the initial value type per wg21.link/p2322
-  using ValueType = typename ::cuda::std::
-    __accumulator_t<BinaryFunction, typename ::cuda::std::iterator_traits<InputIterator>::value_type, InitialValueType>;
+  using ValueType =
+    typename ::cuda::std::__accumulator_t<BinaryFunction, ::cuda::std::iter_value_t<InputIterator>, InitialValueType>;
 
   using Size = ::cuda::std::iter_difference_t<InputIterator>;
   Size n     = thrust::distance(first, last);

@@ -49,7 +49,7 @@ template <typename DerivedPolicy, typename ForwardIterator>
 _CCCL_HOST_DEVICE ForwardIterator
 unique(thrust::execution_policy<DerivedPolicy>& exec, ForwardIterator first, ForwardIterator last)
 {
-  using InputType = typename ::cuda::std::iterator_traits<ForwardIterator>::value_type;
+  using InputType = ::cuda::std::iter_value_t<ForwardIterator>;
 
   return thrust::unique(exec, first, last, thrust::equal_to<InputType>());
 } // end unique()
@@ -61,7 +61,7 @@ _CCCL_HOST_DEVICE ForwardIterator unique(
   ForwardIterator last,
   BinaryPredicate binary_pred)
 {
-  using InputType = typename ::cuda::std::iterator_traits<ForwardIterator>::value_type;
+  using InputType = ::cuda::std::iter_value_t<ForwardIterator>;
 
   thrust::detail::temporary_array<InputType, DerivedPolicy> input(exec, first, last);
 
