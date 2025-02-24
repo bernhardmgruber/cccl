@@ -63,7 +63,13 @@ template <typename It>
 using it_reference_t = typename ::cuda::std::iterator_traits<It>::reference;
 
 template <typename It>
-using it_difference_t = typename ::cuda::std::iterator_traits<It>::difference_type;
+using it_difference_t = typename
+// FIXME(bgruber): switching to ::cuda::std::iterator_traits<T> breaks some tests, e.g.,
+// thrust.test.tabulate_output_iterator
+#if _CCCL_COMPILER(NVRTC)
+  ::cuda
+#endif // _CCCL_COMPILER(NVRTC)
+  ::std::iterator_traits<It>::difference_type;
 
 template <typename It>
 using it_pointer_t = typename ::cuda::std::iterator_traits<It>::pointer;

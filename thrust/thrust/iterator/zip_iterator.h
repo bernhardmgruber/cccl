@@ -66,7 +66,7 @@ struct make_zip_iterator_base
 template <typename... Its>
 struct make_zip_iterator_base<::cuda::std::tuple<Its...>>
 {
-  // reference type is the type of the tuple obtained from the iterators' reference types.
+  // reference type is the type of the tuple obtained from the iterator's reference types.
   using reference = tuple_of_iterator_references<it_reference_t<Its>...>;
 
   // Boost's Value type is the same as reference type. using value_type = reference;
