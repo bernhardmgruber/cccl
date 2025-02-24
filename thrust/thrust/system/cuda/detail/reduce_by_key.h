@@ -963,7 +963,7 @@ pair<KeyOutputIt, ValOutputIt> _CCCL_HOST_DEVICE reduce_by_key(
   ValOutputIt values_output,
   BinaryPred binary_pred)
 {
-  using value_type = ::cuda::std::_If<thrust::detail::is_output_iterator<ValOutputIt>::value,
+  using value_type = ::cuda::std::_If<thrust::detail::is_output_iterator<ValOutputIt>,
                                       ::cuda::std::iter_value_t<ValInputIt>,
                                       ::cuda::std::iter_value_t<ValOutputIt>>;
   return cuda_cub::reduce_by_key(

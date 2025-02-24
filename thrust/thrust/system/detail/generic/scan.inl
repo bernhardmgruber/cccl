@@ -27,7 +27,6 @@
 #endif // no system header
 #include <thrust/detail/static_assert.h>
 #include <thrust/detail/type_traits.h>
-#include <thrust/detail/type_traits/iterator/is_output_iterator.h>
 #include <thrust/functional.h>
 #include <thrust/iterator/iterator_traits.h>
 #include <thrust/scan.h>

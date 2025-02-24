@@ -25,31 +25,22 @@
 #elif defined(_CCCL_IMPLICIT_SYSTEM_HEADER_MSVC)
 #  pragma system_header
 #endif // no system header
-#include <thrust/detail/type_traits.h>
-#include <thrust/detail/type_traits/is_metafunction_defined.h>
+
 #include <thrust/iterator/detail/any_assign.h>
 #include <thrust/iterator/iterator_traits.h>
+
+#include <cuda/std/type_traits>
 
 THRUST_NAMESPACE_BEGIN
 
 namespace detail
 {
-template <typename T>
-using lazy_is_void_like =
-  ::cuda::std::disjunction<::cuda::std::is_void<typename T::type>, ::cuda::std::is_same<typename T::type, any_assign>>;
+template <typename T, typename SFINAE = void>
+_CCCL_INLINE_VAR constexpr bool is_output_iterator = true;
 
-// XXX this meta function should first check that T is actually an iterator
-//
-//     if thrust::iterator_value<T> is defined and thrust::iterator_value<T>::type == void
-//       return false
-//     else
-//       return true
-// TODO(bgruber): what does this logic achieve?
 template <typename T>
-using is_output_iterator =
-  typename eval_if<is_metafunction_defined<lazy_trait<iter_value_t, T>>::value,
-                   lazy_is_void_like<lazy_trait<iter_value_t, T>>,
-                   true_type>::type;
+_CCCL_INLINE_VAR constexpr bool is_output_iterator<T, ::cuda::std::void_t<iter_value_t<T>>> =
+  ::cuda::std::is_void_v<iter_value_t<T>> || ::cuda::std::is_same_v<iter_value_t<T>, any_assign>;
 } // namespace detail
 
 THRUST_NAMESPACE_END

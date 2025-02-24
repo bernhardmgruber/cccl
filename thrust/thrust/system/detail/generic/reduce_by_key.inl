@@ -178,7 +178,7 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> reduce_by_key(
 {
   using T = ::cuda::std::
 
-    _If<thrust::detail::is_output_iterator<OutputIterator2>::value,
+    _If<thrust::detail::is_output_iterator<OutputIterator2>,
         ::cuda::std::iter_value_t<InputIterator2>,
         ::cuda::std::iter_value_t<OutputIterator2>>;
 
