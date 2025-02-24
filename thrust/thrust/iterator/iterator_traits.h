@@ -53,7 +53,17 @@ namespace detail
 {
 using ::cuda::std::iter_difference_t;
 using ::cuda::std::iter_reference_t;
-using ::cuda::std::iter_value_t;
+
+// Thrust used to support iterators with a void value_type (like std::back_insert_iterator, and others defined in the
+// tests), but std::iter_value_t does not. Retain this behavior.
+template <typename It>
+constexpr auto iter_value_t_helper(int) -> ::cuda::std::iter_value_t<It>;
+
+template <typename It>
+constexpr auto iter_value_t_helper(long) -> typename ::cuda::std::iterator_traits<It>::value_type;
+
+template <typename It>
+using iter_value_t = decltype(iter_value_t_helper<It>(0));
 
 template <typename T>
 using iter_pointer_t = typename ::cuda::std::iterator_traits<T>::pointer;

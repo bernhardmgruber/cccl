@@ -84,7 +84,7 @@ reduce_last_segment_backward(
   thrust::reverse_iterator<InputIterator1> keys_last_r(keys_first);
   thrust::reverse_iterator<InputIterator2> values_first_r(values_first + n);
 
-  ::cuda::std::iter_value_t<InputIterator1> result_key                         = *keys_first_r;
+  thrust::detail::iter_value_t<InputIterator1> result_key                      = *keys_first_r;
   typename partial_sum_type<InputIterator2, BinaryFunction>::type result_value = *values_first_r;
 
   // consume the entirety of the first key's sequence

@@ -83,7 +83,7 @@ THRUST_NAMESPACE_BEGIN
  *  \see https://en.cppreference.com/w/cpp/algorithm/accumulate
  */
 template <typename DerivedPolicy, typename InputIterator>
-_CCCL_HOST_DEVICE ::cuda::std::iter_value_t<InputIterator>
+_CCCL_HOST_DEVICE detail::iter_value_t<InputIterator>
 reduce(const thrust::detail::execution_policy_base<DerivedPolicy>& exec, InputIterator first, InputIterator last);
 
 /*! \p reduce is a generalization of summation: it computes the sum (or some
@@ -125,7 +125,7 @@ reduce(const thrust::detail::execution_policy_base<DerivedPolicy>& exec, InputIt
  *  \see https://en.cppreference.com/w/cpp/algorithm/accumulate
  */
 template <typename InputIterator>
-::cuda::std::iter_value_t<InputIterator> reduce(InputIterator first, InputIterator last);
+detail::iter_value_t<InputIterator> reduce(InputIterator first, InputIterator last);
 
 /*! \p reduce is a generalization of summation: it computes the sum (or some
  *  other binary operation) of all the elements in the range <tt>[first,

@@ -193,7 +193,7 @@ _CCCL_HOST_DEVICE void iterative_stable_merge_sort(
   RandomAccessIterator last,
   StrictWeakOrdering comp)
 {
-  using value_type      = ::cuda::std::iter_value_t<RandomAccessIterator>;
+  using value_type      = thrust::detail::iter_value_t<RandomAccessIterator>;
   using difference_type = ::cuda::std::iter_difference_t<RandomAccessIterator>;
 
   difference_type n = last - first;
@@ -237,8 +237,8 @@ _CCCL_HOST_DEVICE void iterative_stable_merge_sort_by_key(
   RandomAccessIterator2 values_first,
   StrictWeakOrdering comp)
 {
-  using value_type1     = ::cuda::std::iter_value_t<RandomAccessIterator1>;
-  using value_type2     = ::cuda::std::iter_value_t<RandomAccessIterator2>;
+  using value_type1     = thrust::detail::iter_value_t<RandomAccessIterator1>;
+  using value_type2     = thrust::detail::iter_value_t<RandomAccessIterator2>;
   using difference_type = ::cuda::std::iter_difference_t<RandomAccessIterator1>;
 
   difference_type n = keys_last - keys_first;

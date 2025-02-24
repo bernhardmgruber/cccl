@@ -144,11 +144,10 @@ constexpr bool is_trivially_relocatable_to_v = is_trivially_relocatable_to<From,
  * \see THRUST_PROCLAIM_TRIVIALLY_RELOCATABLE
  */
 template <typename FromIterator, typename ToIterator>
-using is_indirectly_trivially_relocatable_to =
-  integral_constant<bool,
-                    is_contiguous_iterator<FromIterator>::value && is_contiguous_iterator<ToIterator>::value
-                      && is_trivially_relocatable_to<::cuda::std::iter_value_t<FromIterator>,
-                                                     ::cuda::std::iter_value_t<ToIterator>>::value>;
+using is_indirectly_trivially_relocatable_to = integral_constant<
+  bool,
+  is_contiguous_iterator<FromIterator>::value && is_contiguous_iterator<ToIterator>::value
+    && is_trivially_relocatable_to<detail::iter_value_t<FromIterator>, detail::iter_value_t<ToIterator>>::value>;
 
 /*! \brief <tt>constexpr bool</tt> that is \c true if the element type of
  *  \c FromIterator is

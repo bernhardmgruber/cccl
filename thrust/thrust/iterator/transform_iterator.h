@@ -329,7 +329,7 @@ private:
     // The workaround is to create a temporary to allow iterators with wrapped/proxy references to convert to their
     // value type before calling m_f. This also loads values from a different memory space (cf. `device_reference`).
     // Note that this disallows mutable operations through m_f.
-    ::cuda::std::iter_value_t<Iterator> const& x = *this->base();
+    detail::iter_value_t<Iterator> const& x = *this->base();
     // FIXME(bgruber): x may be a reference to a temporary (e.g. if the base iterator is a counting_iterator). If `m_f`
     // does not produce an independent copy and super_t::reference is a reference, we return a dangling reference (e.g.
     // for any `[thrust|::cuda::std]::identity` functor).

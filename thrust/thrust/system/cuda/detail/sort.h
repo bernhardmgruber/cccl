@@ -347,20 +347,21 @@ template <
   class KeysIt,
   class ItemsIt,
   class CompareOp,
-  ::cuda::std::enable_if_t<!can_use_primitive_sort<::cuda::std::iter_value_t<KeysIt>, CompareOp>::value, int> = 0>
+  ::cuda::std::enable_if_t<!can_use_primitive_sort<thrust::detail::iter_value_t<KeysIt>, CompareOp>::value, int> = 0>
 THRUST_RUNTIME_FUNCTION void
 smart_sort(Policy& policy, KeysIt keys_first, KeysIt keys_last, ItemsIt items_first, CompareOp compare_op)
 {
   __merge_sort::merge_sort<SORT_ITEMS, STABLE>(policy, keys_first, keys_last, items_first, compare_op);
 }
 
-template <class SORT_ITEMS,
-          class /*STABLE*/,
-          class Policy,
-          class KeysIt,
-          class ItemsIt,
-          class CompareOp,
-          ::cuda::std::enable_if_t<can_use_primitive_sort<::cuda::std::iter_value_t<KeysIt>, CompareOp>::value, int> = 0>
+template <
+  class SORT_ITEMS,
+  class /*STABLE*/,
+  class Policy,
+  class KeysIt,
+  class ItemsIt,
+  class CompareOp,
+  ::cuda::std::enable_if_t<can_use_primitive_sort<thrust::detail::iter_value_t<KeysIt>, CompareOp>::value, int> = 0>
 THRUST_RUNTIME_FUNCTION void smart_sort(
   execution_policy<Policy>& policy, KeysIt keys_first, KeysIt keys_last, ItemsIt items_first, CompareOp compare_op)
 {

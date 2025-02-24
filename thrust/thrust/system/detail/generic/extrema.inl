@@ -173,7 +173,7 @@ _CCCL_HOST_DEVICE ForwardIterator min_element(
     return last;
   }
 
-  using InputType = ::cuda::std::iter_value_t<ForwardIterator>;
+  using InputType = thrust::detail::iter_value_t<ForwardIterator>;
   using IndexType = ::cuda::std::iter_difference_t<ForwardIterator>;
 
   thrust::tuple<InputType, IndexType> result = thrust::reduce(
@@ -204,7 +204,7 @@ _CCCL_HOST_DEVICE ForwardIterator max_element(
     return last;
   }
 
-  using InputType = ::cuda::std::iter_value_t<ForwardIterator>;
+  using InputType = thrust::detail::iter_value_t<ForwardIterator>;
   using IndexType = ::cuda::std::iter_difference_t<ForwardIterator>;
 
   thrust::tuple<InputType, IndexType> result = thrust::reduce(
@@ -235,7 +235,7 @@ _CCCL_HOST_DEVICE thrust::pair<ForwardIterator, ForwardIterator> minmax_element(
     return thrust::make_pair(last, last);
   }
 
-  using InputType = ::cuda::std::iter_value_t<ForwardIterator>;
+  using InputType = thrust::detail::iter_value_t<ForwardIterator>;
   using IndexType = ::cuda::std::iter_difference_t<ForwardIterator>;
 
   thrust::tuple<thrust::tuple<InputType, IndexType>, thrust::tuple<InputType, IndexType>> result =

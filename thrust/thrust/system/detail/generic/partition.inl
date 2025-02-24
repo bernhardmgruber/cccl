@@ -49,7 +49,7 @@ template <typename DerivedPolicy, typename ForwardIterator, typename Predicate>
 _CCCL_HOST_DEVICE ForwardIterator stable_partition(
   thrust::execution_policy<DerivedPolicy>& exec, ForwardIterator first, ForwardIterator last, Predicate pred)
 {
-  using InputType = ::cuda::std::iter_value_t<ForwardIterator>;
+  using InputType = thrust::detail::iter_value_t<ForwardIterator>;
 
   // copy input to temp buffer
   thrust::detail::temporary_array<InputType, DerivedPolicy> temp(exec, first, last);
@@ -72,7 +72,7 @@ _CCCL_HOST_DEVICE ForwardIterator stable_partition(
   InputIterator stencil,
   Predicate pred)
 {
-  using InputType = ::cuda::std::iter_value_t<ForwardIterator>;
+  using InputType = thrust::detail::iter_value_t<ForwardIterator>;
 
   // copy input to temp buffer
   thrust::detail::temporary_array<InputType, DerivedPolicy> temp(exec, first, last);

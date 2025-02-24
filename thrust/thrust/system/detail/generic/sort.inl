@@ -102,7 +102,7 @@ _CCCL_HOST_DEVICE void stable_sort_by_key(
   RandomAccessIterator1 keys_last,
   RandomAccessIterator2 values_first)
 {
-  using value_type = ::cuda::std::iter_value_t<RandomAccessIterator1>;
+  using value_type = thrust::detail::iter_value_t<RandomAccessIterator1>;
   thrust::stable_sort_by_key(exec, keys_first, keys_last, values_first, thrust::less<value_type>());
 } // end stable_sort_by_key()
 

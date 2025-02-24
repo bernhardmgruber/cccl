@@ -76,7 +76,7 @@ template <typename DerivedPolicy, typename InputIterator, typename Predicate>
 _CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator>
 count_if(thrust::execution_policy<DerivedPolicy>& exec, InputIterator first, InputIterator last, Predicate pred)
 {
-  using InputType = ::cuda::std::iter_value_t<InputIterator>;
+  using InputType = thrust::detail::iter_value_t<InputIterator>;
   using CountType = ::cuda::std::iter_difference_t<InputIterator>;
 
   thrust::system::detail::generic::count_if_transform<InputType, Predicate, CountType> unary_op(pred);
