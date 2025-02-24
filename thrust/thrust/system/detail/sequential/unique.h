@@ -89,11 +89,11 @@ _CCCL_HOST_DEVICE ForwardIterator unique(
 } // end unique()
 
 template <typename DerivedPolicy, typename ForwardIterator, typename BinaryPredicate>
-_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<ForwardIterator>::difference_type unique_count(
+_CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<ForwardIterator> unique_count(
   sequential::execution_policy<DerivedPolicy>&, ForwardIterator first, ForwardIterator last, BinaryPredicate binary_pred)
 {
   using T = typename ::cuda::std::iterator_traits<ForwardIterator>::value_type;
-  typename ::cuda::std::iterator_traits<ForwardIterator>::difference_type count{};
+  ::cuda::std::iter_difference_t<ForwardIterator> count{};
 
   if (first != last)
   {

@@ -122,7 +122,7 @@ _CCCL_HOST_DEVICE OutputIterator copy_if(
   OutputIterator result,
   Predicate pred)
 {
-  using difference_type = typename ::cuda::std::iterator_traits<InputIterator1>::difference_type;
+  using difference_type = ::cuda::std::iter_difference_t<InputIterator1>;
 
   // empty sequence
   if (first == last)

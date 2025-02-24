@@ -49,7 +49,7 @@ OutputIterator unique_copy(
   BinaryPredicate binary_pred);
 
 template <typename DerivedPolicy, typename ForwardIterator, typename BinaryPredicate>
-typename ::cuda::std::iterator_traits<ForwardIterator>::difference_type unique_count(
+::cuda::std::iter_difference_t<ForwardIterator> unique_count(
   execution_policy<DerivedPolicy>& exec, ForwardIterator first, ForwardIterator last, BinaryPredicate binary_pred);
 
 } // end namespace detail

@@ -36,14 +36,14 @@ namespace generic
 {
 
 template <typename DerivedPolicy, typename InputIterator, typename EqualityComparable>
-_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<InputIterator>::difference_type
+_CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator>
 count(thrust::execution_policy<DerivedPolicy>& exec,
       InputIterator first,
       InputIterator last,
       const EqualityComparable& value);
 
 template <typename DerivedPolicy, typename InputIterator, typename Predicate>
-_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<InputIterator>::difference_type
+_CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator>
 count_if(thrust::execution_policy<DerivedPolicy>& exec, InputIterator first, InputIterator last, Predicate pred);
 
 } // end namespace generic

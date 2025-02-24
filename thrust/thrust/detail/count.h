@@ -30,26 +30,25 @@
 THRUST_NAMESPACE_BEGIN
 
 template <typename DerivedPolicy, typename InputIterator, typename EqualityComparable>
-_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<InputIterator>::difference_type
+_CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator>
 count(const thrust::detail::execution_policy_base<DerivedPolicy>& exec,
       InputIterator first,
       InputIterator last,
       const EqualityComparable& value);
 
 template <typename DerivedPolicy, typename InputIterator, typename Predicate>
-_CCCL_HOST_DEVICE typename ::cuda::std::iterator_traits<InputIterator>::difference_type
+_CCCL_HOST_DEVICE ::cuda::std::iter_difference_t<InputIterator>
 count_if(const thrust::detail::execution_policy_base<DerivedPolicy>& exec,
          InputIterator first,
          InputIterator last,
          Predicate pred);
 
 template <typename InputIterator, typename EqualityComparable>
-typename ::cuda::std::iterator_traits<InputIterator>::difference_type
+::cuda::std::iter_difference_t<InputIterator>
 count(InputIterator first, InputIterator last, const EqualityComparable& value);
 
 template <typename InputIterator, typename Predicate>
-typename ::cuda::std::iterator_traits<InputIterator>::difference_type
-count_if(InputIterator first, InputIterator last, Predicate pred);
+::cuda::std::iter_difference_t<InputIterator> count_if(InputIterator first, InputIterator last, Predicate pred);
 
 THRUST_NAMESPACE_END
 

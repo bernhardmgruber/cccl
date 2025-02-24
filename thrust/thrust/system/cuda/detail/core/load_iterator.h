@@ -45,7 +45,7 @@ template <class PtxPlan, class It>
 struct LoadIterator
 {
   using value_type = typename ::cuda::std::iterator_traits<It>::value_type;
-  using size_type  = typename ::cuda::std::iterator_traits<It>::difference_type;
+  using size_type  = ::cuda::std::iter_difference_t<It>;
 
   using type =
     ::cuda::std::conditional_t<is_contiguous_iterator_v<It>,

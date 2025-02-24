@@ -79,7 +79,7 @@ template <typename DerivedPolicy, typename InputIterator, typename Predicate>
 _CCCL_HOST_DEVICE InputIterator
 find_if(thrust::execution_policy<DerivedPolicy>& exec, InputIterator first, InputIterator last, Predicate pred)
 {
-  using difference_type = typename ::cuda::std::iterator_traits<InputIterator>::difference_type;
+  using difference_type = ::cuda::std::iter_difference_t<InputIterator>;
   using result_type     = typename thrust::tuple<bool, difference_type>;
 
   // empty sequence

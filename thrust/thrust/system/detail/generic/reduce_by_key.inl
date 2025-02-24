@@ -88,7 +88,7 @@ _CCCL_HOST_DEVICE thrust::pair<OutputIterator1, OutputIterator2> reduce_by_key(
   BinaryPredicate binary_pred,
   BinaryFunction binary_op)
 {
-  using difference_type = typename ::cuda::std::iterator_traits<InputIterator1>::difference_type;
+  using difference_type = ::cuda::std::iter_difference_t<InputIterator1>;
 
   using FlagType = unsigned int; // TODO use difference_type
 
