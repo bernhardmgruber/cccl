@@ -149,8 +149,6 @@ template <typename Iterator>
 using iterator_difference_t
   CCCL_DEPRECATED_BECAUSE("Use cuda::std::it_difference_t instead") = typename iterator_difference<Iterator>::type;
 
-_CCCL_SUPPRESS_DEPRECATED_POP
-
 // traversal
 
 template <typename Iterator>
@@ -174,6 +172,8 @@ struct iterator_system_impl<Iterator, ::cuda::std::void_t<typename iterator_trai
     : iterator_category_to_system<typename iterator_traits<Iterator>::iterator_category>
 {};
 } // namespace detail
+
+_CCCL_SUPPRESS_DEPRECATED_POP
 
 template <typename Iterator>
 struct iterator_system : detail::iterator_system_impl<Iterator>
