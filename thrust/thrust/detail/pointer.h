@@ -48,10 +48,9 @@ template <typename Element, typename Tag, typename Reference = use_default, type
 class pointer;
 THRUST_NAMESPACE_END
 
-// Specialize `::cuda::std::iterator_traits` to avoid problems with the name of
-// pointer's constructor shadowing its nested pointer type. We do this before
-// pointer is defined so the specialization is correctly used inside the
-// definition.
+// Specialize `std::iterator_traits` (picked up by cuda::std::iterator_traits) to avoid problems with the name of
+// pointer's constructor shadowing its nested pointer type. We do this before pointer is defined so the specialization
+// is correctly used inside the definition.
 namespace std
 {
 template <typename Element, typename Tag, typename Reference, typename Derived>
