@@ -6,6 +6,9 @@
 
 #include <cuda/std/type_traits>
 
+#include <iterator>
+#include <sstream>
+
 #include <unittest/unittest.h>
 
 using namespace unittest;
@@ -455,3 +458,24 @@ void TestZipIteratorCopySoAToAoS()
   ASSERT_EQUAL_QUIET(13, get<1>(h_soa[0]));
 };
 DECLARE_UNITTEST(TestZipIteratorCopySoAToAoS);
+
+void TestZipIteratorOutputIterators(){
+  // thrust::discard_iterator (value_type == void) (see also more tests in discard_iterator.cu)
+  {auto zip = thrust::make_zip_iterator(thrust::discard_iterator<>{});
+*zip = thrust::tuple{32};
+*zip = thrust::tuple{"aaa"};
+}
+// std::back_inserter (reference == void, value_type == void)
+{
+  thrust::host_vector<int> a, b;
+  auto it_a = std::back_inserter(a);
+  auto it_b = std::back_inserter(b);
+  auto zip  = thrust::make_zip_iterator(it_a, it_b);
+  *zip      = thrust::tuple{1, 10};
+  *zip      = thrust::tuple{2, 20};
+  ASSERT_EQUAL(a, (thrust::host_vector{1, 2}));
+  ASSERT_EQUAL(b, (thrust::host_vector{10, 20}));
+}
+}
+;
+DECLARE_UNITTEST(TestZipIteratorOutputIterators);

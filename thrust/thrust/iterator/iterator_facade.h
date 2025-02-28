@@ -205,6 +205,12 @@ class iterator_core_access
   }
 
   template <typename Facade>
+  _CCCL_HOST_DEVICE static typename Facade::reference dereference(Facade& f)
+  {
+    return f.dereference();
+  }
+
+  template <typename Facade>
   _CCCL_HOST_DEVICE static void increment(Facade& f)
   {
     f.increment();
@@ -370,6 +376,11 @@ public:
    *  \return A reference to the element pointed to by this \p iterator_facade.
    */
   _CCCL_HOST_DEVICE reference operator*() const
+  {
+    return iterator_core_access::dereference(this->derived());
+  }
+
+  _CCCL_HOST_DEVICE reference operator*()
   {
     return iterator_core_access::dereference(this->derived());
   }

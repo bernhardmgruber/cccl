@@ -67,7 +67,7 @@ template <typename... Its>
 struct make_zip_iterator_base<::cuda::std::tuple<Its...>>
 {
   // reference type is the type of the tuple obtained from the iterator's reference types.
-  using reference = tuple_of_iterator_references<it_reference_t<Its>...>;
+  using reference = tuple_of_iterator_references<decltype(*::cuda::std::declval<Its>())...>;
 
   // Boost's Value type is the same as reference type. using value_type = reference;
   template <typename... ValueTypes>
@@ -86,7 +86,9 @@ struct make_zip_iterator_base<::cuda::std::tuple<Its...>>
   using value_type = typename decltype(make_value_type<it_value_t<Its>...>())::type;
 
   // Difference type is the first iterator's difference type
-  using difference_type = it_difference_t<::cuda::std::tuple_element_t<0, ::cuda::std::tuple<Its...>>>;
+  using first_it_difference_type = it_difference_t<::cuda::std::tuple_element_t<0, ::cuda::std::tuple<Its...>>>;
+  using difference_type          = ::cuda::std::
+    conditional_t<::cuda::std::is_void_v<first_it_difference_type>, ::cuda::std::ptrdiff_t, first_it_difference_type>;
 
   // Iterator system is the minimum system tag in the iterator tuple
   using system = ::cuda::std::__type_fold_left<::cuda::std::__type_list<iterator_system_t<Its>...>,
@@ -239,8 +241,20 @@ private:
     return {*::cuda::std::get<Is>(m_iterator_tuple)...};
   }
 
+  _CCCL_EXEC_CHECK_DISABLE
+  template <size_t... Is>
+  _CCCL_HOST_DEVICE typename super_t::reference dereference_impl(index_sequence<Is...>)
+  {
+    return {*::cuda::std::get<Is>(m_iterator_tuple)...};
+  }
+
   // Dereferencing returns a tuple built from the dereferenced iterators in the iterator tuple.
   _CCCL_HOST_DEVICE typename super_t::reference dereference() const
+  {
+    return dereference_impl(index_seq{});
+  }
+
+  _CCCL_HOST_DEVICE typename super_t::reference dereference()
   {
     return dereference_impl(index_seq{});
   }
