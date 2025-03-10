@@ -94,11 +94,13 @@ enum class distinct_partitions
   yes
 };
 
-template <class InputT, flagged, keep_rejects, offset_size OffsetSize, primitive, input_size InputSize>
+namespace select
+{
+template <class InputT, flagged, primitive, input_size InputSize>
 struct sm80_tuning;
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_1>
+struct sm80_tuning<Input, flagged::no, primitive::yes, input_size::_1>
 {
   static constexpr int threads                       = 992;
   static constexpr int items                         = 20;
@@ -107,7 +109,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_2>
+struct sm80_tuning<Input, flagged::no, primitive::yes, input_size::_2>
 {
   static constexpr int threads                       = 576;
   static constexpr int items                         = 14;
@@ -116,7 +118,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_4>
+struct sm80_tuning<Input, flagged::no, primitive::yes, input_size::_4>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 18;
@@ -125,7 +127,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_8>
+struct sm80_tuning<Input, flagged::no, primitive::yes, input_size::_8>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 10;
@@ -135,7 +137,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 
 #if _CCCL_HAS_INT128()
 template <>
-struct sm80_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+struct sm80_tuning<__int128_t, flagged::no, primitive::no, input_size::_16>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 4;
@@ -144,14 +146,14 @@ struct sm80_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, p
 };
 
 template <>
-struct sm80_tuning<__uint128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-    : sm80_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+struct sm80_tuning<__uint128_t, flagged::no, primitive::no, input_size::_16>
+    : sm80_tuning<__int128_t, flagged::no, primitive::no, input_size::_16>
 {};
 #endif
 
 // select::flagged
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_1>
+struct sm80_tuning<Input, flagged::yes, primitive::yes, input_size::_1>
 {
   static constexpr int threads                       = 224;
   static constexpr int items                         = 20;
@@ -160,7 +162,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_2>
+struct sm80_tuning<Input, flagged::yes, primitive::yes, input_size::_2>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 20;
@@ -169,7 +171,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_4>
+struct sm80_tuning<Input, flagged::yes, primitive::yes, input_size::_4>
 {
   static constexpr int threads                       = 320;
   static constexpr int items                         = 10;
@@ -178,7 +180,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_8>
+struct sm80_tuning<Input, flagged::yes, primitive::yes, input_size::_8>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 6;
@@ -188,7 +190,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 
 #if _CCCL_HAS_INT128()
 template <>
-struct sm80_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+struct sm80_tuning<__int128_t, flagged::yes, primitive::no, input_size::_16>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 5;
@@ -197,14 +199,20 @@ struct sm80_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, 
 };
 
 template <>
-struct sm80_tuning<__uint128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-    : sm80_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+struct sm80_tuning<__uint128_t, flagged::yes, primitive::no, input_size::_16>
+    : sm80_tuning<__int128_t, flagged::yes, primitive::no, input_size::_16>
 {};
 #endif
+} // namespace select
+
+namespace partition
+{
+template <class InputT, flagged, primitive, input_size InputSize>
+struct sm80_tuning;
 
 // partition::if
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_1>
+struct sm80_tuning<Input, flagged::no, primitive::yes, input_size::_1>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 20;
@@ -213,7 +221,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_2>
+struct sm80_tuning<Input, flagged::no, primitive::yes, input_size::_2>
 {
   static constexpr int threads                       = 224;
   static constexpr int items                         = 18;
@@ -222,7 +230,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_4>
+struct sm80_tuning<Input, flagged::no, primitive::yes, input_size::_4>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 15;
@@ -231,7 +239,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_8>
+struct sm80_tuning<Input, flagged::no, primitive::yes, input_size::_8>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 10;
@@ -241,7 +249,7 @@ struct sm80_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 
 #if _CCCL_HAS_INT128()
 template <>
-struct sm80_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+struct sm80_tuning<__int128_t, flagged::no, primitive::no, input_size::_16>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 5;
@@ -250,14 +258,14 @@ struct sm80_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, 
 };
 
 template <>
-struct sm80_tuning<__uint128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-    : sm80_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+struct sm80_tuning<__uint128_t, flagged::no, primitive::no, input_size::_16>
+    : sm80_tuning<__int128_t, flagged::no, primitive::no, input_size::_16>
 {};
 #endif
 
 // partition::flagged
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_1>
+struct sm80_tuning<Input, flagged::yes, primitive::yes, input_size::_1>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 20;
@@ -266,7 +274,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_2>
+struct sm80_tuning<Input, flagged::yes, primitive::yes, input_size::_2>
 {
   static constexpr int threads                       = 224;
   static constexpr int items                         = 18;
@@ -275,7 +283,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_4>
+struct sm80_tuning<Input, flagged::yes, primitive::yes, input_size::_4>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 12;
@@ -284,7 +292,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_8>
+struct sm80_tuning<Input, flagged::yes, primitive::yes, input_size::_8>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 12;
@@ -294,7 +302,7 @@ struct sm80_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 
 #if _CCCL_HAS_INT128()
 template <>
-struct sm80_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+struct sm80_tuning<__int128_t, flagged::yes, primitive::no, input_size::_16>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 5;
@@ -303,17 +311,19 @@ struct sm80_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4,
 };
 
 template <>
-struct sm80_tuning<__uint128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-    : sm80_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+struct sm80_tuning<__uint128_t, flagged::yes, primitive::no, input_size::_16>
+    : sm80_tuning<__int128_t, flagged::yes, primitive::no, input_size::_16>
 {};
 #endif
+} // namespace partition
 
-template <class InputT, flagged, keep_rejects, offset_size OffsetSize, primitive, input_size InputSize>
+namespace select
+{
+template <class InputT, flagged, primitive, input_size InputSize>
 struct sm90_tuning;
 
-// select::if
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_1>
+struct sm90_tuning<Input, flagged::no, primitive::yes, input_size::_1>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 22;
@@ -322,7 +332,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_2>
+struct sm90_tuning<Input, flagged::no, primitive::yes, input_size::_2>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 22;
@@ -331,7 +341,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_4>
+struct sm90_tuning<Input, flagged::no, primitive::yes, input_size::_4>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 17;
@@ -340,7 +350,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_8>
+struct sm90_tuning<Input, flagged::no, primitive::yes, input_size::_8>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 11;
@@ -350,7 +360,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::no, offset_size::_4, primit
 
 #if _CCCL_HAS_INT128()
 template <>
-struct sm90_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+struct sm90_tuning<__int128_t, flagged::no, primitive::no, input_size::_16>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 5;
@@ -359,14 +369,14 @@ struct sm90_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, p
 };
 
 template <>
-struct sm90_tuning<__uint128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-    : sm90_tuning<__int128_t, flagged::no, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+struct sm90_tuning<__uint128_t, flagged::no, primitive::no, input_size::_16>
+    : sm90_tuning<__int128_t, flagged::no, primitive::no, input_size::_16>
 {};
 #endif
 
 // select::flagged
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_1>
+struct sm90_tuning<Input, flagged::yes, primitive::yes, input_size::_1>
 {
   static constexpr int threads                       = 448;
   static constexpr int items                         = 20;
@@ -375,7 +385,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_2>
+struct sm90_tuning<Input, flagged::yes, primitive::yes, input_size::_2>
 {
   static constexpr int threads                       = 448;
   static constexpr int items                         = 20;
@@ -384,7 +394,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_4>
+struct sm90_tuning<Input, flagged::yes, primitive::yes, input_size::_4>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 15;
@@ -393,7 +403,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primitive::yes, input_size::_8>
+struct sm90_tuning<Input, flagged::yes, primitive::yes, input_size::_8>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 11;
@@ -403,7 +413,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::no, offset_size::_4, primi
 
 #if _CCCL_HAS_INT128()
 template <>
-struct sm90_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+struct sm90_tuning<__int128_t, flagged::yes, primitive::no, input_size::_16>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 3;
@@ -412,14 +422,20 @@ struct sm90_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, 
 };
 
 template <>
-struct sm90_tuning<__uint128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
-    : sm90_tuning<__int128_t, flagged::yes, keep_rejects::no, offset_size::_4, primitive::no, input_size::_16>
+struct sm90_tuning<__uint128_t, flagged::yes, primitive::no, input_size::_16>
+    : sm90_tuning<__int128_t, flagged::yes, primitive::no, input_size::_16>
 {};
 #endif
+} // namespace select
+
+namespace partition
+{
+template <class InputT, flagged, primitive, input_size InputSize>
+struct sm90_tuning;
 
 // partition::if
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_1>
+struct sm90_tuning<Input, flagged::no, primitive::yes, input_size::_1>
 {
   static constexpr int threads                       = 384;
   static constexpr int items                         = 20;
@@ -428,7 +444,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_2>
+struct sm90_tuning<Input, flagged::no, primitive::yes, input_size::_2>
 {
   static constexpr int threads                       = 320;
   static constexpr int items                         = 14;
@@ -437,7 +453,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_4>
+struct sm90_tuning<Input, flagged::no, primitive::yes, input_size::_4>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 14;
@@ -446,7 +462,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_8>
+struct sm90_tuning<Input, flagged::no, primitive::yes, input_size::_8>
 {
   static constexpr int threads                       = 128;
   static constexpr int items                         = 12;
@@ -456,7 +472,7 @@ struct sm90_tuning<Input, flagged::no, keep_rejects::yes, offset_size::_4, primi
 
 #if _CCCL_HAS_INT128()
 template <>
-struct sm90_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+struct sm90_tuning<__int128_t, flagged::no, primitive::no, input_size::_16>
 {
   static constexpr int threads                       = 192;
   static constexpr int items                         = 5;
@@ -465,14 +481,14 @@ struct sm90_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, 
 };
 
 template <>
-struct sm90_tuning<__uint128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-    : sm90_tuning<__int128_t, flagged::no, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+struct sm90_tuning<__uint128_t, flagged::no, primitive::no, input_size::_16>
+    : sm90_tuning<__int128_t, flagged::no, primitive::no, input_size::_16>
 {};
 #endif
 
 // partition::flagged
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_1>
+struct sm90_tuning<Input, flagged::yes, primitive::yes, input_size::_1>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 20;
@@ -481,7 +497,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_2>
+struct sm90_tuning<Input, flagged::yes, primitive::yes, input_size::_2>
 {
   static constexpr int threads                       = 512;
   static constexpr int items                         = 20;
@@ -490,7 +506,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_4>
+struct sm90_tuning<Input, flagged::yes, primitive::yes, input_size::_4>
 {
   static constexpr int threads                       = 256;
   static constexpr int items                         = 20;
@@ -499,7 +515,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 };
 
 template <class Input>
-struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::yes, input_size::_8>
+struct sm90_tuning<Input, flagged::yes, primitive::yes, input_size::_8>
 {
   static constexpr int threads                       = 224;
   static constexpr int items                         = 6;
@@ -509,7 +525,7 @@ struct sm90_tuning<Input, flagged::yes, keep_rejects::yes, offset_size::_4, prim
 
 #if _CCCL_HAS_INT128()
 template <>
-struct sm90_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+struct sm90_tuning<__int128_t, flagged::yes, primitive::no, input_size::_16>
 {
   static constexpr int threads                       = 160;
   static constexpr int items                         = 5;
@@ -518,10 +534,11 @@ struct sm90_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4,
 };
 
 template <>
-struct sm90_tuning<__uint128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
-    : sm90_tuning<__int128_t, flagged::yes, keep_rejects::yes, offset_size::_4, primitive::no, input_size::_16>
+struct sm90_tuning<__uint128_t, flagged::yes, primitive::no, input_size::_16>
+    : sm90_tuning<__int128_t, flagged::yes, primitive::no, input_size::_16>
 {};
 #endif
+} // namespace partition
 
 template <class InputT,
           flagged,
@@ -1530,13 +1547,14 @@ struct policy_hub
 
   struct Policy800 : ChainedPolicy<800, Policy800, Policy500>
   {
+    // before SM100, we only tuned for int32
+    using SelectTuning =
+      select::sm80_tuning<InputT, is_flagged<FlagT>(), is_primitive<InputT>(), classify_input_size<InputT>()>;
+    using PartitionTuning =
+      partition::sm80_tuning<InputT, is_flagged<FlagT>(), is_primitive<InputT>(), classify_input_size<InputT>()>;
     using SelectIfPolicyT =
-      decltype(select_agent_policy<sm80_tuning<InputT,
-                                               is_flagged<FlagT>(),
-                                               are_rejects_kept<keep_rejects>(),
-                                               offset_size::_4, // before SM100, we only tuned for int32
-                                               is_primitive<InputT>(),
-                                               classify_input_size<InputT>()>>(0));
+      decltype(select_agent_policy<
+               ::cuda::std::_If<SelectionOpt == SelectImpl::Partition, PartitionTuning, SelectTuning>>(0));
   };
 
   struct Policy860
@@ -1546,13 +1564,14 @@ struct policy_hub
 
   struct Policy900 : ChainedPolicy<900, Policy900, Policy860>
   {
+    // before SM100, we only tuned for int32
+    using SelectTuning =
+      select::sm90_tuning<InputT, is_flagged<FlagT>(), is_primitive<InputT>(), classify_input_size<InputT>()>;
+    using PartitionTuning =
+      partition::sm90_tuning<InputT, is_flagged<FlagT>(), is_primitive<InputT>(), classify_input_size<InputT>()>;
     using SelectIfPolicyT =
-      decltype(select_agent_policy<sm90_tuning<InputT,
-                                               is_flagged<FlagT>(),
-                                               are_rejects_kept<keep_rejects>(),
-                                               offset_size::_4, // before SM100, we only tuned for int32
-                                               is_primitive<InputT>(),
-                                               classify_input_size<InputT>()>>(0));
+      decltype(select_agent_policy<
+               ::cuda::std::_If<SelectionOpt == SelectImpl::Partition, PartitionTuning, SelectTuning>>(0));
   };
 
   struct Policy1000 : ChainedPolicy<1000, Policy1000, Policy900>
