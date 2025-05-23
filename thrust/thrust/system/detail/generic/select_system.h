@@ -46,39 +46,35 @@ template <typename... Tags>
 inline constexpr bool
   select_system_exists<::cuda::std::void_t<decltype(select_system(::cuda::std::declval<Tags>()...))>, Tags...> = true;
 
-template <typename System, ::cuda::std::enable_if_t<!select_system_exists<System>, int> = 0>
-_CCCL_HOST_DEVICE auto select_system(thrust::execution_policy<System>& system) -> System&
-{
-  return thrust::detail::derived_cast(system);
-}
-
-template <typename System1, typename System2>
+template <typename System1,
+          typename... Systems,
+          ::cuda::std::enable_if_t<!select_system_exists<System1, Systems...>, int> = 0>
 _CCCL_HOST_DEVICE auto
-select_system(thrust::execution_policy<System1>& system1, thrust::execution_policy<System2>& system2)
-  -> thrust::detail::minimum_system_t<System1, System2>&
+select_system(thrust::execution_policy<System1>& system1, thrust::execution_policy<Systems>&... systems)
+  -> thrust::detail::minimum_system_t<System1, Systems...>
 {
-  if constexpr (::cuda::std::is_same_v<System1, System2>
-                || ::cuda::std::is_same_v<System1, thrust::detail::minimum_system_t<System1, System2>>)
+  if constexpr (sizeof...(Systems) == 0)
   {
     return thrust::detail::derived_cast(system1);
   }
+  else if constexpr (sizeof...(Systems) == 1)
+  {
+    // Some glorious hacks to make it work with 2 systems
+    if constexpr ((::cuda::std::is_same_v<System1, Systems> && ...)
+                  || (::cuda::std::is_same_v<System1, thrust::detail::minimum_system_t<System1, Systems>> && ...))
+    {
+      return thrust::detail::derived_cast(system1);
+    }
+    else
+    {
+      static_assert((::cuda::std::is_same_v<Systems, thrust::detail::minimum_system_t<System1, Systems>> && ...));
+      return thrust::detail::derived_cast(systems...);
+    }
+  }
   else
   {
-    static_assert(::cuda::std::is_same_v<System2, thrust::detail::minimum_system_t<System1, System2>>);
-    return thrust::detail::derived_cast(system2);
+    return select_system(system1, select_system(systems...));
   }
-}
-
-template <typename System1,
-          typename System2,
-          typename... Systems,
-          ::cuda::std::enable_if_t<!select_system_exists<Systems...>, int> = 0>
-_CCCL_HOST_DEVICE auto select_system(
-  thrust::execution_policy<System1>& system1,
-  thrust::execution_policy<System2>& system2,
-  thrust::execution_policy<Systems>&... systems) -> thrust::detail::minimum_system_t<System1, System2, Systems...>
-{
-  return select_system(select_system(system1, system2), systems...);
 }
 
 // Map a single any_system_tag to device_system_tag.
