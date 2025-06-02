@@ -270,6 +270,7 @@ struct dispatch_t<StableAddress,
       kernel,
       num_items,
       elem_per_thread,
+      false,
       op,
       THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(out),
       make_aligned_base_ptr_kernel_arg(
@@ -316,28 +317,43 @@ struct dispatch_t<StableAddress,
       return config.error();
     }
 
+    auto can_vectorize = false;
+    // the policy already handles the compile-time checks if we can vectorize. Do the remaining alignment check here
+    if constexpr (Algorithm::vectorized == policy.GetAlgorithm())
+    {
+      const int alignment     = policy.LoadStoreWordSize();
+      auto is_pointer_aligned = [&](auto it) {
+        return reinterpret_cast<::cuda::std::uintptr_t>(THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(it))
+               % alignment
+            == 0;
+      };
+      can_vectorize = (is_pointer_aligned(::cuda::std::get<Is>(in)) && ...) && is_pointer_aligned(out);
+    }
+
     const int ipt = [&] {
       if constexpr (Algorithm::vectorized == policy.GetAlgorithm())
       {
-        return policy.ItemsPerThreadVectorized();
+        if (can_vectorize)
+        {
+          return policy.ItemsPerThreadVectorized();
+        }
       }
-      else
-      {
-        auto loaded_bytes_per_iter = kernel_source.LoadedBytesPerIteration();
-        // choose items per thread to reach minimum bytes in flight
-        const int items_per_thread =
-          loaded_bytes_per_iter == 0
-            ? +policy.ItemsPerThreadNoInput()
-            : ::cuda::ceil_div(policy.min_bif, config->max_occupancy * block_dim * loaded_bytes_per_iter);
+      // otherwise, setup the prefetch kernel
 
-        // but also generate enough blocks for full occupancy to optimize small problem sizes, e.g., 2^16 or 2^20
-        // elements
-        const int items_per_thread_evenly_spread = static_cast<int>((::cuda::std::min)(
-          Offset{items_per_thread}, num_items / (config->sm_count * block_dim * config->max_occupancy)));
-        const int items_per_thread_clamped =
-          ::cuda::std::clamp(items_per_thread_evenly_spread, +policy.MinItemsPerThread(), +policy.MaxItemsPerThread());
-        return items_per_thread_clamped;
-      }
+      auto loaded_bytes_per_iter = kernel_source.LoadedBytesPerIteration();
+      // choose items per thread to reach minimum bytes in flight
+      const int items_per_thread =
+        loaded_bytes_per_iter == 0
+          ? +policy.ItemsPerThreadNoInput()
+          : ::cuda::ceil_div(policy.min_bif, config->max_occupancy * block_dim * loaded_bytes_per_iter);
+
+      // but also generate enough blocks for full occupancy to optimize small problem sizes, e.g., 2^16 or 2^20
+      // elements
+      const int items_per_thread_evenly_spread = static_cast<int>((::cuda::std::min)(
+        Offset{items_per_thread}, num_items / (config->sm_count * block_dim * config->max_occupancy)));
+      const int items_per_thread_clamped =
+        ::cuda::std::clamp(items_per_thread_evenly_spread, +policy.MinItemsPerThread(), +policy.MaxItemsPerThread());
+      return items_per_thread_clamped;
     }();
     const int tile_size = block_dim * ipt;
     const auto grid_dim = static_cast<unsigned int>(::cuda::ceil_div(num_items, Offset{tile_size}));
@@ -346,6 +362,7 @@ struct dispatch_t<StableAddress,
         .doit(kernel_source.TransformKernel(),
               num_items,
               ipt,
+              can_vectorize,
               op,
               THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(out),
               kernel_source.MakeIteratorKernelArg(

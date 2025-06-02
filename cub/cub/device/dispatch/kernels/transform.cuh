@@ -87,6 +87,7 @@ _CCCL_DEVICE void transform_kernel_impl(
   ::cuda::std::integral_constant<Algorithm, Algorithm::prefetch>,
   Offset num_items,
   int num_elem_per_thread,
+  bool /*can_vectorize*/,
   F f,
   RandomAccessIteratorOut out,
   RandomAccessIteratorIn... ins)
@@ -155,11 +156,26 @@ template <typename VectorizedPolicy,
 _CCCL_DEVICE void transform_kernel_impl(
   ::cuda::std::integral_constant<Algorithm, Algorithm::vectorized>,
   Offset num_items,
-  int /*num_elem_per_thread*/,
+  int num_elem_per_thread,
+  bool can_vectorize,
   F f,
   RandomAccessIteratorOut out,
   RandomAccessIteratorIn... ins)
 {
+  if (!can_vectorize)
+  {
+    // if we cannot vectorize, fall back to prefetch kernel
+    transform_kernel_impl<VectorizedPolicy>(
+      ::cuda::std::integral_constant<Algorithm, Algorithm::prefetch>{},
+      num_items,
+      num_elem_per_thread,
+      can_vectorize,
+      ::cuda::std::move(f),
+      ::cuda::std::move(out),
+      ::cuda::std::move(ins)...);
+    return;
+  }
+
   static_assert((::cuda::std::contiguous_iterator<RandomAccessIteratorIn> && ...));
   static_assert(::cuda::std::contiguous_iterator<RandomAccessIteratorOut>);
 
@@ -448,6 +464,7 @@ _CCCL_DEVICE void transform_kernel_impl(
   ::cuda::std::integral_constant<Algorithm, Algorithm::ublkcp>,
   Offset num_items,
   int num_elem_per_thread,
+  bool /*can_vectorize*/,
   F f,
   RandomAccessIteratorOut out,
   aligned_base_ptr<InTs>... aligned_ptrs)
@@ -535,6 +552,7 @@ __launch_bounds__(MaxPolicy::ActivePolicy::algo_policy::block_threads)
   CUB_DETAIL_KERNEL_ATTRIBUTES void transform_kernel(
     Offset num_items,
     int num_elem_per_thread,
+    bool can_vectorize,
     F f,
     RandomAccessIteratorOut out,
     kernel_arg<RandomAccessIteartorsIn>... ins)
@@ -544,6 +562,7 @@ __launch_bounds__(MaxPolicy::ActivePolicy::algo_policy::block_threads)
     alg,
     num_items,
     num_elem_per_thread,
+    can_vectorize,
     ::cuda::std::move(f),
     ::cuda::std::move(out),
     select_kernel_arg(alg, ::cuda::std::move(ins))...);

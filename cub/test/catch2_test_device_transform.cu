@@ -265,7 +265,6 @@ C2H_TEST("DeviceTransform::Transform overaligned type", "[device][device_transfo
 }
 
 // TODO(bgruber): re-enable once the vectorized implementation can support this
-#if 0
 C2H_TEST("DeviceTransform::Transform huge type", "[device][device_transform]")
 {
   using huge_t = c2h::custom_type_t<c2h::equal_comparable_t, c2h::accumulateable_t, c2h::huge_data<666>::type>;
@@ -287,7 +286,6 @@ C2H_TEST("DeviceTransform::Transform huge type", "[device][device_transform]")
   std::transform(a_h.begin(), a_h.end(), b_h.begin(), reference_h.begin(), std::plus<huge_t>{});
   REQUIRE(result == reference_h);
 }
-#endif
 
 struct times_seven
 {
@@ -583,8 +581,8 @@ C2H_TEST("DeviceTransform::Transform buffer start alignment",
 {
   using type = typename c2h::get<0, TestType>;
 
-  constexpr int num_items = 1000;
-  const int offset        = GENERATE(1, 2, 4, 8, 16, 32, 64, 128); // global memory is always at least 256 byte aligned
+  const int num_items = GENERATE(100, 100'000); // hit non-full tile and full tile code paths
+  const int offset    = GENERATE(1, 2, 4, 8, 16, 32, 64, 128); // global memory is always at least 256 byte aligned
   CAPTURE(c2h::type_name<type>(), offset);
   c2h::device_vector<type> input(num_items);
   thrust::sequence(input.begin(), input.end());
