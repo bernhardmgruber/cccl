@@ -130,20 +130,37 @@ _CCCL_DEVICE void transform_kernel_impl(
 }
 
 template <int Length>
-using load_store_t = ::cuda::std::_If<
-  Length == 1,
-  int8_t,
-  ::cuda::std::_If<
-    Length == 2,
-    int16_t,
-    ::cuda::std::_If<
-      Length == 4,
-      int32_t,
-      ::cuda::std::_If<
-        Length == 8,
-        int64_t,
-        ::cuda::std::
-          _If<Length == 16, int4, ::cuda::std::_If<Length == 32, longlong4, ::cuda::std::array<char, Length>>>>>>>;
+_CCCL_CONSTEVAL auto load_store_type()
+{
+  if constexpr (Length == 1)
+  {
+    return ::cuda::std::int8_t{};
+  }
+  else if constexpr (Length == 2)
+  {
+    return ::cuda::std::int16_t{};
+  }
+  else if constexpr (Length == 4)
+  {
+    return ::cuda::std::int32_t{};
+  }
+  else if constexpr (Length == 8)
+  {
+    return ::cuda::std::int64_t{};
+  }
+  else if constexpr (Length == 16)
+  {
+    return ::cuda::std::int4{};
+  }
+  else if constexpr (Length == 32)
+  {
+    return ::cuda::std::longlong4{};
+  }
+  else
+  {
+    return ::cuda::std::array<char, Length>{};
+  }
+}
 
 template <typename VectorizedPolicy,
           typename Offset,
@@ -188,7 +205,7 @@ _CCCL_DEVICE void transform_kernel_impl(
   }
 
   constexpr int load_store_word_size = VectorizedPolicy::load_store_word_size;
-  using load_store_t                 = load_store_t<load_store_word_size>;
+  using load_store_t                 = decltype(load_store_type<load_store_word_size>());
 
   auto provide_array = [&](auto... inputs) {
     // load inputs

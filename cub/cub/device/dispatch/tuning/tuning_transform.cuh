@@ -56,9 +56,7 @@
 
 CUB_NAMESPACE_BEGIN
 
-namespace detail
-{
-namespace transform
+namespace detail::transform
 {
 enum class Algorithm
 {
@@ -292,7 +290,6 @@ struct policy_hub<RequiresStableAddress, ::cuda::std::tuple<RandomAccessIterator
 #endif // _CUB_HAS_TRANSFORM_UBLKCP
 };
 
-} // namespace transform
-} // namespace detail
+} // namespace detail::transform
 
 CUB_NAMESPACE_END
