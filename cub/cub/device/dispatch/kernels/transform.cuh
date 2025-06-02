@@ -24,6 +24,7 @@
 
 #include <cuda/ptx>
 #include <cuda/std/bit>
+#include <cuda/std/cstdint>
 #include <cuda/std/expected>
 
 // cooperative groups do not support NVHPC yet
@@ -150,11 +151,11 @@ _CCCL_CONSTEVAL auto load_store_type()
   }
   else if constexpr (Length == 16)
   {
-    return ::cuda::std::int4{};
+    return int4{};
   }
   else if constexpr (Length == 32)
   {
-    return ::cuda::std::longlong4{};
+    return longlong4{};
   }
   else
   {
