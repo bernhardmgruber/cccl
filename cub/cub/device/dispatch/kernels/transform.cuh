@@ -131,7 +131,7 @@ _CCCL_DEVICE void transform_kernel_impl(
 }
 
 template <int Length>
-_CCCL_CONSTEVAL auto load_store_type()
+_CCCL_HOST_DEVICE _CCCL_CONSTEVAL auto load_store_type()
 {
   if constexpr (Length == 1)
   {
