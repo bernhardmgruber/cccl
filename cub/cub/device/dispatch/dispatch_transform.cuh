@@ -323,9 +323,16 @@ struct dispatch_t<StableAddress,
     {
       const int alignment     = policy.LoadStoreWordSize();
       auto is_pointer_aligned = [&](auto it) {
-        return reinterpret_cast<::cuda::std::uintptr_t>(THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(it))
-               % alignment
-            == 0;
+        if constexpr (THRUST_NS_QUALIFIER::is_contiguous_iterator_v<decltype(it)>)
+        {
+          return reinterpret_cast<::cuda::std::uintptr_t>(THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(it))
+                 % alignment
+              == 0;
+        }
+        else
+        {
+          return true; // fancy iterators are aligned, since the vectorized kernel chooses a different code path
+        }
       };
       can_vectorize = (is_pointer_aligned(::cuda::std::get<Is>(in)) && ...) && is_pointer_aligned(out);
     }

@@ -440,18 +440,7 @@ C2H_TEST("DeviceTransform::Transform fancy input iterator types", "[device][devi
   REQUIRE(reference_h == result);
 }
 
-// TODO(bgruber): implement fancy output iterator support for vectorized kernel and re-enable this test
-using fancy_out_algorithms =
-  c2h::enum_type_list<Algorithm,
-                      Algorithm::prefetch
-// , Algorithm::vectorized,
-#ifdef _CUB_HAS_TRANSFORM_UBLKCP
-                      ,
-                      Algorithm::ublkcp
-#endif // _CUB_HAS_TRANSFORM_UBLKCP
-                      >;
-
-C2H_TEST("DeviceTransform::Transform fancy output iterator type", "[device][device_transform]", fancy_out_algorithms)
+C2H_TEST("DeviceTransform::Transform fancy output iterator type", "[device][device_transform]", algorithms)
 {
   using type         = int;
   using offset_t     = int;
