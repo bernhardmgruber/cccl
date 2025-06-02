@@ -388,7 +388,9 @@ struct dispatch_t<StableAddress,
     }
     else
 #endif // _CUB_HAS_TRANSFORM_UBLKCP
+    {
       return invoke_prefetch_or_vectorized_algorithm(seq, wrapped_policy);
+    }
   }
 
   template <typename MaxPolicyT = typename PolicyHub::max_policy>
