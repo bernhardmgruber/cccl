@@ -342,7 +342,7 @@ struct dispatch_t<StableAddress,
       {
         if (can_vectorize)
         {
-          return policy.ItemsPerThreadVectorized();
+          return policy.ItemsPerThread();
         }
       }
       // otherwise, setup the prefetch kernel

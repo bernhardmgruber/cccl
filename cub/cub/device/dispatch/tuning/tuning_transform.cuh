@@ -95,7 +95,6 @@ struct async_copy_policy_t
 template <int BlockThreads, int ItemsPerThread, int LoadStoreWordSize>
 struct vectorized_policy_t : prefetch_policy_t<BlockThreads>
 {
-  // static constexpr int block_threads        = BlockThreads;
   static constexpr int items_per_thread     = ItemsPerThread;
   static constexpr int load_store_word_size = LoadStoreWordSize;
 };
@@ -200,7 +199,7 @@ struct TransformPolicyWrapper<StaticPolicyT, ::cuda::std::void_t<decltype(Static
   }
 
   template <typename = void>
-  _CCCL_HOST_DEVICE static constexpr int ItemsPerThreadVectorized()
+  _CCCL_HOST_DEVICE static constexpr int ItemsPerThread()
   {
     return StaticPolicyT::algo_policy::items_per_thread;
   }
