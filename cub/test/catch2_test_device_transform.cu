@@ -39,7 +39,7 @@ struct policy_hub_for_alg
       ::cuda::std::_If<Alg == Algorithm::prefetch,
                        cub::detail::transform::prefetch_policy_t<256>,
                        ::cuda::std::_If<Alg == Algorithm::vectorized,
-                                        cub::detail::transform::vectorized_policy_t<256>,
+                                        cub::detail::transform::vectorized_policy_t<256, 8, 8>,
                                         cub::detail::transform::async_copy_policy_t<256, 128>>>;
   };
 };

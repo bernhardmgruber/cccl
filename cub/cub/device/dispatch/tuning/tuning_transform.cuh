@@ -92,13 +92,12 @@ struct async_copy_policy_t
   static constexpr int bulk_copy_alignment = BulkCopyAlignment;
 };
 
-template <int BlockThreads, int Size1, int... Sizes>
+template <int BlockThreads, int ItemsPerThread, int LoadStoreWordSize>
 struct vectorized_policy_t
 {
-  static constexpr int block_threads    = BlockThreads;
-  static constexpr int items_per_thread = 32 / Size1; // TODO(bgruber): we should specify vectors per thread, not items
-  static constexpr int vector_load_length = ::cuda::std::max(8 / Size1, 1); // How many elements in single load
-                                                                            // instruction
+  static constexpr int block_threads        = BlockThreads;
+  static constexpr int items_per_thread     = ItemsPerThread;
+  static constexpr int load_store_word_size = LoadStoreWordSize;
 };
 
 // mult must be a power of 2
@@ -206,9 +205,9 @@ struct TransformPolicyWrapper<StaticPolicyT, ::cuda::std::void_t<decltype(Static
     return StaticPolicyT::algo_policy::items_per_thread;
   }
 
-  _CCCL_HOST_DEVICE static constexpr int VectorLoadLength()
+  _CCCL_HOST_DEVICE static constexpr int LoadStoreWordSize()
   {
-    return StaticPolicyT::algo_policy::vector_load_length;
+    return StaticPolicyT::algo_policy::load_store_word_size;
   }
 };
 
@@ -232,8 +231,17 @@ struct policy_hub<RequiresStableAddress, ::cuda::std::tuple<RandomAccessIterator
     ::cuda::std::conjunction_v<THRUST_NS_QUALIFIER::is_contiguous_iterator<RandomAccessIteratorsIn>...>;
   static constexpr bool all_values_trivially_reloc =
     ::cuda::std::conjunction_v<THRUST_NS_QUALIFIER::is_trivially_relocatable<it_value_t<RandomAccessIteratorsIn>>...>;
-
   static constexpr bool can_memcpy = all_contiguous && all_values_trivially_reloc;
+
+  // for vectorized policy:
+  static constexpr int load_store_word_size = 8;
+  // static constexpr int NOMINAL_4B_ITEMS_PER_THREAD = 16;
+  // static constexpr int loaded_bytes_per_item       = (sizeof(it_value_t<RandomAccessIteratorsIn>) + ... + 0);
+  // // use register bound scaling
+  // static constexpr int items_per_thread =
+  //   ::cuda::std::max(1, NOMINAL_4B_ITEMS_PER_THREAD * 4 / ::cuda::std::max(4, loaded_bytes_per_item));
+  static constexpr int items_per_thread = 16;
+  using default_vectorized_policy_t     = vectorized_policy_t<256, items_per_thread, load_store_word_size>;
 
   // TODO(bgruber): consider a separate kernel for just filling
 
@@ -243,10 +251,7 @@ struct policy_hub<RequiresStableAddress, ::cuda::std::tuple<RandomAccessIterator
     static constexpr bool use_fallback = RequiresStableAddress || !can_memcpy;
     // TODO(bgruber): we don't need algo, because we can just detect the type of algo_policy
     static constexpr auto algorithm = use_fallback ? Algorithm::prefetch : Algorithm::vectorized;
-    using algo_policy =
-      ::cuda::std::_If<use_fallback,
-                       prefetch_policy_t<256>,
-                       vectorized_policy_t<256, sizeof(it_value_t<RandomAccessIteratorsIn>)...>>;
+    using algo_policy = ::cuda::std::_If<use_fallback, prefetch_policy_t<256>, default_vectorized_policy_t>;
   };
 
 #ifdef _CUB_HAS_TRANSFORM_UBLKCP

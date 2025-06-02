@@ -128,22 +128,21 @@ _CCCL_DEVICE void transform_kernel_impl(
   }
 }
 
-template <typename T, int LoadLength>
-using vector_type = ::cuda::std::_If<
-  sizeof(T) * LoadLength == 1,
+template <int Length>
+using load_store_t = ::cuda::std::_If<
+  Length == 1,
   int8_t,
   ::cuda::std::_If<
-    sizeof(T) * LoadLength == 2,
+    Length == 2,
     int16_t,
     ::cuda::std::_If<
-      sizeof(T) * LoadLength == 4,
+      Length == 4,
       int32_t,
       ::cuda::std::_If<
-        sizeof(T) * LoadLength == 8,
+        Length == 8,
         int64_t,
-        ::cuda::std::_If<sizeof(T) * LoadLength == 16,
-                         int4,
-                         ::cuda::std::_If<sizeof(T) * LoadLength == 32, longlong4, ::cuda::std::array<T, LoadLength>>>>>>>;
+        ::cuda::std::
+          _If<Length == 16, int4, ::cuda::std::_If<Length == 32, longlong4, ::cuda::std::array<char, Length>>>>>>>;
 
 // This kernel guarantees that objects passed as arguments to the user-provided transformation function f reside in
 // global memory. No intermediate copies are taken. If the parameter type of f is a reference, taking the address of
@@ -183,27 +182,22 @@ _CCCL_DEVICE void transform_kernel_impl(
 
   if (tile_size == tile_stride)
   {
-    constexpr int vector_load_length = VectorizedPolicy::vector_load_length;
-    static_assert(items_per_thread % vector_load_length == 0);
-    constexpr int vectors_per_thread = items_per_thread / vector_load_length;
+    constexpr int load_store_word_size = VectorizedPolicy::load_store_word_size;
+    using load_store_t                 = load_store_t<load_store_word_size>;
 
     auto provide_array = [&](auto... inputs) {
       // load inputs
       auto load_tile_vectorized = [&](auto in, auto& input) {
-        // TODO(bgruber): assert tile size has to be multiple of items per vector
-
         using input_t = it_value_t<decltype(in)>;
-        // using input_vector_t = typename CubVector<input_t, vector_load_length>::Type;
-        // using input_vector_t = uint64_t;
-        using input_vector_t = vector_type<input_t, vector_load_length>;
-        auto in_vec          = reinterpret_cast<const input_vector_t*>(in);
-        auto input_vec       = reinterpret_cast<input_vector_t*>(input.data());
+        static_assert((items_per_thread * sizeof(input_t)) % load_store_word_size == 0);
+        constexpr int loads = (items_per_thread * sizeof(input_t)) / load_store_word_size;
 
+        auto in_vec    = reinterpret_cast<const load_store_t*>(in);
+        auto input_vec = reinterpret_cast<load_store_t*>(input.data());
         _CCCL_PRAGMA_UNROLL_FULL()
-        for (int vec_idx = 0; vec_idx < vectors_per_thread; ++vec_idx)
+        for (int i = 0; i < loads; ++i)
         {
-          // need to see LDG.64 (4 elements)
-          input_vec[vec_idx] = in_vec[vec_idx * VectorizedPolicy::block_threads + threadIdx.x];
+          input_vec[i] = in_vec[i * VectorizedPolicy::block_threads + threadIdx.x];
         }
       };
       (load_tile_vectorized(ins, inputs), ...);
@@ -219,16 +213,17 @@ _CCCL_DEVICE void transform_kernel_impl(
 
       // write output
       // TODO(bgruber): dispatch whether we can vectorize writing here
-      using output_vector_t = vector_type<output_t, vector_load_length>;
-      // using output_vector_t = uint64_t;
-      auto output_vec = reinterpret_cast<const output_vector_t*>(output.data());
-      auto out_vec    = reinterpret_cast<output_vector_t*>(out);
+      static_assert((items_per_thread * sizeof(output_t)) % load_store_word_size == 0);
+      constexpr int stores = (items_per_thread * sizeof(output_t)) / load_store_word_size;
+
+      auto output_vec = reinterpret_cast<const load_store_t*>(output.data());
+      auto out_vec    = reinterpret_cast<load_store_t*>(out);
 
       _CCCL_PRAGMA_UNROLL_FULL()
-      for (int vec_idx = 0; vec_idx < vectors_per_thread; ++vec_idx)
+      for (int i = 0; i < stores; ++i)
       {
         // need to see LDG.64 (4 elements)
-        out_vec[vec_idx * VectorizedPolicy::block_threads + threadIdx.x] = output_vec[vec_idx];
+        out_vec[i * VectorizedPolicy::block_threads + threadIdx.x] = output_vec[i];
       }
     };
     provide_array(::cuda::std::array<it_value_t<RandomAccessIteratorIn>, items_per_thread>{}...);
