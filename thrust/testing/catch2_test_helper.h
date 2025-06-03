@@ -4,6 +4,8 @@
 #include <thrust/host_vector.h>
 #include <thrust/universal_vector.h>
 
+#include <vector>
+
 #include "unittest/testframework.h"
 #include <catch2/catch_template_test_macros.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -52,6 +54,57 @@ using vector_list = cuda::std::__type_list<
   thrust::universal_vector<int>,
   thrust::universal_host_pinned_vector<int>>;
 
+// corresponds to DECLARE_INTEGRAL_VECTOR_UNITTEST
+using integral_vector_list = cuda::std::__type_list<
+  // host
+  thrust::host_vector<signed char>,
+  thrust::host_vector<short>,
+  thrust::host_vector<int>,
+  // device
+  thrust::device_vector<signed char>,
+  thrust::device_vector<short>,
+  thrust::device_vector<int>,
+  // universal
+  thrust::universal_vector<int>,
+  thrust::universal_host_pinned_vector<int>>;
+
 // corresponds to DECLARE_VARIABLE_UNITTEST
 using variable_list =
   cuda::std::__type_list<signed char, unsigned char, short, unsigned short, int, unsigned int, float, double>;
+
+// same as in C2H
+namespace detail
+{
+template <class T>
+std::vector<T> to_vec(thrust::device_vector<T> const& vec)
+{
+  thrust::host_vector<T> temp = vec;
+  return std::vector<T>{temp.begin(), temp.end()};
+}
+
+template <class T>
+std::vector<T> to_vec(thrust::host_vector<T> const& vec)
+{
+  return std::vector<T>{vec.begin(), vec.end()};
+}
+
+template <class T>
+std::vector<T> to_vec(std::vector<T> const& vec)
+{
+  return vec;
+}
+} // namespace detail
+
+#define REQUIRE_APPROX_EQ(ref, out)                          \
+  {                                                          \
+    auto vec_ref = detail::to_vec(ref);                      \
+    auto vec_out = detail::to_vec(out);                      \
+    REQUIRE_THAT(vec_ref, Catch::Matchers::Approx(vec_out)); \
+  }
+
+#define CHECK_APPROX_EQ(ref, out)                          \
+  {                                                        \
+    auto vec_ref = detail::to_vec(ref);                    \
+    auto vec_out = detail::to_vec(out);                    \
+    CHECK_THAT(vec_ref, Catch::Matchers::Approx(vec_out)); \
+  }
