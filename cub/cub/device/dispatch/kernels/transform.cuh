@@ -20,7 +20,7 @@
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
 #if _CCCL_DEVICE_COMPILATION() && _CCCL_PTX_ARCH() >= 900 && !_CCCL_CUDA_COMPILER(NVHPC)
-#  include <cuda/pipeline>
+#  include <cuda/barrier>
 #endif
 #include <cuda/ptx>
 #include <cuda/std/bit>
@@ -223,6 +223,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
   constexpr int bulk_copy_alignment = BulkCopyPolicy::bulk_copy_alignment;
 
   __shared__ uint64_t bar;
+  __shared__ cuda::barrier<cuda::thread_scope_system> bar2;
   extern __shared__ char __align__(bulk_copy_alignment) smem[];
 
   namespace ptx = ::cuda::ptx;
@@ -284,7 +285,9 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
       NV_PROVIDES_SM_90,
       (
         // use all threads to schedule an async_memcpy
-        int smem_offset = 0; auto pipe = cuda::make_pipeline();
+        int smem_offset = 0;
+
+        if (elect_one()) { init(&bar2, 1); } __syncthreads();
 
         auto bulk_copy_tile_fallback =
           [&](auto aligned_ptr) {
@@ -295,20 +298,16 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
             _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0, "");
 
             const int bytes_to_copy = static_cast<int>(sizeof(T)) * tile_size;
-            cuda::memcpy_async(this_thread_block(), dst, src, bytes_to_copy, pipe);
+            cuda::memcpy_async(this_thread_block(), dst, src, bytes_to_copy, bar2);
 
             // add bulk_copy_alignment to make space for the next tile's head padding
             smem_offset += static_cast<int>(sizeof(T)) * tile_stride + bulk_copy_alignment;
           };
 
-        pipe.producer_acquire();
         // Order of evaluation is left-to-right
         (..., bulk_copy_tile_fallback(aligned_ptrs));
-        pipe.producer_commit();
 
-        pipe.consumer_wait();
-        __syncthreads();
-        pipe.consumer_release();))
+        bar2.arrive_and_wait();))
   }
 
   // move the whole index and iterator to the block/thread index, to reduce arithmetic in the loops below
