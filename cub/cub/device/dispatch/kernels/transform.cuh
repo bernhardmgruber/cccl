@@ -20,6 +20,8 @@
 #include <thrust/type_traits/is_contiguous_iterator.h>
 
 #include <cuda/__barrier/aligned_size.h> // cannot include <cuda/barrier> directly on CUDA_ARCH < 700
+#include <cuda/pipeline>
+// #include <cuda/barrier>
 #include <cuda/ptx>
 #include <cuda/std/bit>
 #include <cuda/std/expected>
@@ -187,6 +189,20 @@ _CCCL_HOST_DEVICE auto make_aligned_base_ptr(const T* ptr, int alignment) -> ali
   return aligned_base_ptr<T>{base_ptr, static_cast<int>(reinterpret_cast<const char*>(ptr) - base_ptr)};
 }
 
+template <int Size>
+struct thread_block
+{
+  _CCCL_DEVICE int size() const
+  {
+    return Size;
+  }
+
+  _CCCL_DEVICE int thread_rank() const
+  {
+    return threadIdx.x;
+  }
+};
+
 template <typename MemcpyAsyncPolicy, typename Offset, typename F, typename RandomAccessIteratorOut, typename... InTs>
 _CCCL_DEVICE void transform_kernel_impl(
   ::cuda::std::integral_constant<Algorithm, Algorithm::memcpy_async>,
@@ -206,7 +222,17 @@ _CCCL_DEVICE void transform_kernel_impl(
   const Offset offset     = static_cast<Offset>(blockIdx.x) * tile_stride;
   const int tile_size     = static_cast<int>(::cuda::std::min(num_items - offset, Offset{tile_stride}));
 
-  auto group                       = cooperative_groups::this_thread_block();
+  auto group    = thread_block<MemcpyAsyncPolicy::block_threads>{};
+  auto pipeline = cuda::make_pipeline();
+
+  // #pragma nv_diag_suppress static_var_with_dynamic_init
+  //   __shared__ cuda::barrier<cuda::thread_scope::thread_scope_block> barrier;
+  // if (/*elect_one()*/ threadIdx.x == 0)
+  // {
+  //   init(&barrier, block_dim);
+  // }
+  // __syncthreads();
+
   [[maybe_unused]] int smem_offset = 0;
 
   auto copy_and_return_smem_dst = [&](auto aligned_ptr) {
@@ -224,11 +250,15 @@ _CCCL_DEVICE void transform_kernel_impl(
     const int bytes_to_copy = round_up_to_po2_multiple(
       aligned_ptr.head_padding + static_cast<int>(sizeof(T)) * tile_size, memcpy_async_size_multiple);
     smem_offset += bytes_to_copy; // leave aligned address for follow-up copy
-    cooperative_groups::memcpy_async(
+
+    pipeline.producer_acquire();
+    auto cm = cuda::memcpy_async(
       group,
       dst,
       src,
-      ::cuda::aligned_size_t<memcpy_async_size_multiple>{static_cast<::cuda::std::size_t>(bytes_to_copy)});
+      ::cuda::aligned_size_t<memcpy_async_size_multiple>{static_cast<::cuda::std::size_t>(bytes_to_copy)},
+      pipeline);
+    pipeline.producer_commit();
 
     const char* const dst_start_of_data = dst + aligned_ptr.head_padding;
     _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst_start_of_data) % alignof(T) == 0, "");
@@ -246,7 +276,11 @@ _CCCL_DEVICE void transform_kernel_impl(
     _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0, "");
     const int bytes_to_copy = static_cast<int>(sizeof(T)) * tile_size;
     smem_offset += bytes_to_copy;
-    cooperative_groups::memcpy_async(group, dst, src, bytes_to_copy);
+
+    pipeline.producer_acquire();
+    auto cm = cuda::memcpy_async(
+      group, dst, src, ::cuda::aligned_size_t<sizeof(T)>{static_cast<::cuda::std::size_t>(bytes_to_copy)}, pipeline);
+    pipeline.producer_commit();
 
     return dst;
   };
@@ -255,7 +289,10 @@ _CCCL_DEVICE void transform_kernel_impl(
   const bool inner_blocks               = 0 < blockIdx.x && blockIdx.x + 2 < gridDim.x;
   [[maybe_unused]] const auto smem_ptrs = ::cuda::std::tuple<const InTs*...>{
     (inner_blocks ? copy_and_return_smem_dst(aligned_ptrs) : copy_and_return_smem_dst_fallback(aligned_ptrs))...};
-  cooperative_groups::wait(group);
+
+  ::cuda::pipeline_consumer_wait_prior<0>(pipeline);
+  __syncthreads();
+  // barrier.arrive_and_wait();
 
   // move the whole index and iterator to the block/thread index, to reduce arithmetic in the loops below
   out += offset;
