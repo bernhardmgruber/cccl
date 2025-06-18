@@ -210,7 +210,7 @@ _CCCL_DEVICE void transform_kernel_impl(
   auto group                       = cooperative_groups::this_thread_block();
   [[maybe_unused]] int smem_offset = 0;
 
-  auto copy_and_return_smem_dst = [&](auto aligned_ptr) {
+  auto copy_and_return_smem_dst = [&](auto aligned_ptr) -> int {
     using T = typename decltype(aligned_ptr)::value_type;
     // because SMEM base pointer and bytes_to_copy are always multiples of 16-byte, we only need to align the SMEM start
     // for types with larger alignment
@@ -224,16 +224,17 @@ _CCCL_DEVICE void transform_kernel_impl(
     _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % memcpy_async_alignment == 0, "");
     const int bytes_to_copy = round_up_to_po2_multiple(
       aligned_ptr.head_padding + static_cast<int>(sizeof(T)) * valid_items, memcpy_async_size_multiple);
+    const auto start_of_data_offset = smem_offset + aligned_ptr.head_padding;
     smem_offset += bytes_to_copy; // leave aligned address for follow-up copy
     cooperative_groups::memcpy_async(
       group, dst, src, ::cuda::aligned_size_t<memcpy_async_size_multiple>{static_cast<size_t>(bytes_to_copy)});
 
-    const char* const dst_start_of_data = dst + aligned_ptr.head_padding;
-    _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst_start_of_data) % alignof(T) == 0, "");
-    return reinterpret_cast<const T*>(dst_start_of_data);
+    // const char* const dst_start_of_data = dst + aligned_ptr.head_padding;
+    _CCCL_ASSERT(start_of_data_offset % alignof(T) == 0, "");
+    return start_of_data_offset;
   };
 
-  auto copy_and_return_smem_dst_fallback = [&](auto aligned_ptr) {
+  auto copy_and_return_smem_dst_fallback = [&](auto aligned_ptr) -> int {
     using T = typename decltype(aligned_ptr)::value_type;
     // TODO(ahendriksen): the codegen for memcpy_async for char and short is really verbose (300 instructions). we may
     // rather want to just do an unrolled loop here.
@@ -242,17 +243,18 @@ _CCCL_DEVICE void transform_kernel_impl(
     T* dst       = reinterpret_cast<T*>(smem + smem_offset);
     _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0, "");
     _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0, "");
-    const int bytes_to_copy = int{sizeof(T)} * valid_items;
+    const int bytes_to_copy         = int{sizeof(T)} * valid_items;
+    const auto start_of_data_offset = smem_offset;
     smem_offset += bytes_to_copy;
     cooperative_groups::memcpy_async(group, dst, src, bytes_to_copy);
 
-    return dst;
+    return start_of_data_offset;
   };
 
   // TODO(bgruber): if we used SMEM offsets instead of pointers, we only need half the registers
-  const bool inner_blocks               = 0 < blockIdx.x && blockIdx.x + 2 < gridDim.x;
-  [[maybe_unused]] const auto smem_ptrs = ::cuda::std::tuple<const InTs*...>{
-    (inner_blocks ? copy_and_return_smem_dst(aligned_ptrs) : copy_and_return_smem_dst_fallback(aligned_ptrs))...};
+  const bool inner_blocks                  = 0 < blockIdx.x && blockIdx.x + 2 < gridDim.x;
+  [[maybe_unused]] const auto smem_offsets = ::cuda::std::make_tuple(
+    (inner_blocks ? copy_and_return_smem_dst(aligned_ptrs) : copy_and_return_smem_dst_fallback(aligned_ptrs))...);
   cooperative_groups::wait(group);
 
   // move the whole index and iterator to the block/thread index, to reduce arithmetic in the loops below
@@ -269,10 +271,10 @@ _CCCL_DEVICE void transform_kernel_impl(
       if (full_tile || idx < valid_items)
       {
         out[idx] = ::cuda::std::apply(
-          [&](const auto* __restrict__... smem_base_ptrs) {
-            return f(smem_base_ptrs[idx]...);
+          [&](auto... smem_offs) {
+            return f(reinterpret_cast<const InTs*>(smem + smem_offs)[idx]...);
           },
-          smem_ptrs);
+          smem_offsets);
       }
     }
   };
