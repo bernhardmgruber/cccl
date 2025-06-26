@@ -685,7 +685,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
   // move the whole index and iterator to the block/thread index, to reduce arithmetic in the loops below
   out += offset;
 
-  constexpr int elems = 6;
+  constexpr int elems = 8;
 
   auto process_tile = [&](auto full_tile) {
     // Unroll 1 tends to improve performance, especially for smaller data types (confirmed by benchmark)

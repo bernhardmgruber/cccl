@@ -84,8 +84,8 @@ struct async_copy_policy_t
 {
   static constexpr int block_threads = BlockThreads;
   // items per tile are determined at runtime. these (inclusive) bounds allow overriding that value via a tuning policy
-  static constexpr int min_items_per_thread = 1;
-  static constexpr int max_items_per_thread = 32;
+  static constexpr int min_items_per_thread = 8;
+  static constexpr int max_items_per_thread = 8;
 
   static constexpr int bulk_copy_alignment = BulkCopyAlignment;
 };
