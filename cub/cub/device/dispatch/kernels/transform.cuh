@@ -687,14 +687,19 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
   constexpr int elems = 8;
 
+  struct alignas(8) half4
+  {
+    __half data[4];
+  };
+
   auto process_tile = [&](auto full_tile) {
     // Unroll 1 tends to improve performance, especially for smaller data types (confirmed by benchmark)
     _CCCL_PRAGMA_UNROLL()
-    for (int j = 0; j < elems / 2; j++)
+    for (int j = 0; j < elems / 4; j++)
     {
       // TODO(bgruber): fbusato suggests to hoist threadIdx.x out of the loop below
       const int idx = j * block_threads + threadIdx.x;
-      if (full_tile || idx * 2 < valid_items)
+      if (full_tile || idx * 4 < valid_items)
       {
         int smem_offset    = 0;
         auto fetch_operand = [&](auto aligned_ptr) {
@@ -702,16 +707,20 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
           static_assert(::cuda::std::is_same_v<T, __half>);
           const auto* smem_operand_tile_base = smem + smem_offset /*+ aligned_ptr.head_padding*/;
           smem_offset += int{sizeof(T)} * tile_size /*+ bulk_copy_alignment*/;
-          return reinterpret_cast<const __half2*>(smem_operand_tile_base)[idx];
+          return reinterpret_cast<const half4*>(smem_operand_tile_base)[idx];
         };
 
         // need to expand into a tuple for guaranteed order of evaluation
         ::cuda::std::tuple t{fetch_operand(aligned_ptrs)...};
 
-        __half2 r;
-        r.x                                  = f(::cuda::std::get<0>(t).x, ::cuda::std::get<1>(t).x);
-        r.y                                  = f(::cuda::std::get<0>(t).y, ::cuda::std::get<1>(t).y);
-        reinterpret_cast<__half2*>(out)[idx] = r;
+        half4 r;
+        _CCCL_PRAGMA_UNROLL()
+        for (int i = 0; i < 4; ++i)
+        {
+          r.data[i] = f(::cuda::std::get<0>(t).data[i], ::cuda::std::get<1>(t).data[i]);
+        }
+
+        reinterpret_cast<half4*>(out)[idx] = r;
       }
     }
   };
