@@ -694,7 +694,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
     {
       // TODO(bgruber): fbusato suggests to hoist threadIdx.x out of the loop below
       const int idx = j * block_threads + threadIdx.x;
-      if (full_tile || idx < valid_items)
+      if (full_tile || idx * 2 < valid_items)
       {
         int smem_offset    = 0;
         auto fetch_operand = [&](auto aligned_ptr) {
