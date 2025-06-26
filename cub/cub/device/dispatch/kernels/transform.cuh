@@ -597,7 +597,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
   const Offset offset         = static_cast<Offset>(blockIdx.x) * tile_size;
   const int valid_items       = (::cuda::std::min)(num_items - offset, Offset{tile_size});
 
-  const bool inner_blocks = 0 < blockIdx.x && blockIdx.x + 2 < gridDim.x;
+  const bool inner_blocks = true; // 0 < blockIdx.x && blockIdx.x + 2 < gridDim.x;
   if (inner_blocks)
   {
     // use one thread to setup the entire bulk copy
@@ -621,7 +621,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
         // TODO(bgruber): we could precompute bytes_to_copy on the host
         const int bytes_to_copy =
-          ::cuda::round_up(aligned_ptr.head_padding + int{sizeof(T)} * tile_size, bulk_copy_size_multiple);
+          ::cuda::round_up(aligned_ptr.head_padding + int{sizeof(T)} * valid_items, bulk_copy_size_multiple);
 
         ::cuda::ptx::cp_async_bulk(::cuda::ptx::space_cluster, ::cuda::ptx::space_global, dst, src, bytes_to_copy, &bar);
         total_copied += bytes_to_copy;
@@ -637,44 +637,44 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
       ptx::mbarrier_arrive_expect_tx(ptx::sem_release, ptx::scope_cta, ptx::space_shared, &bar, total_copied);
     }
   }
-  else
-  {
-    const bool elected = elect_one();
-    if (elected)
-    {
-      ptx::mbarrier_init(&bar, 1);
-      ptx::fence_proxy_async(ptx::space_shared);
-    }
-
-    // use all threads to copy the head and tail bytes, use the elected thread to start the bulk copy
-    int smem_offset                    = 0;
-    ::cuda::std::uint32_t total_copied = 0;
-
-    // turning this lambda into a function does not change SASS
-    auto bulk_copy_tile_fallback = [&](auto aligned_ptr) {
-      using T      = typename decltype(aligned_ptr)::value_type;
-      const T* src = aligned_ptr.ptr_to_elements() + offset;
-      T* dst       = reinterpret_cast<T*>(smem + smem_offset + aligned_ptr.head_padding);
-      _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0, "");
-      _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0, "");
-
-      const int bytes_to_copy = int{sizeof(T)} * valid_items;
-      bulk_copy_maybe_unaligned<bulk_copy_alignment>(
-        dst, src, bytes_to_copy, aligned_ptr.head_padding, bar, total_copied, elected);
-
-      // add bulk_copy_alignment to make space for the next tile's head padding
-      smem_offset += int{sizeof(T)} * tile_size + bulk_copy_alignment;
-    };
-
-    // Order of evaluation is left-to-right
-    (..., bulk_copy_tile_fallback(aligned_ptrs));
-
-    if (elected)
-    {
-      // TODO(ahendriksen): this could only have ptx::sem_relaxed, but this is not available yet
-      ptx::mbarrier_arrive_expect_tx(ptx::sem_release, ptx::scope_cta, ptx::space_shared, &bar, total_copied);
-    }
-  }
+  // else
+  // {
+  //   const bool elected = elect_one();
+  //   if (elected)
+  //   {
+  //     ptx::mbarrier_init(&bar, 1);
+  //     ptx::fence_proxy_async(ptx::space_shared);
+  //   }
+  //
+  //   // use all threads to copy the head and tail bytes, use the elected thread to start the bulk copy
+  //   int smem_offset                    = 0;
+  //   ::cuda::std::uint32_t total_copied = 0;
+  //
+  //   // turning this lambda into a function does not change SASS
+  //   auto bulk_copy_tile_fallback = [&](auto aligned_ptr) {
+  //     using T      = typename decltype(aligned_ptr)::value_type;
+  //     const T* src = aligned_ptr.ptr_to_elements() + offset;
+  //     T* dst       = reinterpret_cast<T*>(smem + smem_offset + aligned_ptr.head_padding);
+  //     _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0, "");
+  //     _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0, "");
+  //
+  //     const int bytes_to_copy = int{sizeof(T)} * valid_items;
+  //     bulk_copy_maybe_unaligned<bulk_copy_alignment>(
+  //       dst, src, bytes_to_copy, aligned_ptr.head_padding, bar, total_copied, elected);
+  //
+  //     // add bulk_copy_alignment to make space for the next tile's head padding
+  //     smem_offset += int{sizeof(T)} * tile_size + bulk_copy_alignment;
+  //   };
+  //
+  //   // Order of evaluation is left-to-right
+  //   (..., bulk_copy_tile_fallback(aligned_ptrs));
+  //
+  //   if (elected)
+  //   {
+  //     // TODO(ahendriksen): this could only have ptx::sem_relaxed, but this is not available yet
+  //     ptx::mbarrier_arrive_expect_tx(ptx::sem_release, ptx::scope_cta, ptx::space_shared, &bar, total_copied);
+  //   }
+  // }
 
   // all threads wait for bulk copy
   __syncthreads();
