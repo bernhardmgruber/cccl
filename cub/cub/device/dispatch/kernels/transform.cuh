@@ -628,7 +628,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
         total_copied += bytes_to_copy;
 
         // add bulk_copy_alignment to make space for the next tile's head padding
-        smem_offset += int{sizeof(T)} * tile_size + bulk_copy_alignment;
+        smem_offset += int{sizeof(T)} * tile_size /*+ bulk_copy_alignment*/;
       };
 
       // Order of evaluation is left-to-right
@@ -698,7 +698,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
         auto fetch_operand = [&](auto aligned_ptr) {
           using T                         = typename decltype(aligned_ptr)::value_type;
           const T* smem_operand_tile_base = reinterpret_cast<const T*>(smem + smem_offset + aligned_ptr.head_padding);
-          smem_offset += int{sizeof(T)} * tile_size + bulk_copy_alignment;
+          smem_offset += int{sizeof(T)} * tile_size /*+ bulk_copy_alignment*/;
           return smem_operand_tile_base[idx];
         };
 
