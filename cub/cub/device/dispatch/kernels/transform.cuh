@@ -696,8 +696,9 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
       {
         int smem_offset    = 0;
         auto fetch_operand = [&](auto aligned_ptr) {
-          using T                         = typename decltype(aligned_ptr)::value_type;
-          const T* smem_operand_tile_base = reinterpret_cast<const T*>(smem + smem_offset + aligned_ptr.head_padding);
+          using T = typename decltype(aligned_ptr)::value_type;
+          const T* smem_operand_tile_base =
+            reinterpret_cast<const T*>(smem + smem_offset /*+ aligned_ptr.head_padding*/);
           smem_offset += int{sizeof(T)} * tile_size /*+ bulk_copy_alignment*/;
           return smem_operand_tile_base[idx];
         };
