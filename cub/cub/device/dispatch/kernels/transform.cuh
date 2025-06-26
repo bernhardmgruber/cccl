@@ -685,10 +685,12 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
   // move the whole index and iterator to the block/thread index, to reduce arithmetic in the loops below
   out += offset;
 
+  constexpr int elems = 6;
+
   auto process_tile = [&](auto full_tile) {
     // Unroll 1 tends to improve performance, especially for smaller data types (confirmed by benchmark)
-    _CCCL_PRAGMA_NOUNROLL()
-    for (int j = 0; j < num_elem_per_thread; ++j)
+    _CCCL_PRAGMA_UNROLL()
+    for (int j = 0; j < elems / 2; j++)
     {
       // TODO(bgruber): fbusato suggests to hoist threadIdx.x out of the loop below
       const int idx = j * block_threads + threadIdx.x;
@@ -697,18 +699,20 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
         int smem_offset    = 0;
         auto fetch_operand = [&](auto aligned_ptr) {
           using T = typename decltype(aligned_ptr)::value_type;
-          const T* smem_operand_tile_base =
-            reinterpret_cast<const T*>(smem + smem_offset /*+ aligned_ptr.head_padding*/);
+          static_assert(::cuda::std::is_same_v<T, __half>);
+          const auto* smem_operand_tile_base =
+            reinterpret_cast<const __half2*>(smem + smem_offset /*+ aligned_ptr.head_padding*/);
           smem_offset += int{sizeof(T)} * tile_size /*+ bulk_copy_alignment*/;
           return smem_operand_tile_base[idx];
         };
 
         // need to expand into a tuple for guaranteed order of evaluation
-        out[idx] = ::cuda::std::apply(
-          [&](auto... values) {
-            return f(values...);
-          },
-          ::cuda::std::tuple<InTs...>{fetch_operand(aligned_ptrs)...});
+        ::cuda::std::tuple t{fetch_operand(aligned_ptrs)...};
+
+        __half2 r;
+        r.x                                  = f(::cuda::std::get<0>(t).x, ::cuda::std::get<1>(t).x);
+        r.y                                  = f(::cuda::std::get<0>(t).y, ::cuda::std::get<1>(t).y);
+        reinterpret_cast<__half2*>(out)[idx] = r;
       }
     }
   };
