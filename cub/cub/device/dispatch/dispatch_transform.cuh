@@ -251,7 +251,7 @@ struct dispatch_t<StableAddress,
     _CCCL_ASSERT(config->tile_size % alignment == 0, "");
     _CCCL_ASSERT((sizeof...(RandomAccessIteratorsIn) == 0) != (config->smem_size != 0), ""); // logical xor
 
-    printf("elem_per_thread: %d tile_szie: %d\n", config->elem_per_thread, config->tile_size);
+    // printf("elem_per_thread: %d tile_size: %d\n", config->elem_per_thread, config->tile_size);
     const auto grid_dim = static_cast<unsigned int>(::cuda::ceil_div(num_items, Offset{config->tile_size}));
     return ::cuda::std::make_tuple(
       launcher_factory(grid_dim, block_threads, config->smem_size, stream),
