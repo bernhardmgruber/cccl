@@ -700,10 +700,9 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
         auto fetch_operand = [&](auto aligned_ptr) {
           using T = typename decltype(aligned_ptr)::value_type;
           static_assert(::cuda::std::is_same_v<T, __half>);
-          const auto* smem_operand_tile_base =
-            reinterpret_cast<const __half2*>(smem + smem_offset /*+ aligned_ptr.head_padding*/);
+          const auto* smem_operand_tile_base = smem + smem_offset /*+ aligned_ptr.head_padding*/;
           smem_offset += int{sizeof(T)} * tile_size /*+ bulk_copy_alignment*/;
-          return smem_operand_tile_base[idx];
+          return reinterpret_cast<const __half2*>(smem_operand_tile_base)[idx];
         };
 
         // need to expand into a tuple for guaranteed order of evaluation
