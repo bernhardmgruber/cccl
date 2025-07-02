@@ -632,7 +632,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
   // precalculate shared memory offsets
   auto compute_smem_offset = [&, smem_offset = 0](auto aligned_ptr) mutable -> int {
     using T = typename decltype(aligned_ptr)::value_type;
-    static_assert(alignof(T) <= bulk_copy_alignment);
+    static_assert(alignof(T) <= bulk_copy_alignment); // FIXME(bgruber): we need to support this eventually
     const int start = smem_offset;
     // add bulk_copy_alignment to make space for the next tile's head padding
     smem_offset += int{sizeof(T)} * tile_size + bulk_copy_alignment;
@@ -653,9 +653,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
       // turning this lambda into a function does not change SASS
       auto bulk_copy_tile = [&](auto aligned_ptr, int smem_offset) {
-        using T = typename decltype(aligned_ptr)::value_type;
-        static_assert(alignof(T) <= bulk_copy_alignment, ""); // FIXME(bgruber): we need to support this eventually
-
+        using T         = typename decltype(aligned_ptr)::value_type;
         const char* src = aligned_ptr.ptr + offset * sizeof(T);
         char* dst       = smem + smem_offset;
         _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % bulk_copy_alignment == 0, "");
@@ -664,16 +662,13 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
         // TODO(bgruber): we could precompute bytes_to_copy on the host, but computing it takes few instructions
         int bytes_to_copy;
         if constexpr (alignof(T) < bulk_copy_size_multiple)
-        {
-          bytes_to_copy =
-            ::cuda::round_up(aligned_ptr.head_padding + int{sizeof(T)} * tile_size, bulk_copy_size_multiple);
-        }
+        {bytes_to_copy =
+          ::cuda::round_up(aligned_ptr.head_padding + int{sizeof(T)} * tile_size, bulk_copy_size_multiple);}
         else
         {
           _CCCL_ASSERT(aligned_ptr.head_padding == 0, "");
           bytes_to_copy = int{sizeof(T)} * tile_size;
         }
-
         ::cuda::ptx::cp_async_bulk(::cuda::ptx::space_cluster, ::cuda::ptx::space_global, dst, src, bytes_to_copy, &bar);
         total_copied += bytes_to_copy;
       };
@@ -699,10 +694,9 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
     // turning this lambda into a function does not change SASS
     auto bulk_copy_tile_fallback = [&](auto aligned_ptr, int smem_offset) {
-      using T               = typename decltype(aligned_ptr)::value_type;
-      const int data_offset = smem_offset + aligned_ptr.head_padding;
-      const T* src          = aligned_ptr.ptr_to_elements() + offset;
-      T* dst                = reinterpret_cast<T*>(smem + data_offset);
+      using T         = typename decltype(aligned_ptr)::value_type;
+      const char* src = reinterpret_cast<const char*>(aligned_ptr.ptr_to_elements() + offset);
+      char* dst       = smem + smem_offset + aligned_ptr.head_padding;
       _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0, "");
       _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0, "");
 
