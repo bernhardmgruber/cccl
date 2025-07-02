@@ -301,10 +301,8 @@ struct policy_hub<RequiresStableAddress, ::cuda::std::tuple<RandomAccessIterator
       bulk_copy_smem_for_tile_size<RandomAccessIteratorsIn...>(
         AsyncBlockSize * async_policy::min_items_per_thread, alignment)
       > int{max_smem_per_block};
-    // FIXME(bgruber): we need to support overaligned types eventually !!!
-    static constexpr bool any_type_is_overalinged = ((alignof(it_value_t<RandomAccessIteratorsIn>) > alignment) || ...);
     static constexpr bool use_fallback =
-      RequiresStableAddress || !can_memcpy_inputs || no_input_streams || exhaust_smem || any_type_is_overalinged;
+      RequiresStableAddress || !can_memcpy_inputs || no_input_streams || exhaust_smem;
 
   public:
     static constexpr int min_bif    = arch_to_min_bytes_in_flight(PtxVersion);

@@ -603,21 +603,46 @@ _CCCL_DEVICE void bulk_copy_maybe_unaligned(
   }
 }
 
+// TODO(bgruber): replace by align_up once this PR lands: https://github.com/NVIDIA/cccl/pull/5037
+template <typename T>
+_CCCL_DEVICE auto round_up_ptr(T* p, int alignment) -> T*
+{
+  return reinterpret_cast<T*>(::cuda::round_up(reinterpret_cast<uintptr_t>(p), alignment));
+}
+
 template <typename BulkCopyPolicy, typename Offset, typename F, typename RandomAccessIteratorOut, typename... InTs>
 _CCCL_DEVICE void transform_kernel_ublkcp(
   Offset num_items, int num_elem_per_thread, F f, RandomAccessIteratorOut out, aligned_base_ptr<InTs>... aligned_ptrs)
 {
+  constexpr int block_threads       = BulkCopyPolicy::block_threads;
   constexpr int bulk_copy_alignment = BulkCopyPolicy::bulk_copy_alignment;
 
+  constexpr int min_retained_alignment           = ::cuda::std::min({sizeof(InTs)...}) * block_threads;
+  constexpr int max_alignment                    = ::cuda::std::max({alignof(InTs)...});
+  constexpr bool tile_sizes_retain_max_alignment = max_alignment <= min_retained_alignment;
+
+  // add padding after a tile in shared memory to make space for the next tile's head padding, and retain alignment
+  constexpr int tile_padding =
+    tile_sizes_retain_max_alignment ? ::cuda::round_up(bulk_copy_alignment, max_alignment) : bulk_copy_alignment;
+
   __shared__ uint64_t bar;
-  extern __shared__ char __align__(bulk_copy_alignment) smem_base[];
+  extern __shared__ char smem_base_unaligned[];
+  char* smem_base = smem_base_unaligned;
+  // TODO: handle base alignment for Hopper
+  if constexpr (max_alignment <= 16)
+  {
+    smem_base = smem_base_unaligned;
+  }
+  else if constexpr (tile_sizes_retain_max_alignment)
+  {
+    smem_base = round_up_ptr(smem_base_unaligned, max_alignment);
+  }
 
   namespace ptx = ::cuda::ptx;
 
-  constexpr int block_threads = BulkCopyPolicy::block_threads;
-  const int tile_size         = block_threads * num_elem_per_thread;
-  const Offset offset         = static_cast<Offset>(blockIdx.x) * tile_size;
-  const int valid_items       = (::cuda::std::min)(num_items - offset, Offset{tile_size});
+  const int tile_size   = block_threads * num_elem_per_thread;
+  const Offset offset   = static_cast<Offset>(blockIdx.x) * tile_size;
+  const int valid_items = (::cuda::std::min)(num_items - offset, Offset{tile_size});
 
   const bool inner_blocks = 0 < blockIdx.x && blockIdx.x + 2 < gridDim.x;
   if (inner_blocks)
@@ -634,11 +659,13 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
       // turning this lambda into a function does not change SASS
       auto bulk_copy_tile = [&](auto aligned_ptr) {
-        using T = typename decltype(aligned_ptr)::value_type;
-        static_assert(alignof(T) <= bulk_copy_alignment, ""); // FIXME(bgruber): we need to support this eventually
-
+        using T         = typename decltype(aligned_ptr)::value_type;
         const char* src = aligned_ptr.ptr + offset * sizeof(T);
-        char* dst       = smem;
+        if constexpr (!tile_sizes_retain_max_alignment)
+        {
+          smem = round_up_ptr(smem, alignof(T));
+        }
+        char* dst = smem;
         _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % bulk_copy_alignment == 0, "");
         _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % bulk_copy_alignment == 0, "");
 
@@ -658,8 +685,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
         ::cuda::ptx::cp_async_bulk(::cuda::ptx::space_cluster, ::cuda::ptx::space_global, dst, src, bytes_to_copy, &bar);
         total_copied += bytes_to_copy;
 
-        // add bulk_copy_alignment to make space for the next tile's head padding
-        smem += int{sizeof(T)} * tile_size + bulk_copy_alignment;
+        smem += int{sizeof(T)} * tile_size + tile_padding;
       };
 
       // Order of evaluation is left-to-right
@@ -687,7 +713,12 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
     auto bulk_copy_tile_fallback = [&](auto aligned_ptr) {
       using T      = typename decltype(aligned_ptr)::value_type;
       const T* src = aligned_ptr.ptr_to_elements() + offset;
-      T* dst       = reinterpret_cast<T*>(smem + aligned_ptr.head_padding);
+      if constexpr (!tile_sizes_retain_max_alignment)
+      {
+        smem = round_up_ptr(smem, alignof(T));
+      }
+      char* dst = smem + aligned_ptr.head_padding;
+
       _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0, "");
       _CCCL_ASSERT(reinterpret_cast<uintptr_t>(dst) % alignof(T) == 0, "");
 
@@ -695,8 +726,8 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
       bulk_copy_maybe_unaligned<bulk_copy_alignment>(
         dst, src, bytes_to_copy, aligned_ptr.head_padding, bar, total_copied, elected);
 
-      // add bulk_copy_alignment to make space for the next tile's head padding
-      smem += int{sizeof(T)} * tile_size + bulk_copy_alignment;
+      // add padding to make space for the next tile's head padding
+      smem += int{sizeof(T)} * tile_size + tile_padding;
     };
 
     // Order of evaluation is left-to-right
@@ -728,9 +759,12 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
       {
         char* smem         = smem_base;
         auto fetch_operand = [&](auto aligned_ptr) {
-          using T                         = typename decltype(aligned_ptr)::value_type;
+          using T = typename decltype(aligned_ptr)::value_type;
+          if constexpr (!tile_sizes_retain_max_alignment)
+          {
+            smem = round_up_ptr(smem, alignof(T));
+          }
           const T* smem_operand_tile_base = reinterpret_cast<const T*>(smem + aligned_ptr.head_padding);
-          smem += int{sizeof(T)} * tile_size + bulk_copy_alignment;
           return smem_operand_tile_base[idx];
         };
 
