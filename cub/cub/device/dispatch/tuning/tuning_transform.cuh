@@ -128,10 +128,18 @@ _CCCL_HOST_DEVICE constexpr auto bulk_copy_smem_for_tile_size(int tile_size, int
   _CCCL_ASSERT(tile_size % bulk_copy_align == 0, "");
   _CCCL_ASSERT(tile_size % bulk_copy_size_multiple == 0, "");
 
-  return ::cuda::round_up(int{sizeof(int64_t)}, bulk_copy_align) /* bar */
-       + tile_size * loaded_bytes_per_iteration<RandomAccessIteratorsIn...>()
-       // padding for each input tile (handles before + after as long as tile_size is a multiple of bulk_copy_align)
-       + sizeof...(RandomAccessIteratorsIn) * bulk_copy_align;
+  // dynamic SMEM comes after static shared memory (which contains the 8-byte barrier) and is at least 16 bytes aligned.
+  // This also hits the worst case scenario for types with alignment larger than 16, needing the most padding before the
+  // first tile.
+  int smem_size                    = ::cuda::round_up(sizeof(uint64_t), 16);
+  [[maybe_unused]] auto count_smem = [&](int vt_size, int vt_alignment) {
+    smem_size                   = ::cuda::round_up(smem_size, ::cuda::std::max(vt_alignment, bulk_copy_align));
+    const int max_bytes_to_copy = vt_size * tile_size + bulk_copy_align;
+    smem_size += max_bytes_to_copy;
+  };
+  // left to right evaluation!
+  (..., count_smem(sizeof(it_value_t<RandomAccessIteratorsIn>), alignof(it_value_t<RandomAccessIteratorsIn>)));
+  return smem_size;
 }
 
 _CCCL_HOST_DEVICE constexpr int arch_to_min_bytes_in_flight(int sm_arch)

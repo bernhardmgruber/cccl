@@ -604,6 +604,13 @@ _CCCL_DEVICE void bulk_copy_maybe_unaligned(
   }
 }
 
+// TODO(bgruber): replace by align_up once this PR lands: https://github.com/NVIDIA/cccl/pull/5037
+template <typename T>
+_CCCL_DEVICE auto round_up_ptr(T* p, unsigned alignment) -> T*
+{
+  return reinterpret_cast<T*>(::cuda::round_up(reinterpret_cast<uintptr_t>(p), uintptr_t{alignment}));
+}
+
 template <typename BulkCopyPolicy, typename Offset, typename F, typename RandomAccessIteratorOut, typename... InTs>
 _CCCL_DEVICE void transform_kernel_ublkcp(
   Offset num_items, int num_elem_per_thread, F f, RandomAccessIteratorOut out, aligned_base_ptr<InTs>... aligned_ptrs)
@@ -616,7 +623,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
   // takes the alignment into account and even emits an alignment specifier into ptx. However, this sometimes randomly
   // fails at runtime because the shared memory start pointer is not correctly provided by the driver/runtime. See also
   // NVBug 5093902 and discussion in PR #5122.
-  extern __shared__ char __align__(bulk_copy_alignment) smem_base[];
+  extern __shared__ char smem_base[];
 
   // However, any manual alignment of the shared memory start address outweighs the performance benefits of a faster
   // bulk copy by introducing about 7 additional SASS instructions at the start of the kernel. This also has to be done
@@ -666,9 +673,8 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
       // turning this lambda into a function does not change SASS
       auto bulk_copy_tile = [&](auto aligned_ptr) {
-        using T = typename decltype(aligned_ptr)::value_type;
-        static_assert(alignof(T) <= bulk_copy_alignment, ""); // FIXME(bgruber): we need to support this eventually
-
+        using T         = typename decltype(aligned_ptr)::value_type;
+        smem            = round_up_ptr(smem, ::cuda::std::max(bulk_copy_alignment, int{alignof(T)}));
         const char* src = aligned_ptr.ptr + offset * sizeof(T);
         char* dst       = smem;
         _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % bulk_copy_alignment == 0, "");
@@ -722,7 +728,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
       _CCCL_ASSERT(alignof(T) < bulk_copy_alignment || aligned_ptr.head_padding == 0, "");
       const int head_padding = alignof(T) < bulk_copy_alignment ? aligned_ptr.head_padding : 0;
-
+      smem            = round_up_ptr(smem, ::cuda::std::max(bulk_copy_alignment, int{alignof(T)}));
       const char* src = aligned_ptr.ptr + offset * Offset{sizeof(T)} + head_padding;
       char* dst       = smem + head_padding;
       _CCCL_ASSERT(reinterpret_cast<uintptr_t>(src) % alignof(T) == 0, "");
@@ -765,6 +771,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
         char* smem         = smem_base;
         auto fetch_operand = [&](auto aligned_ptr) {
           using T         = typename decltype(aligned_ptr)::value_type;
+          smem                            = round_up_ptr(smem, ::cuda::std::max(bulk_copy_alignment, int{alignof(T)}));
           const char* src = smem;
           if constexpr (alignof(T) < bulk_copy_alignment)
           {
