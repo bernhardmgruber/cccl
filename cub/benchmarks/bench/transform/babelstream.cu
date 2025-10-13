@@ -1,11 +1,14 @@
 // SPDX-FileCopyrightText: Copyright (c) 2024, NVIDIA CORPORATION. All rights reserved.
 // SPDX-License-Identifier: BSD-3-Clause
 
-// Because CUB cannot inspect the transformation function, we cannot add any tunings based on the results of this
-// benchmark. Its main use is to detect regressions.
+// This benchmark tests BabelStream (see https://github.com/UoB-HPC/BabelStream). Because CUB cannot inspect the
+// transformation function, we cannot add any tunings based on the results of this benchmark. Its main use is to detect
+// regressions.
+#if !TUNE_BASE
+#  error Tuning this benchmark is not implemented yet
+#endif // !TUNE_BASE
 
-// %RANGE% TUNE_THREADS tpb 128:1024:128
-// %RANGE% TUNE_ALGORITHM alg 0:2:1
+#include <cuda/__numeric/narrow.h>
 
 #include "common.h"
 

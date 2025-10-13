@@ -1,6 +1,14 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: BSD-3-Clause
 
+// This benchmark was inspired by a GPU MODE competition. Because CUB cannot inspect the transformation function, we
+// cannot add any tunings based on the results of this benchmark. Its main use is to detect regressions.
+#if !TUNE_BASE
+#  error This benchmark is not intended for tuning
+#endif // !TUNE_BASE
+
+#include <cuda/__numeric/narrow.h>
+
 #include "common.h"
 
 template <typename T>

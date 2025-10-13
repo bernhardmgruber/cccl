@@ -1,13 +1,39 @@
 // SPDX-FileCopyrightText: Copyright (c) 2025, NVIDIA CORPORATION & AFFILIATES. All rights reserved.
 // SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 
-// Because CUB cannot inspect the transformation function, we cannot add any tunings based on the results of this
-// benchmark. Its main use is to detect regressions.
-
 // %RANGE% TUNE_THREADS tpb 128:1024:128
-// %RANGE% TUNE_ALGORITHM alg 0:3:1
+// %RANGE% TUNE_VEC_SIZE_POW vec 0:4:1
+// %RANGE% TUNE_VECTORS vpt 1:8:1
+
+#include <cuda/__numeric/narrow.h>
 
 #include "common.h"
+
+template <typename RandomAccessIteratorOut, typename... RandomAccessIteratorsIn>
+#if TUNE_BASE
+using policy_hub_vec_t =
+  cub::detail::transform::policy_hub</* stable address */ false,
+                                     /* dense output */ true,
+                                     ::cuda::std::tuple<RandomAccessIteratorsIn...>,
+                                     RandomAccessIteratorOut>;
+#else
+struct policy_hub_vec_t
+{
+  struct max_policy : cub::ChainedPolicy<500, max_policy, max_policy>
+  {
+    static constexpr int min_bif    = cub::detail::transform::arch_to_min_bytes_in_flight(__CUDA_ARCH_LIST__);
+    static constexpr auto algorithm = cub::detail::transform::Algorithm::vectorized;
+
+    struct tuning
+    {
+      static constexpr int block_threads    = TUNE_THREADS;
+      static constexpr int vec_size         = 1 << TUNE_VEC_SIZE_POW;
+      static constexpr int items_per_thread = vec_size * TUNE_VECTORS;
+    };
+    using algo_policy = cub::detail::transform::vectorized_policy_t<tuning>;
+  };
+};
+#endif
 
 template <typename T>
 struct return_constant
@@ -33,7 +59,8 @@ static void fill(nvbench::state& state, nvbench::type_list<T>)
   state.add_global_memory_reads<T>(0);
   state.add_global_memory_writes<T>(n);
 
-  bench_transform(state, ::cuda::std::tuple{}, out.begin(), n, return_constant<T>{value});
+  bench_transform(
+    state, ::cuda::std::tuple{}, out.begin(), n, return_constant<T>{value}, policy_hub_vec_t<decltype(out.begin())>{});
 }
 
 NVBENCH_BENCH_TYPES(fill, NVBENCH_TYPE_AXES(integral_types))
