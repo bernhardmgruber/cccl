@@ -192,6 +192,11 @@ struct HistogramPolicyWrapper<StaticPolicyT,
   {
     return StaticPolicyT::AgentHistogramPolicyT::PIXELS_PER_THREAD;
   }
+
+  CUB_RUNTIME_FUNCTION static constexpr int IsWorkStealing()
+  {
+    return StaticPolicyT::AgentHistogramPolicyT::IS_WORK_STEALING;
+  }
 };
 
 template <typename PolicyT>

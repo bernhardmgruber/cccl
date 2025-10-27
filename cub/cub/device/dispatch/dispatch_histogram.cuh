@@ -147,27 +147,6 @@ struct dispatch_histogram
 
     do
     {
-      // Get SM count
-      int sm_count;
-      error = CubDebug(launcher_factory.MultiProcessorCount(sm_count));
-
-      if (cudaSuccess != error)
-      {
-        break;
-      }
-
-      // Get SM occupancy for histogram_sweep_kernel
-      int histogram_sweep_sm_occupancy;
-      error =
-        CubDebug(launcher_factory.MaxSmOccupancy(histogram_sweep_sm_occupancy, histogram_sweep_kernel, block_threads));
-      if (cudaSuccess != error)
-      {
-        break;
-      }
-
-      // Get device occupancy for histogram_sweep_kernel
-      int histogram_sweep_occupancy = histogram_sweep_sm_occupancy * sm_count;
-
       if (num_row_pixels * NUM_CHANNELS == row_stride_samples)
       {
         // Treat as a single linear array of samples
@@ -176,20 +155,58 @@ struct dispatch_histogram
         row_stride_samples = num_row_pixels * NUM_CHANNELS;
       }
 
-      // Get grid dimensions, trying to keep total blocks ~histogram_sweep_occupancy
-      int pixels_per_tile = block_threads * pixels_per_thread;
-      int tiles_per_row   = static_cast<int>(::cuda::ceil_div(num_row_pixels, pixels_per_tile));
-      int blocks_per_row  = ::cuda::std::min(histogram_sweep_occupancy, tiles_per_row);
-      int blocks_per_col =
-        (blocks_per_row > 0)
-          ? int(::cuda::std::min(static_cast<OffsetT>(histogram_sweep_occupancy / blocks_per_row), num_rows))
-          : 0;
-      int num_thread_blocks = blocks_per_row * blocks_per_col;
-
       dim3 sweep_grid_dims;
-      sweep_grid_dims.x = (unsigned int) blocks_per_row;
-      sweep_grid_dims.y = (unsigned int) blocks_per_col;
-      sweep_grid_dims.z = 1;
+      int num_thread_blocks;
+      int tiles_per_row;
+
+      if CUB_DETAIL_CONSTEXPR_ISH (true /*wrapped_policy.IsWorkStealing()*/)
+      {
+        const int pixels_per_tile = block_threads * pixels_per_thread;
+        tiles_per_row             = static_cast<int>(::cuda::ceil_div(num_row_pixels, pixels_per_tile));
+        _CCCL_ASSERT(tiles_per_row > 0, "");
+
+        num_thread_blocks = tiles_per_row * num_rows;
+        sweep_grid_dims.x = static_cast<unsigned int>(tiles_per_row);
+        sweep_grid_dims.y = static_cast<unsigned int>(num_rows);
+        sweep_grid_dims.z = 1;
+      }
+      else
+      {
+        // Get SM count
+        int sm_count;
+        error = CubDebug(launcher_factory.MultiProcessorCount(sm_count));
+
+        if (cudaSuccess != error)
+        {
+          break;
+        }
+
+        // Get SM occupancy for histogram_sweep_kernel
+        int histogram_sweep_sm_occupancy;
+        error = CubDebug(
+          launcher_factory.MaxSmOccupancy(histogram_sweep_sm_occupancy, histogram_sweep_kernel, block_threads));
+        if (cudaSuccess != error)
+        {
+          break;
+        }
+
+        // Get device occupancy for histogram_sweep_kernel
+        int histogram_sweep_occupancy = histogram_sweep_sm_occupancy * sm_count;
+
+        // Get grid dimensions, trying to keep total blocks ~histogram_sweep_occupancy
+        int pixels_per_tile = block_threads * pixels_per_thread;
+        tiles_per_row       = static_cast<int>(::cuda::ceil_div(num_row_pixels, pixels_per_tile));
+        int blocks_per_row  = ::cuda::std::min(histogram_sweep_occupancy, tiles_per_row);
+        int blocks_per_col =
+          (blocks_per_row > 0)
+            ? int(::cuda::std::min(static_cast<OffsetT>(histogram_sweep_occupancy / blocks_per_row), num_rows))
+            : 0;
+
+        num_thread_blocks = blocks_per_row * blocks_per_col;
+        sweep_grid_dims.x = static_cast<unsigned int>(blocks_per_row);
+        sweep_grid_dims.y = static_cast<unsigned int>(blocks_per_col);
+        sweep_grid_dims.z = 1;
+      }
 
       // Temporary storage allocation requirements
       constexpr int NUM_ALLOCATIONS      = NUM_ACTIVE_CHANNELS + 1;
@@ -255,7 +272,7 @@ struct dispatch_histogram
         .doit(histogram_init_kernel, num_output_bins_wrapper, d_output_histograms, tile_queue);
 
       // Return if empty problem
-      if ((blocks_per_row == 0) || (blocks_per_col == 0))
+      if ((sweep_grid_dims.x == 0) || (sweep_grid_dims.y == 0))
       {
         break;
       }
