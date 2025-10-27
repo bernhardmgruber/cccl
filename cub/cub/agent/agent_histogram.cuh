@@ -47,6 +47,10 @@
 #include <cub/iterator/cache_modified_input_iterator.cuh>
 #include <cub/util_type.cuh>
 
+#include <cuda/__ptx/instructions/clusterlaunchcontrol.h>
+#include <cuda/__ptx/instructions/mbarrier_arrive.h>
+#include <cuda/__ptx/instructions/mbarrier_init.h>
+#include <cuda/__ptx/instructions/mbarrier_wait.h>
 #include <cuda/std/__type_traits/conditional.h>
 #include <cuda/std/__type_traits/integral_constant.h>
 #include <cuda/std/__type_traits/is_pointer.h>
@@ -186,7 +190,7 @@ struct AgentHistogram
   static constexpr int tile_pixels                 = pixels_per_thread * block_threads;
   static constexpr int tile_samples                = samples_per_thread * block_threads;
   static constexpr bool is_rle_compress            = AgentHistogramPolicyT::IS_RLE_COMPRESS;
-  static constexpr bool is_work_stealing           = AgentHistogramPolicyT::IS_WORK_STEALING;
+  static constexpr bool is_work_stealing           = true; // AgentHistogramPolicyT::IS_WORK_STEALING;
   static constexpr CacheLoadModifier load_modifier = AgentHistogramPolicyT::LOAD_MODIFIER;
   static constexpr auto mem_preference =
     (PrivatizedSmemBins > 0) ? BlockHistogramMemoryPreference{AgentHistogramPolicyT::MEM_PREFERENCE} : GMEM;
@@ -477,44 +481,50 @@ struct AgentHistogram
     OffsetT num_rows,
     OffsetT row_stride_samples,
     int tiles_per_row,
-    GridQueue<int> tile_queue,
+    [[maybe_unused]] GridQueue<int> grid_queue,
     ::cuda::std::true_type is_work_stealing)
   {
-    int num_tiles                = num_rows * tiles_per_row;
-    int tile_idx                 = (blockIdx.y * gridDim.x) + blockIdx.x;
-    OffsetT num_even_share_tiles = gridDim.x * gridDim.y;
+    __shared__ uint64_t bar_work_id;
+    __shared__ uint4 nextworkid;
 
-    while (tile_idx < num_tiles)
+    if (threadIdx.x == 0) // TODO(bgruber): could use elect_one
     {
-      int row             = tile_idx / tiles_per_row;
-      int col             = tile_idx - (row * tiles_per_row);
-      OffsetT row_offset  = row * row_stride_samples;
-      OffsetT col_offset  = (col * tile_samples);
-      OffsetT tile_offset = row_offset + col_offset;
+      ::cuda::ptx::mbarrier_init(&bar_work_id, 1);
+    }
 
-      if (col == tiles_per_row - 1)
+    auto blockIdx_x = blockIdx.x;
+    auto blockIdx_y = blockIdx.y;
+    int parity      = 0;
+    while (true)
+    {
+      if (threadIdx.x == 0) // TODO(bgruber): could use elect_one
       {
-        // Consume a partially-full tile at the end of the row
-        OffsetT num_remaining = (num_row_pixels * NumChannels) - col_offset;
-        ConsumeTile<IsAligned, false>(tile_offset, num_remaining);
-      }
-      else
-      {
-        // Consume full tile
-        ConsumeTile<IsAligned, true>(tile_offset, tile_samples);
+        ::cuda::ptx::clusterlaunchcontrol_try_cancel(&nextworkid, &bar_work_id);
+        ::cuda::ptx::mbarrier_arrive_expect_tx(
+          ::cuda::ptx::sem_release, ::cuda::ptx::scope_cta, ::cuda::ptx::space_shared, &bar_work_id, sizeof(uint4));
       }
 
-      __syncthreads();
+      ConsumeTiles<IsAligned>(
+        num_row_pixels,
+        num_rows,
+        row_stride_samples,
+        tiles_per_row,
+        grid_queue,
+        ::cuda::std::false_type{},
+        blockIdx_x,
+        blockIdx_y);
 
-      // Get next tile
-      if (threadIdx.x == 0)
+      // wait for new work id, exit if there is none
+      while (!::cuda::ptx::mbarrier_try_wait_parity(&bar_work_id, parity))
+        ;
+      parity ^= 1;
+      if (!::cuda::ptx::clusterlaunchcontrol_query_cancel_is_canceled(nextworkid))
       {
-        temp_storage.tile_idx = tile_queue.Drain(1) + num_even_share_tiles;
+        break;
       }
-
-      __syncthreads();
-
-      tile_idx = temp_storage.tile_idx;
+      blockIdx_x = ::cuda::ptx::clusterlaunchcontrol_query_cancel_get_first_ctaid_x<unsigned>(nextworkid);
+      blockIdx_y = ::cuda::ptx::clusterlaunchcontrol_query_cancel_get_first_ctaid_y<unsigned>(nextworkid);
+      __syncthreads(); // TODO(bgruber): we can get rid of this sync by double buffering nextworkid, see DevTech slides
     }
   }
 
@@ -530,13 +540,20 @@ struct AgentHistogram
   //!   The number of samples between starts of consecutive rows in the region of interest
   template <bool IsAligned>
   _CCCL_DEVICE _CCCL_FORCEINLINE void ConsumeTiles(
-    OffsetT num_row_pixels, OffsetT num_rows, OffsetT row_stride_samples, int, GridQueue<int>, ::cuda::std::false_type)
+    OffsetT num_row_pixels,
+    OffsetT num_rows,
+    OffsetT row_stride_samples,
+    int,
+    GridQueue<int>,
+    ::cuda::std::false_type,
+    unsigned blockIdx_x = blockIdx.x,
+    unsigned blockIdx_y = blockIdx.y)
   {
-    for (int row = blockIdx.y; row < num_rows; row += gridDim.y)
+    for (int row = blockIdx_y; row < num_rows; row += gridDim.y)
     {
       OffsetT row_begin   = row * row_stride_samples;
       OffsetT row_end     = row_begin + (num_row_pixels * NumChannels);
-      OffsetT tile_offset = row_begin + (blockIdx.x * tile_samples);
+      OffsetT tile_offset = row_begin + (blockIdx_x * tile_samples);
 
       while (tile_offset < row_end)
       {
