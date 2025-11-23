@@ -7,6 +7,8 @@ node_selector="cpu.arch=x86_64 and gpu.product_name='*B200*'"
 container_image="rapidsai/devcontainers:25.12-cpp-gcc14-cuda13.0"
 jobtime="4:00:00"
 benchmark_preset="cub-benchmark"
+commit="main"
+continue_previous_run=false
 
 batch_script=$scratch/batch.sh
 cat << BATCH_SCRIPT > $batch_script
@@ -15,15 +17,19 @@ cat << BATCH_SCRIPT > $batch_script
 pip install --break-system-packages fpzip pandas scipy
 
 # clone CCCL
-host=\$(hostname)
 cd $scratch
-if [ -d "\$host/cccl" ]; then
-    rm -r \$host/cccl
+host=\$(hostname)
+mkdir -p \$host/cccl
+cd \$host/cccl
+
+if [ !$continue_previous_run ]; then
+  # sparse checkout of CCCL at commit
+  rm -rf *
+  git init
+  git remote add origin git@github.com:NVIDIA/cccl.git
+  git fetch origin $commit
+  git checkout FETCH_HEAD
 fi
-mkdir \$host
-cd \$host
-git clone --depth 1 git@github.com:NVIDIA/cccl.git
-cd cccl
 
 # configure cmake
 mkdir build_perf
