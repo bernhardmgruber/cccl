@@ -294,6 +294,15 @@ struct tuning_vec
   static constexpr int items_per_thread = 8;
 };
 
+// manually tuned fill on Quadro RTX 6000
+template <int StoreSize>
+struct tuning_vec<750, StoreSize>
+{
+  static constexpr int block_threads    = 256;
+  static constexpr int vec_size         = ::cuda::std::max(8 / StoreSize, 1); // 64-bit instructions
+  static constexpr int items_per_thread = 16;
+};
+
 // manually tuned fill on A100
 template <int StoreSize>
 struct tuning_vec<800, StoreSize>
@@ -384,7 +393,18 @@ struct policy_hub<RequiresStableAddress,
       (fallback_to_prefetch || !all_value_types_have_power_of_two_size) ? Algorithm::prefetch : Algorithm::vectorized;
   };
 
-  struct policy800 : ChainedPolicy<800, policy800, policy300>
+  struct policy750 : ChainedPolicy<750, policy750, policy300>
+  {
+    static constexpr int min_bif = arch_to_min_bytes_in_flight(750);
+    using prefetch_policy        = prefetch_policy_t<256>;
+    using vectorized_policy      = vectorized_policy_t<
+           tuning_vec<750, size_of<it_value_t<RandomAccessIteratorOut>>, sizeof(it_value_t<RandomAccessIteratorsIn>)...>>;
+    using async_policy = async_copy_policy_t<256, 16>; // dummy policy, never used
+    static constexpr auto algorithm =
+      (fallback_to_prefetch || !all_value_types_have_power_of_two_size) ? Algorithm::prefetch : Algorithm::vectorized;
+  };
+
+  struct policy800 : ChainedPolicy<800, policy800, policy750>
   {
   private:
     static constexpr int block_threads = 256;
