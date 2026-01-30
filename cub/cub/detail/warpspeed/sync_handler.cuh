@@ -32,9 +32,9 @@ struct SkipSync
 
 struct SyncHandler
 {
-  static constexpr int mMaxNumResources = 10;
-  static constexpr int mMaxNumPhases    = 4;
-  static constexpr int mMaxNumStages    = 32;
+  // TODO(bgruber): hardcoded values for scan
+  static constexpr int mMaxNumResources = 4; // was 10
+  static constexpr int mMaxNumPhases    = 2; // was 4
 
   // Whether barriers have been initialized.
   bool mHasInitialized = false;
@@ -109,12 +109,13 @@ struct SyncHandler
     {
       for (int ri = 0; ri < mMaxNumResources; ++ri)
       {
-        if (mNextResourceHandle <= ri)
-        {
-          continue;
-        }
-        int resNumPhases = mNumPhases[ri];
-        int numStages    = mNumStages[ri];
+        _CCCL_ASSERT(ri < mNextResourceHandle, "Actual resource count is different than max");
+        // if (ri >= mNextResourceHandle)
+        //{
+        //   continue;
+        // }
+        [[maybe_unused]] int resNumPhases = mNumPhases[ri];
+        int numStages                     = mNumStages[ri];
 
         // We loop over all phases with a conditional on resNumPhases. If we
         // directly loop over only resNumPhases, then the SROA optimization does
@@ -122,7 +123,8 @@ struct SyncHandler
         // spilled to the stack.
         for (int pi = 0; pi < mMaxNumPhases; ++pi)
         {
-          if (pi < resNumPhases)
+          _WS_CONSTANT_ASSERT(pi < resNumPhases, "Actual phase count is different than max");
+          // if (pi < resNumPhases)
           {
             uint64_t* ptrBar     = mPtrBar[ri][pi];
             int numOwningThreads = mNumOwningThreads[ri][pi];
