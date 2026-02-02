@@ -697,6 +697,20 @@ _CCCL_DEVICE void bulk_copy_maybe_unaligned(
     dst_ptr[bytes_to_copy - tail_bytes + threadIdx.x] = tail_byte;
   }
 }
+
+[[nodiscard]] _CCCL_DEVICE_API inline int makeWarpUniform(int x)
+{
+  NV_IF_ELSE_TARGET(NV_PROVIDES_SM_90, (return __reduce_min_sync(~0, x);), (return x;));
+}
+[[nodiscard]] _CCCL_DEVICE_API inline uint32_t makeWarpUniform(uint32_t x)
+{
+  NV_IF_ELSE_TARGET(NV_PROVIDES_SM_90, (return __reduce_min_sync(~0, x);), (return x;));
+}
+[[nodiscard]] _CCCL_DEVICE_API inline uint64_t makeWarpUniform(uint64_t x)
+{
+  return __shfl_sync(~0, x, 0);
+}
+
 // FIXME(bgruber): nvcc 12.0 - 13.1 error with `function "void
 // cub::_V_300300_SM_750_800_900_1000_1200::detail::transform::transform_kernel_ublkcp< ::policy, int,
 // ::cub::_V_300300_SM_750_800_900_1000_1200::detail::transform::always_true_predicate,
@@ -717,7 +731,7 @@ template < // const transform_policy& Policy,
   typename F,
   typename RandomAccessIteratorOut,
   typename... InTs>
-_CCCL_DEVICE void transform_kernel_ublkcp(
+_CCCL_DEVICE _CCCL_FORCEINLINE void transform_kernel_ublkcp(
   Offset num_items,
   int num_elem_per_thread,
   Predicate pred,
@@ -776,7 +790,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
   const int tile_size   = block_threads * num_elem_per_thread;
   const Offset offset   = static_cast<Offset>(blockIdx.x) * tile_size;
-  const int valid_items = (::cuda::std::min) (num_items - offset, Offset{tile_size});
+  const int valid_items = makeWarpUniform((int) ((::cuda::std::min) (num_items - offset, Offset{tile_size})));
 
 #if __cccl_ptx_isa >= 920
   // TODO(bgruber): the .ignore_oob variant of UBLKCP only supports up to 15 ignore bytes. We should figure out if it's
