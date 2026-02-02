@@ -801,8 +801,8 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
         // TODO(bgruber): we could precompute bytes_to_copy on the host
         int bytes_to_copy;
-        int head_padding;
-        int tail_padding;
+        [[maybe_unused]] int head_padding;
+        [[maybe_unused]] int tail_padding;
         if constexpr (alignof(T) < bulk_copy_size_multiple)
         {
           head_padding = aligned_ptr.head_padding;
@@ -818,15 +818,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
           bytes_to_copy = int{sizeof(T)} * valid_items;
         }
 
-        ::cuda::ptx::cp_async_bulk_ignore_oob(
-          ::cuda::ptx::space_shared,
-          ::cuda::ptx::space_global,
-          dst,
-          src,
-          bytes_to_copy,
-          /* ignore left */ head_padding,
-          /* ignore right */ tail_padding,
-          &bar);
+        ::cuda::ptx::cp_async_bulk(::cuda::ptx::space_shared, ::cuda::ptx::space_global, dst, src, bytes_to_copy, &bar);
         total_copied += bytes_to_copy;
 
         smem += tile_padding + int{sizeof(T)} * tile_size;
