@@ -887,22 +887,24 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
     // _CCCL_PDL_TRIGGER_NEXT_LAUNCH(); // disabled, see comment on previous _CCCL_PDL_TRIGGER_NEXT_LAUNCH
   }
 
-  // all threads wait for bulk copy
-  __syncthreads(); // TODO: ahendriksen said this is not needed, but compute-sanitizer disagrees
-  while (!ptx::mbarrier_try_wait_parity(&bar, 0))
-    ;
-
   // move the whole index and iterator to the block/thread index, to reduce arithmetic in the loops below
   out += offset;
 
-  auto process_tile = [&](auto full_tile) {
+  const bool full_tile = (tile_size == valid_items);
+
+  // all threads wait for bulk copy
+  __syncthreads();
+  while (!ptx::mbarrier_try_wait_parity(&bar, 0))
+    ;
+
+  auto process_tile = [&](auto full_tile_ic) {
     // Unroll 1 tends to improve performance, especially for smaller data types (confirmed by benchmark)
     _CCCL_PRAGMA_NOUNROLL()
     for (int j = 0; j < num_elem_per_thread; ++j)
     {
       // TODO(bgruber): fbusato suggests to hoist threadIdx.x out of the loop below
       const int idx = j * block_threads + threadIdx.x;
-      if (full_tile || idx < valid_items)
+      if (full_tile_ic || idx < valid_items)
       {
         char* smem         = smem_base;
         auto fetch_operand = [&](auto aligned_ptr) {
@@ -926,7 +928,7 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
     }
   };
   // explicitly calling the lambda on literal true/false lets the compiler emit the lambda twice
-  if (tile_size == valid_items)
+  if (full_tile)
   {
     process_tile(::cuda::std::true_type{});
   }
