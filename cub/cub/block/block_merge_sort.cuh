@@ -119,6 +119,14 @@ _CCCL_DEVICE _CCCL_FORCEINLINE void SerialMerge(
   SerialMerge(keys_shared, keys1_beg, keys2_beg, keys1_count, keys2_count, output, indices, compare_op, output[0]);
 }
 
+_CCCL_API constexpr auto __block_merge_sort_strategy_smem(
+  unsigned key_align, unsigned key_size, unsigned value_align, unsigned value_size, int NumThreads, int ItemsPerThread)
+  -> smem_allocation
+{
+  const int ITEMS_PER_TILE = ItemsPerThread * NumThreads;
+  return {::cuda::std::max(key_align, value_align), ::cuda::std::max(key_size, value_size) * (ITEMS_PER_TILE + 1)};
+}
+
 /**
  * @brief Generalized merge sort algorithm
  *
@@ -696,6 +704,13 @@ private:
     static_cast<const SynchronizationPolicy*>(this)->SyncImplementation();
   }
 };
+
+_CCCL_API constexpr auto __block_merge_sort_smem(
+  unsigned key_align, unsigned key_size, unsigned value_align, unsigned value_size, int NumThreads, int ItemsPerThread)
+  -> smem_allocation
+{
+  return __block_merge_sort_strategy_smem(key_align, key_size, value_align, value_size, NumThreads, ItemsPerThread);
+}
 
 /**
  * @brief The BlockMergeSort class provides methods for sorting items

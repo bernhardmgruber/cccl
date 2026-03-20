@@ -567,6 +567,37 @@ inline ::std::ostream& operator<<(::std::ostream& os, BlockStoreAlgorithm algo)
 }
 #endif // !_CCCL_COMPILER(NVRTC) && !_CCCL_DOXYGEN_INVOKED
 
+_CCCL_API constexpr auto __block_store_smem(
+  unsigned t_align,
+  unsigned t_size,
+  int BlockDimX,
+  int ItemsPerThread,
+  BlockStoreAlgorithm Algorithm = BLOCK_STORE_DIRECT,
+  int BlockDimY                 = 1,
+  int BlockDimZ                 = 1) -> smem_allocation
+{
+  if (Algorithm == BLOCK_STORE_DIRECT || Algorithm == BLOCK_STORE_STRIPED || Algorithm == BLOCK_STORE_VECTORIZE)
+  {
+    return {alignof(NullType), sizeof(NullType)};
+  }
+  else if (Algorithm == BLOCK_STORE_TRANSPOSE || Algorithm == BLOCK_STORE_WARP_TRANSPOSE
+           || Algorithm == BLOCK_STORE_WARP_TRANSPOSE_TIMESLICED)
+  {
+    const auto exchange_smem = __block_exchange_smem(
+      t_align,
+      t_size,
+      BlockDimX,
+      ItemsPerThread,
+      Algorithm == BLOCK_STORE_WARP_TRANSPOSE_TIMESLICED,
+      BlockDimY,
+      BlockDimZ);
+    auto new_size = ::cuda::round_up(
+      ::cuda::round_up(exchange_smem.size, unsigned{alignof(int)}) + unsigned{sizeof(int)}, exchange_smem.alignment);
+    return {::cuda::std::max(exchange_smem.alignment, unsigned{alignof(int)}), new_size};
+  }
+  ::cuda::std::terminate();
+}
+
 //! @rst
 //! The BlockStore class provides :ref:`collective <collective-primitives>` data movement
 //! methods for writing a :ref:`blocked arrangement <flexible-data-arrangement>` of items

@@ -749,6 +749,34 @@ inline ::std::ostream& operator<<(::std::ostream& os, BlockLoadAlgorithm algo)
 }
 #endif // !_CCCL_COMPILER(NVRTC) && !_CCCL_DOXYGEN_INVOKED
 
+_CCCL_API constexpr auto __block_load_smem(
+  int t_align,
+  int t_size,
+  int BlockDimX,
+  int ItemsPerThread,
+  BlockLoadAlgorithm Algorithm = BLOCK_LOAD_DIRECT,
+  int BlockDimY                = 1,
+  int BlockDimZ                = 1) -> smem_allocation
+{
+  if (Algorithm == BLOCK_LOAD_DIRECT || Algorithm == BLOCK_LOAD_STRIPED || Algorithm == BLOCK_LOAD_VECTORIZE)
+  {
+    return {alignof(NullType), sizeof(NullType)};
+  }
+  else if (Algorithm == BLOCK_LOAD_TRANSPOSE || Algorithm == BLOCK_LOAD_WARP_TRANSPOSE
+           || Algorithm == BLOCK_LOAD_WARP_TRANSPOSE_TIMESLICED)
+  {
+    return __block_exchange_smem(
+      t_align,
+      t_size,
+      BlockDimX,
+      ItemsPerThread,
+      Algorithm == BLOCK_LOAD_WARP_TRANSPOSE_TIMESLICED,
+      BlockDimY,
+      BlockDimZ);
+  }
+  ::cuda::std::terminate();
+}
+
 //! @rst
 //! The BlockLoad class provides :ref:`collective <collective-primitives>` data movement methods for loading a linear
 //! segment of items from memory into a :ref:`blocked arrangement <flexible-data-arrangement>` across a CUDA thread

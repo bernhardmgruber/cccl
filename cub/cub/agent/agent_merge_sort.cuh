@@ -64,7 +64,41 @@ CUB_DETAIL_POLICY_WRAPPER_DEFINE(
 
 namespace detail::merge_sort
 {
-template <typename Policy,
+_CCCL_API constexpr auto __agent_block_sort_smem(
+  merge_sort_policy policy, unsigned key_align, unsigned key_size, unsigned value_align, unsigned value_size)
+  -> smem_allocation
+{
+  const auto load_keys_smem =
+    __block_load_smem(key_align, key_size, policy.block_threads, policy.items_per_thread, policy.load_algorithm);
+  const auto load_items_smem =
+    __block_load_smem(value_align, value_size, policy.block_threads, policy.items_per_thread, policy.load_algorithm);
+
+  const auto store_keys_smem =
+    __block_store_smem(key_align, key_size, policy.block_threads, policy.items_per_thread, policy.store_algorithm);
+  const auto store_items_smem =
+    __block_store_smem(value_align, value_size, policy.block_threads, policy.items_per_thread, policy.store_algorithm);
+
+  const auto block_merge_sort_smem = __block_merge_sort_smem(
+    key_align, key_size, value_align, value_size, policy.block_threads, policy.items_per_thread);
+
+  // union of all sub algorithmss
+  const auto max_align = ::cuda::std::max(
+    {load_keys_smem.alignment,
+     load_items_smem.alignment,
+     store_keys_smem.alignment,
+     store_items_smem.alignment,
+     block_merge_sort_smem.alignment});
+  const auto max_size = ::cuda::std::max(
+    {load_keys_smem.size,
+     load_items_smem.size,
+     store_keys_smem.size,
+     store_items_smem.size,
+     block_merge_sort_smem.size});
+
+  return {max_align, max_size};
+}
+
+template <typename PolicyGetter, // TODO(bgruber): pass policy as NTTP in C++20
           typename KeyInputIteratorT,
           typename ValueInputIteratorT,
           typename KeyIteratorT,
@@ -105,6 +139,13 @@ struct AgentBlockSort
     typename BlockMergeSortT::TempStorage block_merge;
   };
 
+private:
+  static constexpr smem_allocation smem =
+    __agent_block_sort_smem(policy, alignof(KeyT), sizeof(KeyT), alignof(ValueT), sizeof(ValueT));
+  static_assert(smem.alignment == alignof(_TempStorage));
+  static_assert(smem.size == sizeof(_TempStorage));
+
+public:
   /// Alias wrapper allowing storage to be unioned
   struct TempStorage : Uninitialized<_TempStorage>
   {};

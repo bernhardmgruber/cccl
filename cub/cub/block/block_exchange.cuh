@@ -30,6 +30,36 @@
 
 CUB_NAMESPACE_BEGIN
 
+struct smem_allocation
+{
+  unsigned alignment;
+  unsigned size;
+};
+
+_CCCL_API constexpr auto __block_exchange_smem(
+  unsigned t_align,
+  unsigned t_size,
+  int BlockDimX,
+  int ItemsPerThread,
+  bool WarpTimeSlicing = false,
+  int BlockDimY        = 1,
+  int BlockDimZ        = 1) -> smem_allocation
+{
+  const int BLOCK_THREADS  = BlockDimX * BlockDimY * BlockDimZ; ///< The thread block size in threads
+  const int WARP_THREADS   = detail::warp_threads;
+  const int LOG_SMEM_BANKS = detail::log2_smem_banks;
+
+  const int TIME_SLICED_THREADS = WarpTimeSlicing ? ::cuda::std::min(BLOCK_THREADS, WARP_THREADS) : BLOCK_THREADS;
+  const int TIME_SLICED_ITEMS   = TIME_SLICED_THREADS * ItemsPerThread;
+
+  // Insert padding to avoid bank conflicts during raking when items per thread is a power of two and > 4 (otherwise
+  // we can typically use 128b loads)
+  const bool INSERT_PADDING = ItemsPerThread > 4 && ::cuda::is_power_of_two(ItemsPerThread);
+  const int PADDING_ITEMS   = INSERT_PADDING ? (TIME_SLICED_ITEMS >> LOG_SMEM_BANKS) : 0;
+
+  return {::cuda::std::max(16u, t_align), t_size * TIME_SLICED_ITEMS + PADDING_ITEMS};
+}
+
 //! @rst
 //! The BlockExchange class provides :ref:`collective <collective-primitives>` methods for rearranging data partitioned
 //! across a CUDA thread block.
