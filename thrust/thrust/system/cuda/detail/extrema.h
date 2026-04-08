@@ -349,21 +349,31 @@ cub_min_element(execution_policy<Derived>& policy, ItemsIt first, ItemsIt last, 
   }
 
   size_t tmp_size = 0;
-  auto error      = cub::DeviceReduce::ArgMin(
-    nullptr,
-    tmp_size,
-    first,
-    ::cuda::discard_iterator{},
-    static_cast<offset_t*>(nullptr),
+  cudaError_t error;
+  THRUST_INDEX_TYPE_DISPATCH(
+    error,
+    cub::DeviceReduce::ArgMin,
     num_items,
-    binary_pred,
-    stream);
+    (nullptr,
+     tmp_size,
+     first,
+     ::cuda::discard_iterator{},
+     static_cast<offset_t*>(nullptr),
+     num_items_fixed,
+     binary_pred,
+     stream));
   throw_on_error(error, "min_element failed to allocate temporary storages");
 
   // We allocate both the temporary storage needed for the algorithm, and a `size_type` to store the result.
   thrust::detail::temporary_array<char, Derived> tmp(policy, sizeof(offset_t) + tmp_size);
   offset_t* index_ptr = thrust::detail::aligned_reinterpret_cast<offset_t*>(tmp.data().get());
   void* tmp_ptr       = static_cast<void*>(tmp.data().get() + sizeof(offset_t));
+
+  THRUST_INDEX_TYPE_DISPATCH(
+    error,
+    cub::DeviceReduce::ArgMin,
+    num_items,
+    (tmp_ptr, tmp_size, first, ::cuda::discard_iterator{}, index_ptr, num_items_fixed, binary_pred, stream));
 
   error = cub::DeviceReduce::ArgMin(
     tmp_ptr, tmp_size, first, ::cuda::discard_iterator{}, index_ptr, num_items, binary_pred, stream);
