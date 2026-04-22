@@ -905,30 +905,30 @@ struct policy_selector
     return warpspeed_policy;
   }
 
-  _CCCL_API constexpr auto get_sm120_fallback_warpspeed_policy() const -> scan_warpspeed_policy
-  {
-    auto policy = get_sm100_fallback_warpspeed_policy();
-    if (operation_t == op_kind_t::other && is_arithmetic_type(input_type))
-    {
-      if (input_value_size == 4 || input_value_size == 8)
-      {
-        policy.items_per_thread = 127;
-      }
-      else
-      {
-        policy.items_per_thread = ::cuda::std::min(policy.items_per_thread, input_value_size <= 2 ? 63 : 127);
-      }
-    }
-    return policy;
-  }
+  // _CCCL_API constexpr auto get_sm120_fallback_warpspeed_policy() const -> scan_warpspeed_policy
+  // {
+  //   auto policy = get_sm100_fallback_warpspeed_policy();
+  //   if (operation_t == op_kind_t::other && is_arithmetic_type(input_type))
+  //   {
+  //     if (input_value_size == 4 || input_value_size == 8)
+  //     {
+  //       policy.items_per_thread = 127;
+  //     }
+  //     else
+  //     {
+  //       policy.items_per_thread = ::cuda::std::min(policy.items_per_thread, input_value_size <= 2 ? 63 : 127);
+  //     }
+  //   }
+  //   return policy;
+  // }
 
   _CCCL_API constexpr auto get_warpspeed_policy(::cuda::arch_id arch) const
     -> ::cuda::std::optional<scan_warpspeed_policy>
   {
-    if (arch >= ::cuda::arch_id::sm_120)
-    {
-      return get_sm120_fallback_warpspeed_policy();
-    }
+    // if (arch >= ::cuda::arch_id::sm_120)
+    // {
+    //   return get_sm120_fallback_warpspeed_policy();
+    // }
     if (arch >= ::cuda::arch_id::sm_100)
     {
       // tunings from cub/benchmarks/bench/scan/exclusive/sum.warpspeed.cu
