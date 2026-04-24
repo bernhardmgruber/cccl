@@ -927,6 +927,21 @@ struct policy_selector
   {
     if (arch >= ::cuda::arch_id::sm_120)
     {
+      // tunings from cub/benchmarks/bench/scan/exclusive/sum.warpspeed.cu
+      if (operation_t == op_kind_t::plus && accum_is_primitive_or_trivially_copy_constructible)
+      {
+        switch (input_value_size)
+        {
+          case 2:
+            // wrps_4.lbi_2.ipt_96 ()  1.082511  0.929516  1.091523  1.264033
+            return scan_warpspeed_policy{4, 2, 96 - 1};
+
+            // TODO(bgruber): tune for more data types
+          default:
+            break;
+        }
+      }
+
       return get_sm120_fallback_warpspeed_policy();
     }
     if (arch >= ::cuda::arch_id::sm_100)
