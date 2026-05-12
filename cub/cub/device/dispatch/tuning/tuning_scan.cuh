@@ -906,29 +906,24 @@ struct policy_selector
     return warpspeed_policy;
   }
 
-  _CCCL_API constexpr auto get_sm120_fallback_warpspeed_policy() const -> scan_warpspeed_policy
-  {
-    auto policy = get_sm100_fallback_warpspeed_policy();
-    if (operation_t == op_kind_t::other && is_arithmetic_type(input_type))
-    {
-      if (input_value_size == 4 || input_value_size == 8)
-      {
-        policy.items_per_thread = 127;
-      }
-      else
-      {
-        policy.items_per_thread = ::cuda::std::min(policy.items_per_thread, input_value_size <= 2 ? 63 : 127);
-      }
-    }
-    return policy;
-  }
-
   _CCCL_API constexpr auto get_warpspeed_policy(::cuda::compute_capability cc) const
     -> ::cuda::std::optional<scan_warpspeed_policy>
   {
     if (cc >= ::cuda::compute_capability{12, 0})
     {
-      return get_sm120_fallback_warpspeed_policy();
+      auto policy = get_sm100_fallback_warpspeed_policy();
+      if (operation_t == op_kind_t::other && is_arithmetic_type(input_type))
+      {
+        if (input_value_size == 4 || input_value_size == 8)
+        {
+          policy.items_per_thread = 127;
+        }
+        else
+        {
+          policy.items_per_thread = ::cuda::std::min(policy.items_per_thread, input_value_size <= 2 ? 63 : 127);
+        }
+      }
+      return policy;
     }
     if (cc >= ::cuda::compute_capability{10, 0})
     {
