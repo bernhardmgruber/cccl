@@ -912,6 +912,21 @@ struct policy_selector
     if (cc >= ::cuda::compute_capability{12, 0})
     {
       auto policy = get_sm100_fallback_warpspeed_policy();
+
+      // tunings from cub/benchmarks/bench/scan/exclusive/sum.warpspeed.cu
+      if (operation_t == op_kind_t::plus && accum_is_primitive_or_trivially_copy_constructible)
+      {
+        switch (input_type)
+        {
+          case type_t::float32:
+            // 102  wrps_4.lbi_2.ipt_32 (6.db)  1.033823  0.999637  1.033983  1.16666
+            return scan_warpspeed_policy{4, 2, 32 - 1};
+          case type_t::float64:
+            // 122  wrps_4.lbi_4.ipt_24 (0.db)  1.053781  1.000000  1.070014  1.25
+            return scan_warpspeed_policy{4, 4, 24 - 1};
+        }
+      }
+
       if (operation_t == op_kind_t::other && is_arithmetic_type(input_type))
       {
         if (input_value_size == 4 || input_value_size == 8)
