@@ -400,6 +400,7 @@ struct aligned_base_ptr
   const char* ptr; // aligned pointer before the original pointer (16-byte or 128-byte). May not be aligned to
                    // alignof(T). E.g.: array of int3 starting at address 4, ptr == 0
   int head_padding; // byte offset between ptr and the original pointer. Value inside [0;15] or [0;127].
+  int bytes_to_copy_full_tile;
 
   _CCCL_HOST_DEVICE const T* ptr_to_elements() const
   {
@@ -408,16 +409,19 @@ struct aligned_base_ptr
 
   _CCCL_HOST_DEVICE friend bool operator==(const aligned_base_ptr& a, const aligned_base_ptr& b)
   {
-    return a.ptr == b.ptr && a.head_padding == b.head_padding;
+    return a.ptr == b.ptr && a.head_padding == b.head_padding && a.bytes_to_copy_full_tile == b.bytes_to_copy_full_tile;
   }
 };
 
 template <typename T>
-_CCCL_HOST_DEVICE auto make_aligned_base_ptr(const T* ptr, int alignment) -> aligned_base_ptr<T>
+_CCCL_HOST_DEVICE auto make_aligned_base_ptr(const T* ptr, int alignment, int tile_size) -> aligned_base_ptr<T>
 {
-  const auto raw_ptr  = reinterpret_cast<const char*>(ptr);
-  const auto base_ptr = ::cuda::align_down(raw_ptr, alignment);
-  return aligned_base_ptr<T>{base_ptr, static_cast<int>(raw_ptr - base_ptr)};
+  const auto raw_ptr      = reinterpret_cast<const char*>(ptr);
+  const auto base_ptr     = ::cuda::align_down(raw_ptr, alignment);
+  const auto head_padding = static_cast<int>(raw_ptr - base_ptr);
+  const auto bytes_to_copy_full_tile =
+    ::cuda::round_up(head_padding + int{sizeof(T)} * tile_size, bulk_copy_size_multiple);
+  return aligned_base_ptr<T>{base_ptr, head_padding, bytes_to_copy_full_tile};
 }
 
 template <int ThreadsPerBlock>
@@ -803,12 +807,10 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
         _CCCL_ASSERT(::cuda::std::is_sufficiently_aligned<bulk_copy_alignment>(src), "");
         _CCCL_ASSERT(::cuda::std::is_sufficiently_aligned<bulk_copy_alignment>(dst), "");
 
-        // TODO(bgruber): we could precompute bytes_to_copy on the host
         int bytes_to_copy;
         if constexpr (alignof(T) < bulk_copy_size_multiple)
         {
-          bytes_to_copy =
-            ::cuda::round_up(aligned_ptr.head_padding + int{sizeof(T)} * tile_size, bulk_copy_size_multiple);
+          bytes_to_copy = aligned_ptr.bytes_to_copy_full_tile;
         }
         else
         {
@@ -1106,10 +1108,10 @@ _CCCL_HOST_DEVICE auto make_iterator_kernel_arg(It it) -> kernel_arg<It>
 }
 
 template <typename It>
-_CCCL_HOST_DEVICE auto make_aligned_base_ptr_kernel_arg(It ptr, int alignment) -> kernel_arg<It>
+_CCCL_HOST_DEVICE auto make_aligned_base_ptr_kernel_arg(It ptr, int alignment, int tile_size) -> kernel_arg<It>
 {
   kernel_arg<It> arg;
-  arg.aligned_ptr = make_aligned_base_ptr(ptr, alignment);
+  arg.aligned_ptr = make_aligned_base_ptr(ptr, alignment, tile_size);
   return arg;
 }
 

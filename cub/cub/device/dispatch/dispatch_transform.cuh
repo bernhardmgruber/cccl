@@ -142,9 +142,9 @@ struct TransformKernelSource<PolicySelector,
   }
 
   template <typename It>
-  CUB_RUNTIME_FUNCTION static constexpr kernel_arg<It> MakeAlignedBasePtrKernelArg(It it, int align)
+  CUB_RUNTIME_FUNCTION static constexpr kernel_arg<It> MakeAlignedBasePtrKernelArg(It it, int align, int tile_size)
   {
-    return detail::transform::make_aligned_base_ptr_kernel_arg(it, align);
+    return detail::transform::make_aligned_base_ptr_kernel_arg(it, align, tile_size);
   }
 
 private:
@@ -318,8 +318,11 @@ CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE cudaError_t invoke_async_algorithm(
   {
     return ret.error();
   }
-
   auto [launcher, kernel, items_per_thread] = *ret;
+
+  CUB_DETAIL_CONSTEXPR_ISH const TransformPolicy policy = policy_getter();
+  const int tile_size                                   = policy.async_copy.threads_per_block * items_per_thread;
+
   return launcher.doit(
     kernel,
     num_items,
@@ -329,7 +332,7 @@ CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE cudaError_t invoke_async_algorithm(
     op,
     THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(out),
     kernel_source.MakeAlignedBasePtrKernelArg(
-      THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(::cuda::std::get<Is>(in)), alignment)...);
+      THRUST_NS_QUALIFIER::try_unwrap_contiguous_iterator(::cuda::std::get<Is>(in)), alignment, tile_size)...);
 }
 
 template <typename... RandomAccessIteratorsIn,
