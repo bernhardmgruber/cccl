@@ -778,9 +778,9 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
 
   namespace ptx = ::cuda::ptx;
 
-  const int tile_size   = threads_per_block * num_elem_per_thread;
-  const Offset offset   = static_cast<Offset>(blockIdx.x) * tile_size;
-  const int valid_items = (::cuda::std::min) (num_items - offset, static_cast<Offset>(tile_size));
+  const int tile_size = threads_per_block * num_elem_per_thread;
+  const Offset offset = static_cast<Offset>(blockIdx.x) * tile_size;
+  int valid_items     = tile_size; // overwritten later if we are not an inner block
 
   const bool inner_blocks = 0 < blockIdx.x && blockIdx.x + 2 < gridDim.x;
   if (inner_blocks)
@@ -857,6 +857,8 @@ _CCCL_DEVICE void transform_kernel_ublkcp(
       // an update to the CUDA memory model blesses skipping the following fence
       // ptx::fence_proxy_async(ptx::space_shared);
     }
+
+    valid_items = (::cuda::std::min) (num_items - offset, static_cast<Offset>(tile_size));
 
     // use all threads to copy the head and tail bytes, use the elected thread to start the bulk copy
     char* smem                         = smem_base;
