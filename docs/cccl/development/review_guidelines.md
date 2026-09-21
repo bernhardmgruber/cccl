@@ -330,6 +330,10 @@ and prefer other member names. Candidate for a pre-commit grep.
 <!-- provenance:
   #9777→#10508 single-pass host+device fpemu test instantiated fpemu<_Float64> guarded only by __STDCPP_FLOAT64_T__, breaking nvcc device compilation under C++23
 -->
+<!-- note:
+  CI could only catch this with a C++23 lane (nvcc -std=c++23 + libstdc++ 13+); the matrix builds
+  17/20 only. Even then, each new dialect/stdlib pairing reopens the gap, so the rule stays relevant.
+-->
 
 When a diff adds a code path selected purely by a *language* feature-test macro (`__cpp_*`,
 `__STDCPP_*_T__`, C++23 `<stdfloat>` types) inside a function compiled for BOTH host and device (a
