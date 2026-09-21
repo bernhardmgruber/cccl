@@ -192,6 +192,16 @@ byte buffer. Static shared memory with alignment > 16 is fine.
   #2166→#2217 added C++14 deprecation warning without bumping CUB/Thrust's own default CMake dialect off C++14
 -->
 
+<!-- note:
+  Incident summary: #2166 deprecated building with C++14 while THRUST_CPP_DIALECT still defaulted to 14,
+  so every default-configured standalone build was immediately flooded by the new warning; #2217 bumped
+  the default nine days later. CI did not catch it because CI pins every configuration value (presets/
+  matrix pass the dialect explicitly; the C++14 lanes set *_IGNORE_DEPRECATED_* suppressions), so CMake
+  defaults are a structural CI blind spot — only out-of-CI users exercise them.
+  Triage: possibly too seldom to keep as its own rule (single incident); if kept, consider reframing
+  around the broader mechanism "configuration defaults are never tested by CI".
+-->
+
 When a diff adds a deprecation warning/error tied to a specific configuration value (C++ dialect,
 compiler version, a flag's value), check whether the project's own default configuration (CMake option
 defaults, presets, CI scripts) still resolves to that now-deprecated value. If so, every user building
