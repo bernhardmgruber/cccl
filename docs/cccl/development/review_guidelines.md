@@ -460,20 +460,14 @@ the call. PR CI builds and runs with matched driver/CTK, so this only reproduces
 ## correctness.workaround-breaks-constexpr (important, constexpr-marked functions in cuda::std)
 
 <!-- provenance:
-  #5939→#7059 auto __tmp = mapping();
-  return __tmp.is_exhaustive();
-  workaround for a clang [[nodiscard]] warning made mdspan's is_exhaustive unusable in constexpr context on NVHPC;
-  propagated to is_unique/is_strided/stride in #6703
+  #5939→#7059 `auto __tmp = mapping(); return __tmp.is_exhaustive();` workaround for a clang [[nodiscard]] warning made mdspan's is_exhaustive unusable in constexpr context on some compilers; propagated to is_unique/is_strided/stride in #6703
 -->
 
-When a diff introduces a workaround inside a `constexpr` function (a named local copy of a temporary
-to dodge a compiler warning, an intermediate variable, a cast), verify the function is still usable in
-a constexpr evaluation context, not merely that it compiles as a runtime call. Some compilers (notably
-NVHPC) diagnose "attempt to access run-time storage" for a materialized local copy of a class-type
-temporary inside a constexpr call chain; the break only surfaces when a caller uses the function in a
-`static_assert`, which the introducing PR's tests may not exercise. Prefer binding a `const auto&`
-over a named copy, and require a `static_assert`-based test when adding such a workaround. If the
-pattern is copy-pasted to sibling member functions, check each one.
+When a diff introduces any workaround inside a `constexpr` function, verify the function is still
+usable during constant evaluation on every supported compiler, not merely that it compiles as a
+runtime call. The break only surfaces when a caller uses the function during constant evaluation,
+which the unit tests may not exercise. Adding a test that evaluates the function at compile time is
+recommended.
 
 ## correctness.ptx-asm-operand-index (critical, hand-written/generated inline PTX `asm volatile` blocks)
 
