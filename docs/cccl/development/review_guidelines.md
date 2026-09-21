@@ -375,6 +375,10 @@ stringification; require `_CCCL_HOST_DEVICE_API` (or narrower).
   #8216→#10813 centralizing STL stream includes removed a transitive <iostream> that the README.md quick-start example (never touched by the diff) relied on
 -->
 
+<!-- note:
+  This seems like we should just have more documentation examples unit tested.
+-->
+
 When a diff centralizes or minimizes `#include`s across many library headers, check whether it removes
 a standard-library include (`<iostream>`, `<sstream>`) that was previously available *transitively*
 through public headers. Search README/getting-started snippets, `examples/`, and documentation code
@@ -391,10 +395,10 @@ rely on the same transitive includes and are not compiled by CI.
 
 Flag a `__global__` function (or any function) defined in a header that is turned into a template
 (especially with an unused/default-only parameter like `template <int = 0>`) purely to work around a
-"multiple definition" / ODR linker error. This is not equivalent to `inline`: template kernels
-instantiated identically in multiple TUs can still misbehave at kernel-launch time. The correct fix is
-`inline` for ordinary functions and `static` or an unnamed namespace for `__global__` kernels. A
-comment like "template to make this inline without using inline" is a strong signal.
+"multiple definition" / ODR linker error — a template is not a safe substitute for `inline` here:
+identically instantiated template kernels in multiple TUs can still misbehave at launch time. The
+correct fix is `inline` for ordinary functions and `static` or an unnamed namespace for `__global__`
+kernels.
 
 ## correctness.remove-equivalence-sanity-check (critical, any diff)
 
