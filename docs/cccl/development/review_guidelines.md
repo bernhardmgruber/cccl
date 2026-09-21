@@ -247,6 +247,11 @@ diff's base revision. Candidate for a pre-commit grep.
   #10997→#11031,#11033 __remove_cv builtin broadened to NVCC/GCC with only a libstdc++-version gate and no NVCC-version floor, miscompiled on NVCC 12.9/13.0
 -->
 
+<!-- note:
+    I don't think it's feasible to add such a rule.
+    Or can we ask the agent to entertain a web search and study the corresponding manuals?
+-->
+
 When a diff adds or edits a capability macro gating a CUDA-toolkit- or compiler-version-dependent
 feature (programmatic dependent launch, a `__builtin_*`, cluster launch, …) behind a numeric threshold
 (`_CCCL_CUDACC_AT_LEAST(11, 8)`, `_CCCL_COMPILER(NVRTC, >, 12, 2)`), require the diff to carry a
@@ -265,18 +270,18 @@ type-trait builtin for NVCC/GCC that was clang-only): require an explicit per-co
 shipped release-specific miscompiles of individual builtins, and PR CI typically builds only the
 newest toolchain.
 
-## build.narrow-multiply-then-widen (important, C++/CUDA code computing a size/count/capacity/offset, including test files)
+## build.narrow-arithmetic-then-widen (important, C++/CUDA code computing a size/count/capacity/offset, including test files)
 
 <!-- provenance:
   #7705→#9736 fixed_capacity_map tests computed capacity via static_cast<size_t>(num_keys * 2), multiplying in int before widening, breaking a clang-tidy CI check (pair auto-inferred as #9719→#9736)
 -->
 
-When a diff computes a size, count, capacity, or offset by multiplying two narrower-typed operands and
-only widens the RESULT afterward — `static_cast<SizeT>(a * b)` — flag it: the multiplication executes
-in the narrower type and can silently overflow before the cast runs. Require widening an operand
-first: `SizeT{a} * b`. Check every occurrence in the diff, including test/benchmark files sizing a
-buffer from a small `int` loop-count variable — these are not exempt merely because the test's inputs
-happen to be small. Candidate for a pre-commit grep.
+When a diff computes a size, count, capacity, or offset by adding or multiplying two operands and
+widening the RESULT afterward — explicitly with a cast or implicitly through a wider
+destination type, a wider function parameter, or return type — flag it as a
+code smell: the operation executes in the narrower type and can silently overflow before the
+result is widened. The author should either widen an operand before the operation
+or, if the narrow result is intended, narrow the destination type so no widening occurs.
 
 ## build.long-not-64bit-on-windows (important, C++/CUDA code aliasing or computing with `long`)
 
