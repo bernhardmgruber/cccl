@@ -400,20 +400,20 @@ identically instantiated template kernels in multiple TUs can still misbehave at
 correct fix is `inline` for ordinary functions and `static` or an unnamed namespace for `__global__`
 kernels.
 
-## correctness.remove-equivalence-sanity-check (critical, any diff)
+## correctness.verification-removed-without-replacement (critical, any diff deleting a check or test)
 
 <!-- provenance:
-  #3743→#3866 dropping deprecated cub::Traits CATEGORY usage also deleted the static_assert cross-checks (old_IS_SMALL_UNSIGNED, "sanity check, remove eventually") comparing new type classification to the old one, breaking dispatch for library-extended types;
-  NVBug 5121653
+  #3743→#3866 dropping deprecated cub::Traits CATEGORY usage also deleted the static_assert cross-checks (old_IS_SMALL_UNSIGNED, "sanity check, remove eventually") comparing new type classification to the old one, breaking dispatch for library-extended types (NVBug 5121653);
+  #3970→#9211 (issue #807) generate/raw_reference_cast simplification deleted the compile-fail harness (runtime_static_assert.h, unittest_static_assert.cu) with no replacement
 -->
 
-If a diff deletes a `static_assert` (or other check) that cross-checks a new computation against an
-old or deprecated one — look for comments like "sanity check", "TODO remove later", `old_*` variable
-names — do not let it go as incidental cleanup. Such checks are left in deliberately to catch exactly
-the divergence a refactor might introduce; removing one (typically because it references a deprecated
-symbol) without independently confirming the two computations are equivalent for every supported type
-risks reintroducing the bug it was guarding against, especially for library-extended types (custom
-floating-point-like or integer-like types) that generic `<type_traits>` predicates don't recognize.
+When a diff deletes something whose purpose is to verify a property — a `static_assert` cross-checking
+a new computation against an old one (tells: "sanity check" comments, `old_*` names), a negative or
+compile-fail test (`*_fail*`, `*_static_assert*`, `UNSUPPORTED`/`XFAIL` markers), a runtime assertion —
+do not accept it as incidental cleanup, even when the deletion is a side effect of removing a
+deprecated symbol the check referenced. The verified property outlives the check: require either
+evidence it now holds by construction (for every supported type, including library-extended types that
+generic `<type_traits>` predicates don't recognize) or an equivalent replacement in the same diff.
 
 ## correctness.stale-refs-after-rename (important, renames, moves, or splits of files, symbols, or modules anywhere in the repo)
 
@@ -918,20 +918,6 @@ an entry in an exhaustive self-test table enumerating every known architecture (
 `policy_hub_all` in `catch2_test_util_device.cu`). Do not assume existing CI covers it: dependent
 projects' "light" PR jobs are pinned to a single default SM. Flag the omission; ask the author to
 point at the specific job/test covering the new architecture, or add one.
-
-## test.remove-negative-test-without-replacement (important, test suites in cub/thrust/libcudacxx)
-
-<!-- provenance:
-  #3970→#9211 (issue #807) generate/raw_reference_cast simplification deleted runtime_static_assert.h, unittest_static_assert.cu, and generate_const_iterators.cu — the compile-fail harness — with no replacement until #9211 added *_fail.cu tests
--->
-
-When a diff deletes a test file, header, or CMake target whose purpose is to verify a negative
-property (a static assertion fires, a call fails to compile, an operation is rejected —
-filenames/macros like `*_fail*`, `*_static_assert*`, `UNSUPPORTED`/`XFAIL` markers), check that an
-equivalent replacement lands in the same diff, even when the deletion is incidental to an unrelated
-refactor. "The old mechanism was awkward/incompatible with a compiler" is not sufficient justification
-for deleting it outright — the property it verified still needs coverage. Also check whether any CMake
-test-registration still references the deleted test name.
 
 ## infra.pin-deps (important, CMake/CI/submodules)
 
