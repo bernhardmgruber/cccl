@@ -424,22 +424,16 @@ generic `<type_traits>` predicates don't recognize) or an equivalent replacement
   #4537→#6516 NVTX macro rename left a stale #define in test_nvtx_disabled.cu, silently defanging a negative test;
   #4795→#4814 cudax detail→__detail rename swept ~120 files but missed the second example copy at top-level examples/cudax/
 -->
+<!-- note:
+  A docs CI check failing on autodoc directives that yield no members (or on empty generated pages)
+  would cover the last clause mechanically; retire it once such a check exists.
+-->
 
-When a diff renames, moves, or splits a file, macro, symbol, or module across many call sites, search
-for surviving references to the old name/path — against the diff's base revision, not the current
-checkout (a later fix may make an empty grep look safe). The diff will not show untouched files that
-still point at the old location; enumerate them by purpose:
-- Sphinx `automodule::`/`toctree::` directives, cross-references in `.rst`/`.md`, and code/test
-  comments citing a doc or source path; verify every added `toctree::` entry leads to a page with
-  actual content (auto-generated category pages can be empty stubs);
-- test files referencing the name out-of-band: filenames containing `disabled`, `guard`, `negative`,
-  `_neg`; tests that `#define` a library macro before including library headers (a negative test
-  `#define`-ing the old name to `static_assert(false, …)` becomes a permanent no-op once real code
-  stops using that name); `.in`/template files with hardcoded paths;
-- sample/demo code in BOTH `<subproject>/examples/` AND top-level `examples/<subproject>/` — these are
-  independently maintained, and a rename scoped to the subproject dir will not touch the latter.
-For each candidate, state whether the rename covers it. Flag the omission even if the current checkout
-looks consistent.
+When a diff renames, moves, or splits a file, macro, symbol, or module, `git grep` for the old name:
+each remaining hit must be updated, or be classified as an unrelated entity that merely shares
+the name. Doc directives (`automodule::`/`toctree::`) can go stale without containing the old name and
+still build cleanly (autodoc renders emptied packages as blank pages) — verify the rendered docs, not
+just the grep.
 
 ## correctness.cuda-runtime-symbol-version-guard (critical, code calling CUDA Runtime/Driver API symbols)
 
