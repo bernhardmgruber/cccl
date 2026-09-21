@@ -283,19 +283,18 @@ code smell: the operation executes in the narrower type and can silently overflo
 result is widened. The author should either widen an operand before the operation
 or, if the narrow result is intended, narrow the destination type so no widening occurs.
 
-## build.long-not-64bit-on-windows (important, C++/CUDA code aliasing or computing with `long`)
+## build.no-long (important, C++/CUDA code, including tests)
 
 <!-- provenance:
-  #6068→#6081 c/parallel three_way_partition used `using OffsetT = long;
-  `, whose choose_signed_offset static_assert fails under MSVC (LLP64: long is 32-bit)
+  #6068→#6081 c/parallel three_way_partition used `using OffsetT = long`, whose choose_signed_offset static_assert fails under MSVC (LLP64: long is 32-bit)
 -->
 
-Flag `long` used as a stand-in for a 64-bit or pointer-width integer type (`using X = long;`, casts to
-`long`, `long` chosen for an offset/size/count spanning the address space) unless guarded for MSVC.
-Windows targets (MSVC, clang-cl) use the LLP64 data model where `long` is 32 bits, unlike LP64
-Linux/macOS. Code assuming `long == int64_t` builds and passes on Linux CI but silently truncates or
-fails a `static_assert` on Windows. Prefer `ptrdiff_t`, `int64_t`, or `long long`. Candidate for a
-pre-commit grep.
+Flag any use of `long`/`unsigned long` as a chosen type. `long` is 64-bit on LP64 Linux/macOS but
+32-bit on LLP64 Windows (MSVC, clang-cl), so code assuming either width builds and passes on one
+platform and silently truncates or fails on the other. Use `int64_t`/`long long`, `int32_t`, or
+`ptrdiff_t`/`size_t` to say which width is meant. Acceptable: `long` as a *supported* type for
+traits, overload sets, type-list tests enumerating fundamental types, and external API signatures
+that use it. Candidate for a pre-commit grep.
 
 ## build.mixed-cuda-runtime-linkage (important, CMake changes linking CUDA runtime libraries)
 
