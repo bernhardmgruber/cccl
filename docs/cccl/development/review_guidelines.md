@@ -435,20 +435,27 @@ the name. Doc directives (`automodule::`/`toctree::`) can go stale without conta
 still build cleanly (autodoc renders emptied packages as blank pages) — verify the rendered docs, not
 just the grep.
 
-## correctness.cuda-runtime-symbol-version-guard (critical, code calling CUDA Runtime/Driver API symbols)
+## correctness.cuda-driver-symbol-version-guard (critical, code calling CUDA Driver API symbols)
 
 <!-- provenance:
   #2192→#5971 cudaGetDriverEntryPointByVersion gated only by a build-time CUDART_VERSION check, breaking when built against CTK>=12.5 but run against an older CUDA runtime (pair auto-inferred from issue #5970);
   #5976→#6895 (backport #6896) cuGetProcAddress switch reintroduced the same break by bootstrapping via the unversioned cudaGetDriverEntryPoint
 -->
 
-When a diff gates a call to a CUDA Runtime/Driver API symbol introduced in a specific CUDA Toolkit
-version behind a build-time-only check (`_CCCL_CTK_AT_LEAST(...)`, `CUDART_VERSION >= ...`), flag it
-unless the code also verifies the *linked/runtime* CUDA version before making the call
-(`cudaRuntimeGetVersion`/`cudaDriverGetVersion`). CCCL is commonly built against a newer CTK than the
-one on the machine that later runs the binary; a build-time-only guard links fine but hits an
-"undefined symbol" failure at run time against an older `libcudart.so`. PR CI builds and runs against
-the same CTK, so this is invisible to CI and only reproduces in the field.
+<!-- note:
+  The Runtime API half of the historical incidents is no longer relevant to CCCL: cudart is statically
+  linked everywhere (c/parallel pins CUDA_RUNTIME_LIBRARY STATIC; #7221 fixed the one shared-cudart
+  mix), and the driver bootstrap in cuda/__driver/driver_api.h now dlopens libcuda directly instead of
+  going through cudart.
+-->
+
+When a diff gates a call to a CUDA Driver API symbol introduced in a specific CUDA version behind a
+build-time-only check (`_CCCL_CTK_AT_LEAST(...)`), flag it: `libcuda.so`/`nvcuda.dll` comes from the
+installed display driver, which is independent of — and often older than — the CTK the binary was
+built against, so the symbol can be absent at run time regardless of any build-time guard. Resolve
+driver entry points through the versioned `cuGetProcAddress` bootstrap in
+`cuda/__driver/driver_api.h` (which reports availability), or verify `cudaDriverGetVersion` before
+the call. PR CI builds and runs with matched driver/CTK, so this only reproduces in the field.
 
 ## correctness.workaround-breaks-constexpr (important, constexpr-marked functions in cuda::std)
 
