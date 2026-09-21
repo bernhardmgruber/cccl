@@ -196,7 +196,7 @@ byte buffer. Static shared memory with alignment > 16 is fine.
   Incident summary: #2166 deprecated building with C++14 while THRUST_CPP_DIALECT still defaulted to 14,
   so every default-configured standalone build was immediately flooded by the new warning; #2217 bumped
   the default nine days later. CI did not catch it because CI pins every configuration value (presets/
-  matrix pass the dialect explicitly; the C++14 lanes set *_IGNORE_DEPRECATED_* suppressions), so CMake
+  matrix pass the dialect explicitly; the C++14 jobs set *_IGNORE_DEPRECATED_* suppressions), so CMake
   defaults are a structural CI blind spot — only out-of-CI users exercise them.
   Triage: possibly too seldom to keep as its own rule (single incident); if kept, consider reframing
   around the broader mechanism "configuration defaults are never tested by CI".
@@ -331,7 +331,7 @@ and prefer other member names. Candidate for a pre-commit grep.
   #9777→#10508 single-pass host+device fpemu test instantiated fpemu<_Float64> guarded only by __STDCPP_FLOAT64_T__, breaking nvcc device compilation under C++23
 -->
 <!-- note:
-  CI could only catch this with a C++23 lane (nvcc -std=c++23 + libstdc++ 13+); the matrix builds
+  CI could only catch this with a C++23 job (nvcc -std=c++23 + libstdc++ 13+); the matrix builds
   17/20 only. Even then, each new dialect/stdlib pairing reopens the gap, so the rule stays relevant.
 -->
 
@@ -351,6 +351,13 @@ host defines `__STDCPP_*_T__`). Require an additional compiler check
   #10533 was a closed draft, real intro via git blame);
   #9752→#10539 CUB tuning to_string() debug helpers marked _CCCL_API (pair auto-inferred as #10533→#10539);
   #8475→#9191 cuda::std::simd complex support (inline asm, manual unrolling) marked _CCCL_API, breaking tile-mode compilation
+-->
+
+<!-- note:
+  A tile-mode build job would catch this class mechanically (hard compile errors, e.g. "asm statement
+  is unsupported in tile code"); lit has an enable-tile feature but it is off by default and not in the
+  PR matrix. Coverage is limited by lazy instantiation of templates. Retire this rule once such a job
+  exists.
 -->
 
 When a diff marks a function with the generic `_CCCL_API` (or `_CCCL_TRIVIAL_API`/`_CCCL_NODEBUG_API`)
