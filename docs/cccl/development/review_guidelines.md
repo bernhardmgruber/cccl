@@ -478,16 +478,16 @@ recommended.
 When a diff adds or edits an inline `asm volatile("...", : outputs : inputs : clobbers)` block
 referencing operands by number (`%0`, `%1`, …), manually verify each `%N` against its declared position
 (outputs first, then inputs, in constraint-list order) — the compiler only checks that `%N` is in
-range, not that it refers to the intended operand. Watch for: reading an output-only (`"="`) operand
-instead of the matching input (reads undefined data), and adjacent operand groups that off-by-one after
-a reorder (compare vs. desired in a CAS). Require a test that reads back the actual written value, not
-just a success boolean — especially for >64-bit operand groups spanning multiple registers.
+range, not that it refers to the intended operand. Watch for reads of output-only (`"="`) operands and
+off-by-one indices after a reorder. Tests should read back the written values, not just a status.
 
 ## correctness.partial-optimizer-workaround (important, compiler/optimizer-bug workarounds in CUDA kernels)
 
 <!-- provenance:
   #8656→#8839 asm-volatile barrier for an NVCC codegen bug applied to one masked-copy pointer group in squadStoreBulkSync but not the structurally identical doStartCopy block below, causing an illegal memory access on sm_121 (intro corrected from issue #8838)
 -->
+
+<!-- I don't think this can be generalized. Compiler workarounds have to be re-evaluated at every site they are used -->
 
 When a diff adds a compiler/optimizer-bug workaround (an `asm volatile("" : "+r"(x))` barrier,
 `#pragma`, `volatile`) to guard specific values against a cited codegen bug, search the surrounding
