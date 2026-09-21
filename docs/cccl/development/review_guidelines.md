@@ -318,13 +318,12 @@ cover for the touched project. Require one consistent flavor per binary (in CCCL
   renamed to highest/lowest and parenthesized
 -->
 
-Flag an unparenthesized call to a function literally named `max` or `min` (most commonly
-`std::numeric_limits<T>::max()`), and a newly introduced member or trait literally named `max`/`min`.
-On Windows, `<windows.h>` (pulled in transitively unless `NOMINMAX` is defined first) `#define`s
-`max`/`min` as 2-argument function-like macros, so a zero-argument `::max()` is a hard preprocessor
-error — only on MSVC/Windows configurations, often missing from local builds. Require the macro-safe
-spelling `(std::numeric_limits<T>::max)()`, and prefer naming new members something other than bare
-`max`/`min` (e.g. `highest`/`lowest`). Candidate for a pre-commit grep.
+Flag an unparenthesized call to a function literally named `max`/`min` (e.g.
+`std::numeric_limits<T>::max()`), and any new member or trait named `max`/`min`. On Windows,
+`<windows.h>` defines `max`/`min` as function-like macros, breaking such code. Headers sandwiched
+between `<cuda/std/__cccl/prologue.h>`/`epilogue.h` (libcudacxx, cudax) are safe; everywhere else
+(CUB, Thrust, tests, examples), require the macro-safe spelling `(std::numeric_limits<T>::max)()`
+and prefer other member names. Candidate for a pre-commit grep.
 
 ## build.host-feature-unavailable-in-device (important, code compiled for both host and device)
 
