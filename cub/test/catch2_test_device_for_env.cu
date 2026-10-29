@@ -31,6 +31,12 @@ struct stream_registry_factory_t;
 #include <c2h/device_and_stream.h>
 #include <catch2_test_launch_helper.h>
 
+DECLARE_LAUNCH_WRAPPER(cub::DeviceFor::Bulk, device_bulk_two_phase);
+DECLARE_LAUNCH_WRAPPER(cub::DeviceFor::ForEachN, device_for_each_n_two_phase);
+DECLARE_LAUNCH_WRAPPER(cub::DeviceFor::ForEach, device_for_each_two_phase);
+DECLARE_LAUNCH_WRAPPER(cub::DeviceFor::ForEachCopyN, device_for_each_copy_n_two_phase);
+DECLARE_LAUNCH_WRAPPER(cub::DeviceFor::ForEachCopy, device_for_each_copy_two_phase);
+
 // %PARAM% TEST_LAUNCH lid 0:1:2
 
 struct square_ref_op
@@ -975,6 +981,202 @@ CUB_TEST("DeviceFor::ForEachInLayout two-phase API propagates tuning", "[for][de
 }
 
 #endif // TEST_LAUNCH == 0
+
+// The graph launch (TEST_LAUNCH == 2) appends its own stream argument, so it cannot be combined with an environment.
+#if TEST_LAUNCH != 2
+
+// Before the environment parameter, the two-phase overloads took `cudaStream_t stream = 0`, so callers passing nullptr,
+// a literal 0 or a default constructed cudaStream_t for the stream exist. All must keep compiling and keep running on
+// the default stream.
+
+CUB_TEST("DeviceFor::Bulk two-phase overload accepts legacy null stream arguments", "[for][env]", CUB_SMALL)
+{
+  auto vec = c2h::device_vector<int>{1, 2, 3, 4};
+  const square_idx_op op{thrust::raw_pointer_cast(vec.data())};
+
+  const stream_scope scope{cudaStream_t{}};
+
+  SECTION("nullptr")
+  {
+    device_bulk_two_phase(4, op, nullptr);
+  }
+
+  SECTION("literal 0")
+  {
+    device_bulk_two_phase(4, op, 0);
+  }
+
+  SECTION("cudaStream_t{}")
+  {
+    device_bulk_two_phase(4, op, cudaStream_t{});
+  }
+
+  const c2h::device_vector<int> expected{1, 4, 9, 16};
+  REQUIRE(vec == expected);
+}
+
+CUB_TEST("DeviceFor::ForEachN and ForEach two-phase overloads accept legacy null stream arguments",
+         "[for][env]",
+         CUB_SMALL)
+{
+  auto vec = c2h::device_vector<int>{1, 2, 3, 4};
+  const square_ref_op op{};
+  const auto num_items = static_cast<int>(vec.size());
+
+  const stream_scope scope{cudaStream_t{}};
+
+  SECTION("ForEachN with nullptr")
+  {
+    device_for_each_n_two_phase(vec.begin(), num_items, op, nullptr);
+  }
+
+  SECTION("ForEachN with literal 0")
+  {
+    device_for_each_n_two_phase(vec.begin(), num_items, op, 0);
+  }
+
+  SECTION("ForEachN with cudaStream_t{}")
+  {
+    device_for_each_n_two_phase(vec.begin(), num_items, op, cudaStream_t{});
+  }
+
+  SECTION("ForEach with nullptr")
+  {
+    device_for_each_two_phase(vec.begin(), vec.end(), op, nullptr);
+  }
+
+  SECTION("ForEach with literal 0")
+  {
+    device_for_each_two_phase(vec.begin(), vec.end(), op, 0);
+  }
+
+  SECTION("ForEach with cudaStream_t{}")
+  {
+    device_for_each_two_phase(vec.begin(), vec.end(), op, cudaStream_t{});
+  }
+
+  const c2h::device_vector<int> expected{1, 4, 9, 16};
+  REQUIRE(vec == expected);
+}
+
+CUB_TEST("DeviceFor::ForEachCopyN and ForEachCopy two-phase overloads accept legacy null stream arguments",
+         "[for][env]",
+         CUB_SMALL)
+{
+  auto vec   = c2h::device_vector<int>{1, 2, 3, 4};
+  auto count = c2h::device_vector<int>(1);
+  const odd_count_op op{thrust::raw_pointer_cast(count.data())};
+  const auto num_items = static_cast<int>(vec.size());
+
+  const stream_scope scope{cudaStream_t{}};
+
+  SECTION("ForEachCopyN with nullptr")
+  {
+    device_for_each_copy_n_two_phase(vec.begin(), num_items, op, nullptr);
+  }
+
+  SECTION("ForEachCopyN with literal 0")
+  {
+    device_for_each_copy_n_two_phase(vec.begin(), num_items, op, 0);
+  }
+
+  SECTION("ForEachCopyN with cudaStream_t{}")
+  {
+    device_for_each_copy_n_two_phase(vec.begin(), num_items, op, cudaStream_t{});
+  }
+
+  SECTION("ForEachCopy with nullptr")
+  {
+    device_for_each_copy_two_phase(vec.begin(), vec.end(), op, nullptr);
+  }
+
+  SECTION("ForEachCopy with literal 0")
+  {
+    device_for_each_copy_two_phase(vec.begin(), vec.end(), op, 0);
+  }
+
+  SECTION("ForEachCopy with cudaStream_t{}")
+  {
+    device_for_each_copy_two_phase(vec.begin(), vec.end(), op, cudaStream_t{});
+  }
+
+  const c2h::device_vector<int> expected_count{2};
+  REQUIRE(count == expected_count);
+}
+
+#endif // TEST_LAUNCH != 2
+
+// The host-launched two-phase overloads are tested for tuning above; this covers launching them from the device.
+#if TEST_LAUNCH == 1
+
+CUB_TEST("DeviceFor::Bulk two-phase can be tuned when launched from the device", "[for][device]", CUB_SMALL, block_sizes)
+{
+  constexpr unsigned int target_block_size = c2h::get<0, TestType>::value;
+  c2h::device_vector<unsigned int> d_block_size(1);
+  const block_size_check_t op{thrust::raw_pointer_cast(d_block_size.data())};
+  const auto env = cuda::execution::tune(for_each_tuning<target_block_size>{});
+
+  device_bulk_two_phase(4, op, env);
+  REQUIRE(d_block_size[0] == target_block_size);
+}
+
+CUB_TEST(
+  "DeviceFor::ForEachN two-phase can be tuned when launched from the device", "[for][device]", CUB_SMALL, block_sizes)
+{
+  constexpr unsigned int target_block_size = c2h::get<0, TestType>::value;
+  c2h::device_vector<int> d_data{1, 2, 3, 4};
+  c2h::device_vector<unsigned int> d_block_size(1);
+  const block_size_check_t op{thrust::raw_pointer_cast(d_block_size.data())};
+  const auto env = cuda::execution::tune(for_each_tuning<target_block_size>{});
+
+  device_for_each_n_two_phase(d_data.begin(), static_cast<int>(d_data.size()), op, env);
+  REQUIRE(d_block_size[0] == target_block_size);
+}
+
+CUB_TEST(
+  "DeviceFor::ForEach two-phase can be tuned when launched from the device", "[for][device]", CUB_SMALL, block_sizes)
+{
+  constexpr unsigned int target_block_size = c2h::get<0, TestType>::value;
+  c2h::device_vector<int> d_data{1, 2, 3, 4};
+  c2h::device_vector<unsigned int> d_block_size(1);
+  const block_size_check_t op{thrust::raw_pointer_cast(d_block_size.data())};
+  const auto env = cuda::execution::tune(for_each_tuning<target_block_size>{});
+
+  device_for_each_two_phase(d_data.begin(), d_data.end(), op, env);
+  REQUIRE(d_block_size[0] == target_block_size);
+}
+
+CUB_TEST("DeviceFor::ForEachCopyN two-phase can be tuned when launched from the device",
+         "[for][device]",
+         CUB_SMALL,
+         block_sizes)
+{
+  constexpr unsigned int target_block_size = c2h::get<0, TestType>::value;
+  c2h::device_vector<int> d_data{1, 2, 3, 4};
+  c2h::device_vector<unsigned int> d_block_size(1);
+  const block_size_check_t op{thrust::raw_pointer_cast(d_block_size.data())};
+  const auto env = cuda::execution::tune(for_each_tuning<target_block_size>{});
+
+  device_for_each_copy_n_two_phase(d_data.begin(), static_cast<int>(d_data.size()), op, env);
+  REQUIRE(d_block_size[0] == target_block_size);
+}
+
+CUB_TEST("DeviceFor::ForEachCopy two-phase can be tuned when launched from the device",
+         "[for][device]",
+         CUB_SMALL,
+         block_sizes)
+{
+  constexpr unsigned int target_block_size = c2h::get<0, TestType>::value;
+  c2h::device_vector<int> d_data{1, 2, 3, 4};
+  c2h::device_vector<unsigned int> d_block_size(1);
+  const block_size_check_t op{thrust::raw_pointer_cast(d_block_size.data())};
+  const auto env = cuda::execution::tune(for_each_tuning<target_block_size>{});
+
+  device_for_each_copy_two_phase(d_data.begin(), d_data.end(), op, env);
+  REQUIRE(d_block_size[0] == target_block_size);
+}
+
+#endif // TEST_LAUNCH == 1
 
 // Compile-time checks; cheap enough to keep a test in every TEST_LAUNCH variant.
 #if _CCCL_COMPILER(GCC, >=, 8) // gcc 7 cannot preserve constexpr-ness from p1 to p2
