@@ -68,9 +68,8 @@ CUB_NAMESPACE_BEGIN
 //! Tuning
 //! +++++++++++++++++++++++++++++++++++++++++++++
 //!
-//! All algorithms in DeviceSegmentedRadixSort that accept an environment can be tuned by passing a custom
-//! :ref:`policy selector <cub-policy-selectors>` that returns a :cpp:struct:`cub::SegmentedRadixSortPolicy`, as shown
-//! in the example below:
+//! All algorithms in DeviceSegmentedRadixSort can be tuned by passing a custom :ref:`policy selector
+//! <cub-policy-selectors>` that returns a :cpp:struct:`cub::SegmentedRadixSortPolicy`, as shown in the example below:
 //!
 //!  .. literalinclude:: ../../../cub/test/catch2_test_device_segmented_radix_sort_env_api.cu
 //!      :language: c++
@@ -92,6 +91,88 @@ private:
   _CCCL_HOST_DEVICE static constexpr auto GetName() -> const char*
   {
     return "cub::DeviceSegmentedRadixSort";
+  }
+
+  // Signed integer type for segment sizes
+  using segment_size_t = ::cuda::std::int32_t;
+
+  // Sorts with the stream, tuning and memory resource of the environment, which allocates the temporary storage
+  template <SortOrder Order,
+            typename KeyT,
+            typename ValueT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT>
+  CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE static cudaError_t sort_impl_single_phase(
+    DoubleBuffer<KeyT>& d_keys,
+    DoubleBuffer<ValueT>& d_values,
+    ::cuda::std::int64_t num_items,
+    ::cuda::std::int64_t num_segments,
+    BeginOffsetIteratorT d_begin_offsets,
+    EndOffsetIteratorT d_end_offsets,
+    int begin_bit,
+    int end_bit,
+    bool is_overwrite_okay,
+    const EnvT& env)
+  {
+    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
+      return detail::segmented_radix_sort::dispatch<Order, segment_size_t>(
+        storage,
+        bytes,
+        d_keys,
+        d_values,
+        num_items,
+        num_segments,
+        d_begin_offsets,
+        d_end_offsets,
+        begin_bit,
+        end_bit,
+        is_overwrite_okay,
+        stream,
+        /* decomposer */ {},
+        tuning_env);
+    });
+  }
+
+  // Sorts with the stream and tuning of the environment, using the temporary storage provided by the caller
+  template <SortOrder Order,
+            typename KeyT,
+            typename ValueT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT>
+  CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE static cudaError_t sort_impl_two_phase(
+    void* d_temp_storage,
+    size_t& temp_storage_bytes,
+    DoubleBuffer<KeyT>& d_keys,
+    DoubleBuffer<ValueT>& d_values,
+    ::cuda::std::int64_t num_items,
+    ::cuda::std::int64_t num_segments,
+    BeginOffsetIteratorT d_begin_offsets,
+    EndOffsetIteratorT d_end_offsets,
+    int begin_bit,
+    int end_bit,
+    bool is_overwrite_okay,
+    const EnvT& env)
+  {
+    return detail::dispatch_with_env(
+      d_temp_storage, temp_storage_bytes, env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
+        return detail::segmented_radix_sort::dispatch<Order, segment_size_t>(
+          storage,
+          bytes,
+          d_keys,
+          d_values,
+          num_items,
+          num_segments,
+          d_begin_offsets,
+          d_end_offsets,
+          begin_bit,
+          end_bit,
+          is_overwrite_okay,
+          stream,
+          /* decomposer */ {},
+          tuning_env);
+      });
   }
 
 public:
@@ -180,6 +261,11 @@ public:
   //! @tparam EndOffsetIteratorT
   //!   **[inferred]** Random-access input iterator type for reading segment ending offsets @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!   Supports customization of the stream via ``cuda::get_stream`` and of the tuning via
+  //!   ``cuda::execution::tune``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -228,11 +314,16 @@ public:
   //!   **[optional]** The most-significant bit index (exclusive) needed for key
   //!   comparison (e.g., `sizeof(unsigned int) * 8`)
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
+  //!   Supports stream and tuning customization. The caller manages temporary storage.
   //!   @endrst
-  template <typename KeyT, typename ValueT, typename BeginOffsetIteratorT, typename EndOffsetIteratorT>
+  template <typename KeyT,
+            typename ValueT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t SortPairs(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -244,21 +335,18 @@ public:
     ::cuda::std::int64_t num_segments,
     BeginOffsetIteratorT d_begin_offsets,
     EndOffsetIteratorT d_end_offsets,
-    int begin_bit       = 0,
-    int end_bit         = sizeof(KeyT) * 8,
-    cudaStream_t stream = nullptr)
+    int begin_bit   = 0,
+    int end_bit     = sizeof(KeyT) * 8,
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, GetName());
-
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<KeyT> d_keys(const_cast<KeyT*>(d_keys_in), d_keys_out);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<ValueT> d_values(const_cast<ValueT*>(d_values_in), d_values_out);
 
-    return detail::segmented_radix_sort::dispatch<SortOrder::Ascending, SegmentSizeT>(
+    return sort_impl_two_phase<SortOrder::Ascending>(
       d_temp_storage,
       temp_storage_bytes,
       d_keys,
@@ -270,7 +358,7 @@ public:
       begin_bit,
       end_bit,
       false,
-      stream);
+      env);
   }
 
   //! @rst
@@ -367,6 +455,11 @@ public:
   //! @tparam EndOffsetIteratorT
   //!   **[inferred]** Random-access input iterator type for reading segment ending offsets @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!   Supports customization of the stream via ``cuda::get_stream`` and of the tuning via
+  //!   ``cuda::execution::tune``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -413,11 +506,16 @@ public:
   //!   **[optional]** The most-significant bit index (exclusive) needed for key
   //!   comparison (e.g., `sizeof(unsigned int) * 8`)
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
+  //!   Supports stream and tuning customization. The caller manages temporary storage.
   //!   @endrst
-  template <typename KeyT, typename ValueT, typename BeginOffsetIteratorT, typename EndOffsetIteratorT>
+  template <typename KeyT,
+            typename ValueT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t SortPairs(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -427,16 +525,13 @@ public:
     ::cuda::std::int64_t num_segments,
     BeginOffsetIteratorT d_begin_offsets,
     EndOffsetIteratorT d_end_offsets,
-    int begin_bit       = 0,
-    int end_bit         = sizeof(KeyT) * 8,
-    cudaStream_t stream = nullptr)
+    int begin_bit   = 0,
+    int end_bit     = sizeof(KeyT) * 8,
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, GetName());
 
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
-
-    return detail::segmented_radix_sort::dispatch<SortOrder::Ascending, SegmentSizeT>(
+    return sort_impl_two_phase<SortOrder::Ascending>(
       d_temp_storage,
       temp_storage_bytes,
       d_keys,
@@ -448,7 +543,7 @@ public:
       begin_bit,
       end_bit,
       true,
-      stream);
+      env);
   }
 
   //! @rst
@@ -574,30 +669,13 @@ public:
   {
     _CCCL_NVTX_RANGE_SCOPE(GetName());
 
-    using SegmentSizeT = ::cuda::std::int32_t;
-
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<KeyT> d_keys(const_cast<KeyT*>(d_keys_in), d_keys_out);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<ValueT> d_values(const_cast<ValueT*>(d_values_in), d_values_out);
 
-    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
-      return detail::segmented_radix_sort::dispatch<SortOrder::Ascending, SegmentSizeT>(
-        storage,
-        bytes,
-        d_keys,
-        d_values,
-        static_cast<::cuda::std::int64_t>(num_items),
-        static_cast<::cuda::std::int64_t>(num_segments),
-        d_begin_offsets,
-        d_end_offsets,
-        begin_bit,
-        end_bit,
-        false,
-        stream,
-        /* decomposer */ {},
-        tuning_env);
-    });
+    return sort_impl_single_phase<SortOrder::Ascending>(
+      d_keys, d_values, num_items, num_segments, d_begin_offsets, d_end_offsets, begin_bit, end_bit, false, env);
   }
 
   //! @rst
@@ -729,25 +807,8 @@ public:
   {
     _CCCL_NVTX_RANGE_SCOPE(GetName());
 
-    using SegmentSizeT = ::cuda::std::int32_t;
-
-    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
-      return detail::segmented_radix_sort::dispatch<SortOrder::Ascending, SegmentSizeT>(
-        storage,
-        bytes,
-        d_keys,
-        d_values,
-        num_items,
-        num_segments,
-        d_begin_offsets,
-        d_end_offsets,
-        begin_bit,
-        end_bit,
-        true,
-        stream,
-        /* decomposer */ {},
-        tuning_env);
-    });
+    return sort_impl_single_phase<SortOrder::Ascending>(
+      d_keys, d_values, num_items, num_segments, d_begin_offsets, d_end_offsets, begin_bit, end_bit, true, env);
   }
 
   //! @rst
@@ -835,6 +896,11 @@ public:
   //!   **[inferred]** Random-access input iterator type for reading segment
   //!   ending offsets @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!   Supports customization of the stream via ``cuda::get_stream`` and of the tuning via
+  //!   ``cuda::execution::tune``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -885,11 +951,16 @@ public:
   //!   **[optional]** The most-significant bit index (exclusive) needed for key
   //!   comparison (e.g., `sizeof(unsigned int) * 8`)
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
+  //!   Supports stream and tuning customization. The caller manages temporary storage.
   //!   @endrst
-  template <typename KeyT, typename ValueT, typename BeginOffsetIteratorT, typename EndOffsetIteratorT>
+  template <typename KeyT,
+            typename ValueT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t SortPairsDescending(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -901,21 +972,18 @@ public:
     ::cuda::std::int64_t num_segments,
     BeginOffsetIteratorT d_begin_offsets,
     EndOffsetIteratorT d_end_offsets,
-    int begin_bit       = 0,
-    int end_bit         = sizeof(KeyT) * 8,
-    cudaStream_t stream = nullptr)
+    int begin_bit   = 0,
+    int end_bit     = sizeof(KeyT) * 8,
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, GetName());
-
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<KeyT> d_keys(const_cast<KeyT*>(d_keys_in), d_keys_out);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<ValueT> d_values(const_cast<ValueT*>(d_values_in), d_values_out);
 
-    return detail::segmented_radix_sort::dispatch<SortOrder::Descending, SegmentSizeT>(
+    return sort_impl_two_phase<SortOrder::Descending>(
       d_temp_storage,
       temp_storage_bytes,
       d_keys,
@@ -927,7 +995,7 @@ public:
       begin_bit,
       end_bit,
       false,
-      stream);
+      env);
   }
 
   //! @rst
@@ -1027,6 +1095,11 @@ public:
   //!   **[inferred]** Random-access input iterator type for reading segment
   //!   ending offsets @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!   Supports customization of the stream via ``cuda::get_stream`` and of the tuning via
+  //!   ``cuda::execution::tune``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -1073,11 +1146,16 @@ public:
   //!   **[optional]** The most-significant bit index (exclusive) needed for key
   //!   comparison (e.g., `sizeof(unsigned int) * 8`)
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
+  //!   Supports stream and tuning customization. The caller manages temporary storage.
   //!   @endrst
-  template <typename KeyT, typename ValueT, typename BeginOffsetIteratorT, typename EndOffsetIteratorT>
+  template <typename KeyT,
+            typename ValueT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t SortPairsDescending(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -1087,16 +1165,13 @@ public:
     ::cuda::std::int64_t num_segments,
     BeginOffsetIteratorT d_begin_offsets,
     EndOffsetIteratorT d_end_offsets,
-    int begin_bit       = 0,
-    int end_bit         = sizeof(KeyT) * 8,
-    cudaStream_t stream = nullptr)
+    int begin_bit   = 0,
+    int end_bit     = sizeof(KeyT) * 8,
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, GetName());
 
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
-
-    return detail::segmented_radix_sort::dispatch<SortOrder::Descending, SegmentSizeT>(
+    return sort_impl_two_phase<SortOrder::Descending>(
       d_temp_storage,
       temp_storage_bytes,
       d_keys,
@@ -1108,7 +1183,7 @@ public:
       begin_bit,
       end_bit,
       true,
-      stream);
+      env);
   }
 
   //! @rst
@@ -1234,30 +1309,13 @@ public:
   {
     _CCCL_NVTX_RANGE_SCOPE(GetName());
 
-    using SegmentSizeT = ::cuda::std::int32_t;
-
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<KeyT> d_keys(const_cast<KeyT*>(d_keys_in), d_keys_out);
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<ValueT> d_values(const_cast<ValueT*>(d_values_in), d_values_out);
 
-    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
-      return detail::segmented_radix_sort::dispatch<SortOrder::Descending, SegmentSizeT>(
-        storage,
-        bytes,
-        d_keys,
-        d_values,
-        num_items,
-        num_segments,
-        d_begin_offsets,
-        d_end_offsets,
-        begin_bit,
-        end_bit,
-        false,
-        stream,
-        /* decomposer */ {},
-        tuning_env);
-    });
+    return sort_impl_single_phase<SortOrder::Descending>(
+      d_keys, d_values, num_items, num_segments, d_begin_offsets, d_end_offsets, begin_bit, end_bit, false, env);
   }
 
   //! @rst
@@ -1389,25 +1447,8 @@ public:
   {
     _CCCL_NVTX_RANGE_SCOPE(GetName());
 
-    using SegmentSizeT = ::cuda::std::int32_t;
-
-    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
-      return detail::segmented_radix_sort::dispatch<SortOrder::Descending, SegmentSizeT>(
-        storage,
-        bytes,
-        d_keys,
-        d_values,
-        num_items,
-        num_segments,
-        d_begin_offsets,
-        d_end_offsets,
-        begin_bit,
-        end_bit,
-        true,
-        stream,
-        /* decomposer */ {},
-        tuning_env);
-    });
+    return sort_impl_single_phase<SortOrder::Descending>(
+      d_keys, d_values, num_items, num_segments, d_begin_offsets, d_end_offsets, begin_bit, end_bit, true, env);
   }
 
   //! @}
@@ -1491,6 +1532,11 @@ public:
   //!   **[inferred]** Random-access input iterator type for reading segment
   //!   ending offsets @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!   Supports customization of the stream via ``cuda::get_stream`` and of the tuning via
+  //!   ``cuda::execution::tune``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -1533,11 +1579,15 @@ public:
   //!   **[optional]** The most-significant bit index (exclusive) needed for key
   //!   comparison (e.g., `sizeof(unsigned int) * 8`)
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
+  //!   Supports stream and tuning customization. The caller manages temporary storage.
   //!   @endrst
-  template <typename KeyT, typename BeginOffsetIteratorT, typename EndOffsetIteratorT>
+  template <typename KeyT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t SortKeys(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -1547,21 +1597,18 @@ public:
     ::cuda::std::int64_t num_segments,
     BeginOffsetIteratorT d_begin_offsets,
     EndOffsetIteratorT d_end_offsets,
-    int begin_bit       = 0,
-    int end_bit         = sizeof(KeyT) * 8,
-    cudaStream_t stream = nullptr)
+    int begin_bit   = 0,
+    int end_bit     = sizeof(KeyT) * 8,
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, GetName());
-
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
 
     // Null value type
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<KeyT> d_keys(const_cast<KeyT*>(d_keys_in), d_keys_out);
     DoubleBuffer<NullType> d_values;
 
-    return detail::segmented_radix_sort::dispatch<SortOrder::Ascending, SegmentSizeT>(
+    return sort_impl_two_phase<SortOrder::Ascending>(
       d_temp_storage,
       temp_storage_bytes,
       d_keys,
@@ -1573,7 +1620,7 @@ public:
       begin_bit,
       end_bit,
       false,
-      stream);
+      env);
   }
 
   //! @rst
@@ -1663,6 +1710,11 @@ public:
   //!   **[inferred]** Random-access input iterator type for reading segment
   //!   ending offsets @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!   Supports customization of the stream via ``cuda::get_stream`` and of the tuning via
+  //!   ``cuda::execution::tune``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -1705,11 +1757,15 @@ public:
   //!   **[optional]** The most-significant bit index (exclusive) needed for key
   //!   comparison (e.g., `sizeof(unsigned int) * 8`)
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
+  //!   Supports stream and tuning customization. The caller manages temporary storage.
   //!   @endrst
-  template <typename KeyT, typename BeginOffsetIteratorT, typename EndOffsetIteratorT>
+  template <typename KeyT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t SortKeys(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -1718,19 +1774,16 @@ public:
     ::cuda::std::int64_t num_segments,
     BeginOffsetIteratorT d_begin_offsets,
     EndOffsetIteratorT d_end_offsets,
-    int begin_bit       = 0,
-    int end_bit         = sizeof(KeyT) * 8,
-    cudaStream_t stream = nullptr)
+    int begin_bit   = 0,
+    int end_bit     = sizeof(KeyT) * 8,
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, GetName());
-
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
 
     // Null value type
     DoubleBuffer<NullType> d_values;
 
-    return detail::segmented_radix_sort::dispatch<SortOrder::Ascending, SegmentSizeT>(
+    return sort_impl_two_phase<SortOrder::Ascending>(
       d_temp_storage,
       temp_storage_bytes,
       d_keys,
@@ -1742,7 +1795,7 @@ public:
       begin_bit,
       end_bit,
       true,
-      stream);
+      env);
   }
 
   //! @rst
@@ -1857,29 +1910,12 @@ public:
   {
     _CCCL_NVTX_RANGE_SCOPE(GetName());
 
-    using SegmentSizeT = ::cuda::std::int32_t;
-
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<KeyT> d_keys(const_cast<KeyT*>(d_keys_in), d_keys_out);
     DoubleBuffer<NullType> d_values;
 
-    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
-      return detail::segmented_radix_sort::dispatch<SortOrder::Ascending, SegmentSizeT>(
-        storage,
-        bytes,
-        d_keys,
-        d_values,
-        num_items,
-        num_segments,
-        d_begin_offsets,
-        d_end_offsets,
-        begin_bit,
-        end_bit,
-        false,
-        stream,
-        /* decomposer */ {},
-        tuning_env);
-    });
+    return sort_impl_single_phase<SortOrder::Ascending>(
+      d_keys, d_values, num_items, num_segments, d_begin_offsets, d_end_offsets, begin_bit, end_bit, false, env);
   }
 
   //! @rst
@@ -1998,29 +2034,11 @@ public:
   {
     _CCCL_NVTX_RANGE_SCOPE(GetName());
 
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
-
     // Null value type
     DoubleBuffer<NullType> d_values;
 
-    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
-      return detail::segmented_radix_sort::dispatch<SortOrder::Ascending, SegmentSizeT>(
-        storage,
-        bytes,
-        d_keys,
-        d_values,
-        num_items,
-        num_segments,
-        d_begin_offsets,
-        d_end_offsets,
-        begin_bit,
-        end_bit,
-        true,
-        stream,
-        /* decomposer */ {},
-        tuning_env);
-    });
+    return sort_impl_single_phase<SortOrder::Ascending>(
+      d_keys, d_values, num_items, num_segments, d_begin_offsets, d_end_offsets, begin_bit, end_bit, true, env);
   }
 
   //! @rst
@@ -2101,6 +2119,11 @@ public:
   //! @tparam EndOffsetIteratorT
   //!   **[inferred]** Random-access input iterator type for reading segment ending offsets @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!   Supports customization of the stream via ``cuda::get_stream`` and of the tuning via
+  //!   ``cuda::execution::tune``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -2143,11 +2166,15 @@ public:
   //!   **[optional]** The most-significant bit index (exclusive) needed for key
   //!   comparison (e.g., sizeof(unsigned int) * 8)
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
+  //!   Supports stream and tuning customization. The caller manages temporary storage.
   //!   @endrst
-  template <typename KeyT, typename BeginOffsetIteratorT, typename EndOffsetIteratorT>
+  template <typename KeyT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t SortKeysDescending(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -2157,20 +2184,17 @@ public:
     ::cuda::std::int64_t num_segments,
     BeginOffsetIteratorT d_begin_offsets,
     EndOffsetIteratorT d_end_offsets,
-    int begin_bit       = 0,
-    int end_bit         = sizeof(KeyT) * 8,
-    cudaStream_t stream = nullptr)
+    int begin_bit   = 0,
+    int end_bit     = sizeof(KeyT) * 8,
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, GetName());
-
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
 
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<KeyT> d_keys(const_cast<KeyT*>(d_keys_in), d_keys_out);
     DoubleBuffer<NullType> d_values;
 
-    return detail::segmented_radix_sort::dispatch<SortOrder::Descending, SegmentSizeT>(
+    return sort_impl_two_phase<SortOrder::Descending>(
       d_temp_storage,
       temp_storage_bytes,
       d_keys,
@@ -2182,7 +2206,7 @@ public:
       begin_bit,
       end_bit,
       false,
-      stream);
+      env);
   }
 
   //! @rst
@@ -2272,6 +2296,11 @@ public:
   //!   **[inferred]** Random-access input iterator type for reading segment
   //!   ending offsets @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!   Supports customization of the stream via ``cuda::get_stream`` and of the tuning via
+  //!   ``cuda::execution::tune``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -2313,11 +2342,15 @@ public:
   //!   **[optional]** The most-significant bit index (exclusive) needed for key
   //!   comparison (e.g., `sizeof(unsigned int) * 8`)
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
+  //!   Supports stream and tuning customization. The caller manages temporary storage.
   //!   @endrst
-  template <typename KeyT, typename BeginOffsetIteratorT, typename EndOffsetIteratorT>
+  template <typename KeyT,
+            typename BeginOffsetIteratorT,
+            typename EndOffsetIteratorT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t SortKeysDescending(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -2326,19 +2359,16 @@ public:
     ::cuda::std::int64_t num_segments,
     BeginOffsetIteratorT d_begin_offsets,
     EndOffsetIteratorT d_end_offsets,
-    int begin_bit       = 0,
-    int end_bit         = sizeof(KeyT) * 8,
-    cudaStream_t stream = nullptr)
+    int begin_bit   = 0,
+    int end_bit     = sizeof(KeyT) * 8,
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, GetName());
-
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
 
     // Null value type
     DoubleBuffer<NullType> d_values;
 
-    return detail::segmented_radix_sort::dispatch<SortOrder::Descending, SegmentSizeT>(
+    return sort_impl_two_phase<SortOrder::Descending>(
       d_temp_storage,
       temp_storage_bytes,
       d_keys,
@@ -2350,7 +2380,7 @@ public:
       begin_bit,
       end_bit,
       true,
-      stream);
+      env);
   }
 
   //! @rst
@@ -2463,29 +2493,12 @@ public:
   {
     _CCCL_NVTX_RANGE_SCOPE(GetName());
 
-    using SegmentSizeT = ::cuda::std::int32_t;
-
     // NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast)
     DoubleBuffer<KeyT> d_keys(const_cast<KeyT*>(d_keys_in), d_keys_out);
     DoubleBuffer<NullType> d_values;
 
-    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
-      return detail::segmented_radix_sort::dispatch<SortOrder::Descending, SegmentSizeT>(
-        storage,
-        bytes,
-        d_keys,
-        d_values,
-        num_items,
-        num_segments,
-        d_begin_offsets,
-        d_end_offsets,
-        begin_bit,
-        end_bit,
-        false,
-        stream,
-        /* decomposer */ {},
-        tuning_env);
-    });
+    return sort_impl_single_phase<SortOrder::Descending>(
+      d_keys, d_values, num_items, num_segments, d_begin_offsets, d_end_offsets, begin_bit, end_bit, false, env);
   }
 
   //! @rst
@@ -2604,29 +2617,11 @@ public:
   {
     _CCCL_NVTX_RANGE_SCOPE(GetName());
 
-    // Signed integer type for global offsets
-    using SegmentSizeT = ::cuda::std::int32_t;
-
     // Null value type
     DoubleBuffer<NullType> d_values;
 
-    return detail::dispatch_with_env(env, [&](auto tuning_env, void* storage, size_t& bytes, auto stream) {
-      return detail::segmented_radix_sort::dispatch<SortOrder::Descending, SegmentSizeT>(
-        storage,
-        bytes,
-        d_keys,
-        d_values,
-        num_items,
-        num_segments,
-        d_begin_offsets,
-        d_end_offsets,
-        begin_bit,
-        end_bit,
-        true,
-        stream,
-        /* decomposer */ {},
-        tuning_env);
-    });
+    return sort_impl_single_phase<SortOrder::Descending>(
+      d_keys, d_values, num_items, num_segments, d_begin_offsets, d_end_offsets, begin_bit, end_bit, true, env);
   }
 
   //! @}
