@@ -65,7 +65,7 @@ CUB_NAMESPACE_BEGIN
 //! Tuning
 //! +++++++++++++++++++++++++++++++++++++++++++++
 //!
-//! All algorithms in DeviceSegmentedScan that accept an environment can be tuned by passing a custom
+//! All algorithms in DeviceSegmentedScan can be tuned by passing a custom
 //! :ref:`policy selector <cub-policy-selectors>` that returns a :cpp:struct:`cub::SegmentedScanPolicy`, as shown in
 //! the example below:
 //!
@@ -90,6 +90,95 @@ private:
   {
     using offset_t = detail::common_iterator_value_t<It...>;
     static_assert(::cuda::std::is_integral_v<offset_t>, "Offset iterator value type should be integral.");
+  }
+
+  template <typename InputIteratorT, typename ScanOpT, typename InitValueT>
+  using default_policy_selector_t = detail::segmented_scan::policy_selector_from_types<
+    detail::segmented_scan::deduced_accum_t<ScanOpT, InitValueT, detail::it_value_t<InputIteratorT>>>;
+
+  template <ForceInclusive EnforceInclusive = ForceInclusive::No,
+            typename InputIteratorT,
+            typename OutputIteratorT,
+            typename BeginOffsetIteratorInputT,
+            typename EndOffsetIteratorInputT,
+            typename BeginOffsetIteratorOutputT,
+            typename ScanOpT,
+            typename InitValueT,
+            typename EnvT>
+  CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE static cudaError_t segmented_scan_impl_single_phase(
+    InputIteratorT d_in,
+    OutputIteratorT d_out,
+    BeginOffsetIteratorInputT d_in_begin_offsets,
+    EndOffsetIteratorInputT d_in_end_offsets,
+    BeginOffsetIteratorOutputT d_out_begin_offsets,
+    ::cuda::std::int64_t num_segments,
+    ScanOpT scan_op,
+    InitValueT init_value,
+    const EnvT& env)
+  {
+    return detail::dispatch_with_env_and_tuning<default_policy_selector_t<InputIteratorT, ScanOpT, InitValueT>>(
+      env, [&](auto policy_selector, void* storage, size_t& bytes, cudaStream_t stream) {
+        return detail::segmented_scan::dispatch<EnforceInclusive>(
+          storage,
+          bytes,
+          d_in,
+          d_out,
+          num_segments,
+          d_in_begin_offsets,
+          d_in_end_offsets,
+          d_out_begin_offsets,
+          scan_op,
+          init_value,
+          1,
+          detail::segmented_scan::worker::block,
+          stream,
+          policy_selector);
+      });
+  }
+
+  template <ForceInclusive EnforceInclusive = ForceInclusive::No,
+            typename InputIteratorT,
+            typename OutputIteratorT,
+            typename BeginOffsetIteratorInputT,
+            typename EndOffsetIteratorInputT,
+            typename BeginOffsetIteratorOutputT,
+            typename ScanOpT,
+            typename InitValueT,
+            typename EnvT>
+  CUB_RUNTIME_FUNCTION _CCCL_FORCEINLINE static cudaError_t segmented_scan_impl_two_phase(
+    void* d_temp_storage,
+    size_t& temp_storage_bytes,
+    InputIteratorT d_in,
+    OutputIteratorT d_out,
+    BeginOffsetIteratorInputT d_in_begin_offsets,
+    EndOffsetIteratorInputT d_in_end_offsets,
+    BeginOffsetIteratorOutputT d_out_begin_offsets,
+    ::cuda::std::int64_t num_segments,
+    ScanOpT scan_op,
+    InitValueT init_value,
+    const EnvT& env)
+  {
+    return detail::dispatch_with_env_and_tuning<default_policy_selector_t<InputIteratorT, ScanOpT, InitValueT>>(
+      d_temp_storage,
+      temp_storage_bytes,
+      env,
+      [&](auto policy_selector, void* storage, size_t& bytes, cudaStream_t stream) {
+        return detail::segmented_scan::dispatch<EnforceInclusive>(
+          storage,
+          bytes,
+          d_in,
+          d_out,
+          num_segments,
+          d_in_begin_offsets,
+          d_in_end_offsets,
+          d_out_begin_offsets,
+          scan_op,
+          init_value,
+          1,
+          detail::segmented_scan::worker::block,
+          stream,
+          policy_selector);
+      });
   }
 
 public:
@@ -165,6 +254,9 @@ public:
   //!   **[inferred]** Random-access input iterator type for reading segment ending offsets in the input data sequence
   //!   @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -196,14 +288,15 @@ public:
   //! @param[in] num_segments
   //!   The number of segments that comprise the segmented prefix scan data.
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
             typename BeginOffsetIteratorInputT,
-            typename EndOffsetIteratorInputT>
+            typename EndOffsetIteratorInputT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t ExclusiveSegmentedSum(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -212,7 +305,7 @@ public:
     BeginOffsetIteratorInputT d_in_begin_offsets,
     EndOffsetIteratorInputT d_in_end_offsets,
     ::cuda::std::int64_t num_segments,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::ExclusiveSegmentedSum");
 
@@ -224,20 +317,18 @@ public:
     using init_value_t = detail::it_value_t<InputIteratorT>;
     const init_value_t init_value{};
 
-    return detail::segmented_scan::dispatch(
+    return segmented_scan_impl_two_phase(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_in_begin_offsets,
+      num_segments,
       scan_op,
       detail::InputValue<init_value_t>(init_value),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      env);
   }
 
   //! @rst
@@ -342,29 +433,16 @@ public:
     using init_value_t = cub::detail::it_value_t<InputIteratorT>;
     init_value_t init_value{};
 
-    using accum_t = detail::segmented_scan::
-      deduced_accum_t<scan_op_t, detail::InputValue<init_value_t>, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_in_begin_offsets,
-          scan_op,
-          detail::InputValue<init_value_t>(init_value),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase(
+      d_in,
+      d_out,
+      d_in_begin_offsets,
+      d_in_end_offsets,
+      d_in_begin_offsets,
+      num_segments,
+      scan_op,
+      detail::InputValue<init_value_t>(init_value),
+      env);
   }
 
   //! @rst
@@ -409,6 +487,9 @@ public:
   //!   **[inferred]** Random-access input iterator type for reading segment beginning offsets in the output sequence
   //!   @iterator
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -447,15 +528,17 @@ public:
   //! @param[in] num_segments
   //!   The number of segments that comprise the segmented prefix scan data.
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
             typename BeginOffsetIteratorInputT,
             typename EndOffsetIteratorInputT,
-            typename BeginOffsetIteratorOutputT>
+            typename BeginOffsetIteratorOutputT,
+            typename EnvT = ::cuda::std::execution::env<>,
+            ::cuda::std::enable_if_t<!::cuda::std::is_integral_v<BeginOffsetIteratorOutputT>, int> = 0>
   CUB_RUNTIME_FUNCTION static cudaError_t ExclusiveSegmentedSum(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -465,7 +548,7 @@ public:
     EndOffsetIteratorInputT d_in_end_offsets,
     BeginOffsetIteratorOutputT d_out_begin_offsets,
     ::cuda::std::int64_t num_segments,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::ExclusiveSegmentedSum");
 
@@ -479,20 +562,18 @@ public:
     using init_value_t = cub::detail::it_value_t<InputIteratorT>;
     const init_value_t init_value{};
 
-    return cub::detail::segmented_scan::dispatch(
+    return segmented_scan_impl_two_phase(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_out_begin_offsets,
+      num_segments,
       scan_op,
       detail::InputValue<init_value_t>(init_value),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      env);
   }
 
   //! @rst
@@ -603,29 +684,16 @@ public:
     using init_value_t = cub::detail::it_value_t<InputIteratorT>;
     init_value_t init_value{};
 
-    using accum_t = detail::segmented_scan::
-      deduced_accum_t<scan_op_t, detail::InputValue<init_value_t>, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_out_begin_offsets,
-          scan_op,
-          detail::InputValue<init_value_t>(init_value),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase(
+      d_in,
+      d_out,
+      d_in_begin_offsets,
+      d_in_end_offsets,
+      d_out_begin_offsets,
+      num_segments,
+      scan_op,
+      detail::InputValue<init_value_t>(init_value),
+      env);
   }
 
   //! @rst
@@ -676,6 +744,9 @@ public:
   //! @tparam InitValueT
   //!  **[inferred]** Type of the `init_value`
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -713,16 +784,17 @@ public:
   //! @param[in] init_value
   //!   Initial value to seed the exclusive scan for each segment in the output sequence
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
             typename BeginOffsetIteratorInputT,
             typename EndOffsetIteratorInputT,
             typename ScanOpT,
-            typename InitValueT>
+            typename InitValueT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t ExclusiveSegmentedScan(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -733,26 +805,24 @@ public:
     ::cuda::std::int64_t num_segments,
     ScanOpT scan_op,
     InitValueT init_value,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::ExclusiveSegmentedScan");
 
     check_common_iterator_value_is_integral<BeginOffsetIteratorInputT, EndOffsetIteratorInputT>();
 
-    return cub::detail::segmented_scan::dispatch(
+    return segmented_scan_impl_two_phase(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_in_begin_offsets,
+      num_segments,
       scan_op,
       detail::InputValue<InitValueT>(init_value),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      env);
   }
 
   //! @rst
@@ -864,29 +934,16 @@ public:
 
     check_common_iterator_value_is_integral<BeginOffsetIteratorInputT, EndOffsetIteratorInputT>();
 
-    using accum_t = detail::segmented_scan::
-      deduced_accum_t<ScanOpT, detail::InputValue<InitValueT>, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_in_begin_offsets,
-          scan_op,
-          detail::InputValue<InitValueT>(init_value),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase(
+      d_in,
+      d_out,
+      d_in_begin_offsets,
+      d_in_end_offsets,
+      d_in_begin_offsets,
+      num_segments,
+      scan_op,
+      detail::InputValue<InitValueT>(init_value),
+      env);
   }
 
   //! @rst
@@ -927,6 +984,9 @@ public:
   //!
   //! @tparam InitValueT
   //!  **[inferred]** Type of the `init_value`
+  //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
   //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
@@ -972,9 +1032,9 @@ public:
   //! @param[in] init_value
   //!   Initial value to seed the exclusive scan for each segment in the output sequence
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
@@ -982,7 +1042,8 @@ public:
             typename EndOffsetIteratorInputT,
             typename BeginOffsetIteratorOutputT,
             typename ScanOpT,
-            typename InitValueT>
+            typename InitValueT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t ExclusiveSegmentedScan(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -994,7 +1055,7 @@ public:
     ::cuda::std::int64_t num_segments,
     ScanOpT scan_op,
     InitValueT init_value,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::ExclusiveSegmentedScan");
 
@@ -1002,20 +1063,18 @@ public:
                                             EndOffsetIteratorInputT,
                                             BeginOffsetIteratorOutputT>();
 
-    return cub::detail::segmented_scan::dispatch(
+    return segmented_scan_impl_two_phase(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_out_begin_offsets,
+      num_segments,
       scan_op,
       detail::InputValue<InitValueT>(init_value),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      env);
   }
 
   //! @rst
@@ -1142,29 +1201,16 @@ public:
                                             EndOffsetIteratorInputT,
                                             BeginOffsetIteratorOutputT>();
 
-    using accum_t = detail::segmented_scan::
-      deduced_accum_t<ScanOpT, detail::InputValue<InitValueT>, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_out_begin_offsets,
-          scan_op,
-          detail::InputValue<InitValueT>(init_value),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase(
+      d_in,
+      d_out,
+      d_in_begin_offsets,
+      d_in_end_offsets,
+      d_out_begin_offsets,
+      num_segments,
+      scan_op,
+      detail::InputValue<InitValueT>(init_value),
+      env);
   }
 
   //! @rst
@@ -1208,6 +1254,9 @@ public:
   //! @tparam ScanOpT
   //!   **[inferred]** Binary associative scan functor type having member `T operator()(const T &a, const T &b)`
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -1239,14 +1288,15 @@ public:
   //! @param[in] num_segments
   //!   The number of segments that comprise the segmented prefix scan data.
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
             typename BeginOffsetIteratorInputT,
-            typename EndOffsetIteratorInputT>
+            typename EndOffsetIteratorInputT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t InclusiveSegmentedSum(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -1255,7 +1305,7 @@ public:
     BeginOffsetIteratorInputT d_in_begin_offsets,
     EndOffsetIteratorInputT d_in_end_offsets,
     ::cuda::std::int64_t num_segments,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::InclusiveSegmentedSum");
 
@@ -1264,20 +1314,18 @@ public:
     using scan_op_t = ::cuda::std::plus<>;
     const scan_op_t scan_op{};
 
-    return cub::detail::segmented_scan::dispatch(
+    return segmented_scan_impl_two_phase(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_in_begin_offsets,
+      num_segments,
       scan_op,
-      NullType(),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      NullType{},
+      env);
   }
 
   //! @rst
@@ -1371,28 +1419,8 @@ public:
     using scan_op_t = ::cuda::std::plus<>;
     scan_op_t scan_op{};
 
-    using accum_t = detail::segmented_scan::deduced_accum_t<scan_op_t, NullType, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_in_begin_offsets,
-          scan_op,
-          NullType(),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase(
+      d_in, d_out, d_in_begin_offsets, d_in_end_offsets, d_in_begin_offsets, num_segments, scan_op, NullType{}, env);
   }
 
   //! @rst
@@ -1440,6 +1468,9 @@ public:
   //! @tparam ScanOpT
   //!   **[inferred]** Binary associative scan functor type having member `T operator()(const T &a, const T &b)`
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -1478,15 +1509,17 @@ public:
   //! @param[in] num_segments
   //!   The number of segments that comprise the segmented prefix scan data.
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
             typename BeginOffsetIteratorInputT,
             typename EndOffsetIteratorInputT,
-            typename BeginOffsetIteratorOutputT>
+            typename BeginOffsetIteratorOutputT,
+            typename EnvT = ::cuda::std::execution::env<>,
+            ::cuda::std::enable_if_t<!::cuda::std::is_integral_v<BeginOffsetIteratorOutputT>, int> = 0>
   CUB_RUNTIME_FUNCTION static cudaError_t InclusiveSegmentedSum(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -1496,7 +1529,7 @@ public:
     EndOffsetIteratorInputT d_in_end_offsets,
     BeginOffsetIteratorOutputT d_out_begin_offsets,
     ::cuda::std::int64_t num_segments,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::InclusiveSegmentedSum");
 
@@ -1507,20 +1540,18 @@ public:
     using scan_op_t = ::cuda::std::plus<>;
     const scan_op_t scan_op{};
 
-    return cub::detail::segmented_scan::dispatch(
+    return segmented_scan_impl_two_phase(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_out_begin_offsets,
+      num_segments,
       scan_op,
-      NullType(),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      NullType{},
+      env);
   }
 
   //! @rst
@@ -1630,28 +1661,8 @@ public:
     using scan_op_t = ::cuda::std::plus<>;
     scan_op_t scan_op{};
 
-    using accum_t = detail::segmented_scan::deduced_accum_t<scan_op_t, NullType, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_out_begin_offsets,
-          scan_op,
-          NullType(),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase(
+      d_in, d_out, d_in_begin_offsets, d_in_end_offsets, d_out_begin_offsets, num_segments, scan_op, NullType{}, env);
   }
 
   //! @rst
@@ -1683,6 +1694,9 @@ public:
   //!
   //! @tparam ScanOpT
   //!   **[inferred]** Binary associative scan functor type having member `T operator()(const T &a, const T &b)`
+  //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
   //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
@@ -1718,15 +1732,16 @@ public:
   //! @param[in] scan_op
   //!   Binary associative scan functor
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
             typename BeginOffsetIteratorInputT,
             typename EndOffsetIteratorInputT,
-            typename ScanOpT>
+            typename ScanOpT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t InclusiveSegmentedScan(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -1736,26 +1751,24 @@ public:
     EndOffsetIteratorInputT d_in_end_offsets,
     ::cuda::std::int64_t num_segments,
     ScanOpT scan_op,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::InclusiveSegmentedScan");
 
     check_common_iterator_value_is_integral<BeginOffsetIteratorInputT, EndOffsetIteratorInputT>();
 
-    return cub::detail::segmented_scan::dispatch(
+    return segmented_scan_impl_two_phase(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_in_begin_offsets,
+      num_segments,
       scan_op,
-      NullType(),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      NullType{},
+      env);
   }
 
   //! @rst
@@ -1857,28 +1870,8 @@ public:
 
     check_common_iterator_value_is_integral<BeginOffsetIteratorInputT, EndOffsetIteratorInputT>();
 
-    using accum_t = detail::segmented_scan::deduced_accum_t<ScanOpT, NullType, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_in_begin_offsets,
-          scan_op,
-          NullType(),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase(
+      d_in, d_out, d_in_begin_offsets, d_in_end_offsets, d_in_begin_offsets, num_segments, scan_op, NullType{}, env);
   }
 
   //! @rst
@@ -1928,6 +1921,9 @@ public:
   //! @tparam ScanOpT
   //!   **[inferred]** Binary associative scan functor type having member `T operator()(const T &a, const T &b)`
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -1969,16 +1965,17 @@ public:
   //! @param[in] scan_op
   //!   Binary associative scan functor
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
             typename BeginOffsetIteratorInputT,
             typename EndOffsetIteratorInputT,
             typename BeginOffsetIteratorOutputT,
-            typename ScanOpT>
+            typename ScanOpT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t InclusiveSegmentedScan(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -1989,7 +1986,7 @@ public:
     BeginOffsetIteratorOutputT d_out_begin_offsets,
     ::cuda::std::int64_t num_segments,
     ScanOpT scan_op,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::InclusiveSegmentedScan");
 
@@ -1997,20 +1994,18 @@ public:
                                             EndOffsetIteratorInputT,
                                             BeginOffsetIteratorOutputT>();
 
-    return cub::detail::segmented_scan::dispatch(
+    return segmented_scan_impl_two_phase(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_out_begin_offsets,
+      num_segments,
       scan_op,
-      NullType(),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      NullType{},
+      env);
   }
 
   //! @rst
@@ -2128,28 +2123,8 @@ public:
                                             EndOffsetIteratorInputT,
                                             BeginOffsetIteratorOutputT>();
 
-    using accum_t = detail::segmented_scan::deduced_accum_t<ScanOpT, NullType, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_out_begin_offsets,
-          scan_op,
-          NullType(),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase(
+      d_in, d_out, d_in_begin_offsets, d_in_end_offsets, d_out_begin_offsets, num_segments, scan_op, NullType{}, env);
   }
 
   //! @rst
@@ -2201,6 +2176,9 @@ public:
   //! @tparam InitValueT
   //!  **[inferred]** Type of the `init_value`
   //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
+  //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
   //!
@@ -2238,16 +2216,17 @@ public:
   //! @param[in] init_value
   //!   Initial value to seed the exclusive scan for each segment in the output sequence
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
             typename BeginOffsetIteratorInputT,
             typename EndOffsetIteratorInputT,
             typename ScanOpT,
-            typename InitValueT>
+            typename InitValueT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t InclusiveSegmentedScanInit(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -2258,27 +2237,25 @@ public:
     ::cuda::std::int64_t num_segments,
     ScanOpT scan_op,
     InitValueT init_value,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::InclusiveSegmentedScanInit");
 
     check_common_iterator_value_is_integral<BeginOffsetIteratorInputT, EndOffsetIteratorInputT>();
     static_assert(!::cuda::std::is_same_v<InitValueT, NullType>);
 
-    return cub::detail::segmented_scan::dispatch<ForceInclusive::Yes>(
+    return segmented_scan_impl_two_phase<ForceInclusive::Yes>(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_in_begin_offsets,
+      num_segments,
       scan_op,
       detail::InputValue<InitValueT>(init_value),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      env);
   }
 
   //! @rst
@@ -2391,29 +2368,16 @@ public:
     check_common_iterator_value_is_integral<BeginOffsetIteratorInputT, EndOffsetIteratorInputT>();
     static_assert(!::cuda::std::is_same_v<InitValueT, NullType>);
 
-    using accum_t = detail::segmented_scan::
-      deduced_accum_t<ScanOpT, detail::InputValue<InitValueT>, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch<ForceInclusive::Yes>(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_in_begin_offsets,
-          scan_op,
-          detail::InputValue<InitValueT>(init_value),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase<ForceInclusive::Yes>(
+      d_in,
+      d_out,
+      d_in_begin_offsets,
+      d_in_end_offsets,
+      d_in_begin_offsets,
+      num_segments,
+      scan_op,
+      detail::InputValue<InitValueT>(init_value),
+      env);
   }
 
   //! @rst
@@ -2455,6 +2419,9 @@ public:
   //!
   //! @tparam InitValueT
   //!  **[inferred]** Type of the `init_value`
+  //!
+  //! @tparam EnvT
+  //!   **[inferred]** Execution environment type. Default is ``cuda::std::execution::env<>``.
   //!
   //! @param[in] d_temp_storage
   //!   @devicestorage
@@ -2500,9 +2467,9 @@ public:
   //! @param[in] init_value
   //!   Initial value to seed the exclusive scan for each segment in the output sequence
   //!
-  //! @param[in] stream
+  //! @param[in] env
   //!   @rst
-  //!   **[optional]** CUDA stream to launch kernels within. Default is stream\ :sub:`0`.
+  //!   **[optional]** Execution environment. Default is ``cuda::std::execution::env{}``.
   //!   @endrst
   template <typename InputIteratorT,
             typename OutputIteratorT,
@@ -2510,7 +2477,8 @@ public:
             typename EndOffsetIteratorInputT,
             typename BeginOffsetIteratorOutputT,
             typename ScanOpT,
-            typename InitValueT>
+            typename InitValueT,
+            typename EnvT = ::cuda::std::execution::env<>>
   CUB_RUNTIME_FUNCTION static cudaError_t InclusiveSegmentedScanInit(
     void* d_temp_storage,
     size_t& temp_storage_bytes,
@@ -2522,7 +2490,7 @@ public:
     ::cuda::std::int64_t num_segments,
     ScanOpT scan_op,
     InitValueT init_value,
-    cudaStream_t stream = nullptr)
+    const EnvT& env = {})
   {
     _CCCL_NVTX_RANGE_SCOPE_IF(d_temp_storage, "cub::DeviceSegmentedScan::InclusiveSegmentedScanInit");
 
@@ -2531,20 +2499,18 @@ public:
                                             BeginOffsetIteratorOutputT>();
     static_assert(!::cuda::std::is_same_v<InitValueT, NullType>);
 
-    return cub::detail::segmented_scan::dispatch<ForceInclusive::Yes>(
+    return segmented_scan_impl_two_phase<ForceInclusive::Yes>(
       d_temp_storage,
       temp_storage_bytes,
       d_in,
       d_out,
-      num_segments,
       d_in_begin_offsets,
       d_in_end_offsets,
       d_out_begin_offsets,
+      num_segments,
       scan_op,
       detail::InputValue<InitValueT>(init_value),
-      1,
-      detail::segmented_scan::worker::block,
-      stream);
+      env);
   }
 
   //! @rst
@@ -2673,29 +2639,16 @@ public:
                                             BeginOffsetIteratorOutputT>();
     static_assert(!::cuda::std::is_same_v<InitValueT, NullType>);
 
-    using accum_t = detail::segmented_scan::
-      deduced_accum_t<ScanOpT, detail::InputValue<InitValueT>, detail::it_value_t<InputIteratorT>>;
-
-    using default_policy_selector = detail::segmented_scan::policy_selector_from_types<accum_t>;
-
-    return detail::dispatch_with_env_and_tuning<default_policy_selector>(
-      env, [&](auto policy_selector, void* d_temp_storage, size_t& temp_storage_bytes, cudaStream_t stream) {
-        return cub::detail::segmented_scan::dispatch<ForceInclusive::Yes>(
-          d_temp_storage,
-          temp_storage_bytes,
-          d_in,
-          d_out,
-          num_segments,
-          d_in_begin_offsets,
-          d_in_end_offsets,
-          d_out_begin_offsets,
-          scan_op,
-          detail::InputValue<InitValueT>(init_value),
-          1,
-          detail::segmented_scan::worker::block,
-          stream,
-          policy_selector);
-      });
+    return segmented_scan_impl_single_phase<ForceInclusive::Yes>(
+      d_in,
+      d_out,
+      d_in_begin_offsets,
+      d_in_end_offsets,
+      d_out_begin_offsets,
+      num_segments,
+      scan_op,
+      detail::InputValue<InitValueT>(init_value),
+      env);
   }
 };
 
