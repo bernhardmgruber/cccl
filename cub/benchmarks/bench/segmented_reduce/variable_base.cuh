@@ -10,6 +10,8 @@
 
 #include <nvbench_helper.cuh>
 
+#include "policy_selector.cuh"
+
 #if TUNE_T
 using value_types = nvbench::type_list<TUNE_T>;
 #else
@@ -108,7 +110,12 @@ _CCCL_HOST_API void variable_segmented_reduce(nvbench::state& state, nvbench::ty
     op_t{},
     init_value_t{},
     guaranteed_max_seg_size,
-    nullptr /* stream */);
+    nullptr /* stream */
+#if !TUNE_BASE
+    ,
+    policy_selector<accum_t>{}
+#endif // !TUNE_BASE
+  );
 
   thrust::device_vector<nvbench::uint8_t> temp(temp_size, thrust::no_init);
   auto* temp_storage = thrust::raw_pointer_cast(temp.data());
@@ -125,7 +132,12 @@ _CCCL_HOST_API void variable_segmented_reduce(nvbench::state& state, nvbench::ty
       op_t{},
       init_value_t{},
       guaranteed_max_seg_size,
-      launch.get_stream());
+      launch.get_stream()
+#if !TUNE_BASE
+        ,
+      policy_selector<accum_t>{}
+#endif // !TUNE_BASE
+    );
   });
 }
 
